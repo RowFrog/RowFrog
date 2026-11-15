@@ -190,7 +190,8 @@ struct WidgetGalleryView: View {
                 if failed {
                     Text("The forecast could not be loaded.").foregroundStyle(.secondary)
                 }
-                let snapshot = RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: forecast)
+                let snapshot = galleryNight ? nightSnapshot
+                    : RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: forecast)
                 caption(sizes.name)
                 // Each size in its layouts (Edit Widget > Layout): fewer values first, the default.
                 caption("Small: fewer values")
@@ -260,6 +261,17 @@ struct WidgetGalleryView: View {
                 })
             }
         }
+    }
+
+    /// `-RWWidgetNight YES`: every widget as at 01:30 of the coming night, to show the
+    /// night folded into one column up to sunrise. The forecast counts as fresh then.
+    private var galleryNight: Bool { UserDefaults.standard.bool(forKey: "RWWidgetNight") }
+
+    private var nightSnapshot: RowingSnapshot {
+        let night = Calendar.current.nextDate(after: .now, matching: DateComponents(hour: 1, minute: 30), matchingPolicy: .nextTime) ?? .now
+        var shifted = forecast
+        shifted?.generatedAt = night.addingTimeInterval(-30 * 60)
+        return RowingSnapshot(date: night, clubName: "MRC 1880", isHome: true, forecast: shifted)
     }
 
     /// The picture WidgetBridge.preparePictures writes for the satellite background, with the club's place.

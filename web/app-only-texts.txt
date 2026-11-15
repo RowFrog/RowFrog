@@ -178,6 +178,7 @@ Better from %@
 Caution
 Good until %@
 Not good
+Night until %@
 Out of date
 
 # iPad only: the sidebar button hides the location list (the website's list stays)

@@ -538,6 +538,19 @@ extension RowingWidgetView {
             }
         }
 
+        /// The number for an hour, or the night's worst, as the app's night line.
+        func text(_ column: WidgetHourColumn) -> String {
+            switch column {
+            case let .hour(hour): return text(hour)
+            case let .night(night, _):
+                switch self {
+                case .wind: return "\(Format.windNumber(night.strongestWindMs))–\(Format.windNumber(night.strongestGustMs))"
+                case .waves: return Format.wavesNumber(night.highestWavesM)
+                case .visibility: return Format.distanceNumber(night.poorestVisibilityM)
+                }
+            }
+        }
+
         /// The number alone; the legend names the unit. Wind as mean–gust.
         func text(_ hour: ForecastHour) -> String {
             switch self {
@@ -557,41 +570,62 @@ extension RowingWidgetView {
     /// without `temperature` (medium) only time, symbol and light show.
     func hourRow(count: Int, lines: [HourLine], legend: Bool = false, big: Bool = false, temperature: Bool = true,
                  fit: WidgetFit = .regular) -> some View {
-        let hours = Array(snapshot.hours.prefix(count))
+        // At night the dark hours after "Now" fold into one column up to sunrise, as in the
+        // app's 48-hour table (owner pick B, 15 Nov 2026), so the row reaches the morning.
+        let columns = snapshot.hourColumns(count)
         return Grid(horizontalSpacing: 0, verticalSpacing: big ? fit.rowGap : 4) {
             GridRow {
                 if legend { Color.clear.frame(width: 0, height: 0) }
-                ForEach(Array(hours.enumerated()), id: \.element.time) { index, hour in
-                    Text(index == 0 ? tr("Now") : Format.time(hour.time))
-                        .font(.caption2.weight(.medium))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxWidth: .infinity)
+                ForEach(Array(columns.enumerated()), id: \.element.id) { index, column in
+                    Group {
+                        switch column {
+                        case let .hour(hour): Text(index == 0 ? tr("Now") : Format.time(hour.time))
+                        case let .night(_, until): Text("–" + Format.time(until))
+                        }
+                    }
+                    .font(.caption2.weight(.medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
                 }
             }
             GridRow {
                 if legend { Color.clear.frame(width: 0, height: 0) }
-                ForEach(hours, id: \.time) { hour in
+                ForEach(columns) { column in
                     // Fixed heights, so a taller rain symbol never squeezes the time above it.
-                    skyIcon(hour)
-                        .font(big ? .title3 : .subheadline)
-                        .frame(height: big ? fit.skyHeight : 20)
-                        .frame(maxWidth: .infinity)
+                    Group {
+                        switch column {
+                        case let .hour(hour): skyIcon(hour)
+                        case .night: Image(systemName: "moon.stars.fill").symbolRenderingMode(.multicolor)
+                        }
+                    }
+                    .font(big ? .title3 : .subheadline)
+                    .frame(height: big ? fit.skyHeight : 20)
+                    .frame(maxWidth: .infinity)
                 }
             }
             GridRow {
                 if legend { Color.clear.frame(width: 0, height: 0) }
-                ForEach(hours, id: \.time) { hour in
-                    lightDot(hour.light, size: big ? 16 : 13, hour: true)
-                        .frame(maxWidth: .infinity)
+                ForEach(columns) { column in
+                    Group {
+                        switch column {
+                        case let .hour(hour): lightDot(hour.light, size: big ? 16 : 13, hour: true)
+                        case let .night(night, until): nightDot(night, until: until, size: big ? 16 : 13)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
             }
             if temperature {
                 GridRow {
                     if legend { legendLabel(Condition.temperature.symbol, AppSettings.shared.temperatureUnit.symbol) }
-                    ForEach(hours, id: \.time) { hour in
-                        let text = Text(legend ? Format.temperatureNumber(hour.temperatureC) : Format.degrees(hour.temperatureC))
+                    ForEach(columns) { column in
+                        let celsius: Double? = switch column {
+                        case let .hour(hour): hour.temperatureC
+                        case let .night(night, _): night.lowestC
+                        }
+                        let text = Text(legend ? Format.temperatureNumber(celsius) : Format.degrees(celsius))
                         if lines.isEmpty {
                             text
                                 .font((big ? Font.subheadline : .caption).weight(.semibold))
@@ -602,7 +636,7 @@ extension RowingWidgetView {
                                 .opacity(0.85)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                                .modifier(TintedIf(color: tint(Condition.temperature.cause(in: hour))))
+                                .modifier(TintedIf(color: column.hour.flatMap { tint(Condition.temperature.cause(in: $0)) }))
                                 .frame(maxWidth: .infinity)
                         }
                     }
@@ -611,18 +645,27 @@ extension RowingWidgetView {
             ForEach(lines, id: \.self) { line in
                 GridRow {
                     if legend { legendLabel(line.condition.symbol, line.unit) }
-                    ForEach(hours, id: \.time) { hour in
-                        Text(line.text(hour))
+                    ForEach(columns) { column in
+                        Text(line.text(column))
                             .font(.caption2)
                             .opacity(0.85)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
-                            .modifier(TintedIf(color: tint(line.condition.cause(in: hour))))
+                            .modifier(TintedIf(color: column.hour.flatMap { tint(line.condition.cause(in: $0)) }))
                             .frame(maxWidth: .infinity)
                     }
                 }
             }
         }
+    }
+
+    /// The night column's dot: plain, no rowing in the dark.
+    private func nightDot(_ night: NightFold.Night, until: Date, size: CGFloat) -> some View {
+        Circle()
+            .fill(plain ? Color.secondary.opacity(0.35) : Color.white.opacity(0.3))
+            .frame(width: size, height: size)
+            .accessibilityElement()
+            .accessibilityLabel(String(format: tr("Night until %@"), Format.time(until)))
     }
 
     /// The legend's symbol and unit at the start of an hour line.
@@ -855,3 +898,36 @@ extension WidgetFamily {
     }
 }
 
+/// One column of the widget's hour row: an hour, or the rest of a night up to sunrise.
+enum WidgetHourColumn: Identifiable {
+    case hour(ForecastHour)
+    case night(NightFold.Night, until: Date)
+
+    var id: Date {
+        switch self {
+        case let .hour(hour): hour.time
+        case let .night(night, _): night.start
+        }
+    }
+
+    var hour: ForecastHour? {
+        if case let .hour(hour) = self { hour } else { nil }
+    }
+}
+
+extension RowingSnapshot {
+    /// The hour row's columns: "Now", then each hour, with the dark hours of a night
+    /// folded into one column that ends at sunrise (owner pick B, 15 Nov 2026).
+    func hourColumns(_ count: Int) -> [WidgetHourColumn] {
+        let days = forecast?.daylight ?? []
+        // A night is at most about 17 hours, so this always fills the row.
+        return NightFold.parts(Array(hours.prefix(count + 24)), days: days).prefix(count).map { part in
+            switch part {
+            case let .hour(hour): return .hour(hour)
+            case let .night(night):
+                let sunrise = days.map(\.sunrise).first { $0 >= night.start && $0 <= night.end.addingTimeInterval(3600) }
+                return .night(night, until: sunrise ?? night.end)
+            }
+        }
+    }
+}

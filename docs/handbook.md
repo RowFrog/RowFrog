@@ -221,6 +221,7 @@ switch gets its name there (settings go in `AppSettings.Keys`). The most useful:
 - `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWCombinedTopTile NO` Current conditions as its own card; `-RWTopTileOpen YES` the combined top tile starts open; `-RWSamplePeek thunderstorm` (or `ice`, `cloudCover`, …) shows that value's line under the sun line of the closed tile
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
+- `-RWWidgetNight YES` (with `-RWWidgetGallery YES`) every widget as at 01:30 of the coming night: the night's dark hours fold into one column up to sunrise
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
 - `-RWRoute "lat,lon;lat,lon;…"` open route mode with these points (a new route goes one way); `-RWOutAndBack YES` rows it out and back
