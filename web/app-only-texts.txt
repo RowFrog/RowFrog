@@ -193,3 +193,6 @@ The boat button on the club page switches the boat for the rowing light right th
 The light also looks at the water within 1 km of the launch point; the Why line says when it is rougher out there.
 Undo in the route editor takes back the last step.
 Widgets: pick a layout with fewer values or all six, and marks in the light's dots, under Edit Widget.
+
+# Shown while pulling down to refresh: the website has no Refresh button and loads again on return to the tab (owner, 15 Nov 2026)
+Updating…
