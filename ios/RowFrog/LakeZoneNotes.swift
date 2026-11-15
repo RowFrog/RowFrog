@@ -96,14 +96,15 @@ extension LakeView {
             let worse = cells.filter { hour.lights[$0] == light }
             let better = cells.filter { hour.lights[$0] < light }
             let causes = Dictionary(grouping: worse.compactMap { cause(ofCell: $0, hour: hour) }, by: { $0 })
-            let cause = causes.max { ($0.value.count, $1.key) < ($1.value.count, $0.key) }?.key
+            // Not named "cause": older compilers mix it up with cause(ofCell:hour:) above (Xcode 26 CI job).
+            let main = causes.max { ($0.value.count, $1.key) < ($1.value.count, $0.key) }?.key
             guard !cells.isEmpty, Double(better.count) / Double(cells.count) >= LakeZoneNote.minBetterShare else {
-                return LakeZoneNote(light: light, cause: cause, place: nil, rest: light)
+                return LakeZoneNote(light: light, cause: main, place: nil, rest: light)
             }
             let mean = { (c: [Int]) in Double(c.map { distance[$0] }.reduce(0, +)) / Double(c.count) }
             let gap = mean(worse) - mean(better)
             let place: LakeZoneNote.Place = gap <= -0.5 ? .shore : gap >= 0.5 ? .openWater : .parts
-            return LakeZoneNote(light: light, cause: cause, place: place, rest: better.map { hour.lights[$0] }.max() ?? .green)
+            return LakeZoneNote(light: light, cause: main, place: place, rest: better.map { hour.lights[$0] }.max() ?? .green)
         }
         var notes = zones.indices.map { z in note((0..<n).filter { grid.cellZone[$0] == z }) }
         notes.append(note(Array(0..<n)))

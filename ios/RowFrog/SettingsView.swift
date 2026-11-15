@@ -381,12 +381,17 @@ extension View {
     /// effect instead of showing sharp under the search field (detail check
     /// 14 Nov 2026, B2.4); earlier systems keep the plain inset.
     @ViewBuilder func bottomBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
+        // Xcode 16 (the iOS 18 CI job) has no iOS 26 SDK, so the bar is compiled only by newer compilers.
+        #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             safeAreaBar(edge: .bottom, spacing: 0, content: bar)
                 .scrollEdgeEffectStyle(.soft, for: .bottom)
         } else {
             safeAreaInset(edge: .bottom, spacing: 0, content: bar)
         }
+        #else
+        safeAreaInset(edge: .bottom, spacing: 0, content: bar)
+        #endif
     }
 }
 
