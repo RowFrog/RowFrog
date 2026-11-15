@@ -5,7 +5,7 @@ import SwiftUI
 /// code DWD's model gives; without one, from cloud cover and precipitation.
 enum Sky: CaseIterable {
     case clear, mostlyClear, partlyCloudy, cloudy, fog, drizzle, rain, showers, heavyRain,
-         freezingRain, snow, thunderstorm, hail
+         freezingRain, sleet, snow, thunderstorm, hail
 
     init(code: Int?, cloudCoverPct: Double?, precipitationMm: Double?) {
         switch code {
@@ -16,6 +16,7 @@ enum Sky: CaseIterable {
         case 45, 48: self = .fog
         case 51, 53, 55: self = .drizzle
         case 56, 57, 66, 67: self = .freezingRain
+        case 68, 69: self = .sleet
         case 61, 63: self = .rain
         case 80, 81: self = .showers
         case 65, 82: self = .heavyRain
@@ -49,7 +50,7 @@ enum Sky: CaseIterable {
         case .drizzle: "cloud.drizzle.fill"
         case .rain, .showers: "cloud.rain.fill"
         case .heavyRain: "cloud.heavyrain.fill"
-        case .freezingRain: "cloud.sleet.fill"
+        case .freezingRain, .sleet: "cloud.sleet.fill"
         case .snow: "cloud.snow.fill"
         case .thunderstorm: "cloud.bolt.fill"
         case .hail: "cloud.hail.fill"
@@ -68,7 +69,7 @@ enum Sky: CaseIterable {
         case .partlyCloudy: return (cloud, night ? moon : sun)
         case .cloudy, .fog: return (cloud, cloud)
         case .drizzle, .rain, .showers, .heavyRain: return (cloud, .blue)
-        case .freezingRain, .snow, .hail: return (cloud, .cyan)
+        case .freezingRain, .sleet, .snow, .hail: return (cloud, .cyan)
         case .thunderstorm: return (cloud, sun)
         }
     }
@@ -85,6 +86,7 @@ enum Sky: CaseIterable {
         case .showers: tr("Showers")
         case .heavyRain: tr("Heavy rain")
         case .freezingRain: tr("Freezing rain")
+        case .sleet: tr("Sleet")
         case .snow: tr("Snow")
         case .thunderstorm: tr("Thunderstorm")
         case .hail: tr("Thunderstorm with hail")
@@ -97,6 +99,7 @@ enum Sky: CaseIterable {
         case .drizzle: tr("Drizzle")
         case .rain, .showers, .heavyRain, .thunderstorm: tr("Rain")
         case .freezingRain: tr("Freezing rain")
+        case .sleet: tr("Sleet")
         case .snow: tr("Snow")
         case .hail: tr("Hail")
         default: nil

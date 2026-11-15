@@ -21,6 +21,8 @@ from datetime import date, datetime, timezone
 
 import httpx
 
+from .. import sleet
+
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 # When Open-Meteo last took in a run of a model; free, and not counted as a call.
@@ -179,6 +181,14 @@ def parse(payload: dict) -> list[ForecastHour]:
     def col(name: str) -> list:
         return h.get(name) or [None] * len(h["time"])
 
+    # Rain and snowfall come only for clubs in the cold band (sleet.py); both in one hour is Schneeregen.
+    codes = col("weather_code")
+    if "rain" in h and "snowfall" in h:
+        codes = [
+            sleet.mixed_code(None if c is None else int(c), p, r, s)
+            for c, p, r, s in zip(codes, col("precipitation"), col("rain"), col("snowfall"))
+        ]
+
     rows = zip(
         h["time"],
         col("temperature_2m"),
@@ -191,7 +201,7 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("precipitation"),
         col("cape"),
         col("is_day"),
-        col("weather_code"),
+        codes,
         col("apparent_temperature"),
         col("relative_humidity_2m"),
         col("dew_point_2m"),
@@ -270,13 +280,15 @@ OUTLOOK_PAST_HOURS = 24
 OUTLOOK_HOURS = 168
 
 
-async def fetch_outlook(client: httpx.AsyncClient, lat: float, lon: float) -> list[ForecastHour]:
+async def fetch_outlook(
+    client: httpx.AsyncClient, lat: float, lon: float, hourly: list[str] = HOURLY
+) -> list[ForecastHour]:
     """Yesterday plus the next 7 days, for the charts behind the conditions tiles.
 
     ICON has no UV index, so it comes from Open-Meteo's default model mix in a
     second, small call; without it the outlook simply has no UV values.
     """
-    params = request_params(lat, lon, OUTLOOK_HOURS, OUTLOOK_PAST_HOURS)
+    params = request_params(lat, lon, OUTLOOK_HOURS, OUTLOOK_PAST_HOURS, hourly=hourly)
     hours = parse(await _get(client, BASE_URL, params))
     if all(h.uv_index is None for h in hours):
         uv_params = {k: v for k, v in params.items() if k != "models"}
