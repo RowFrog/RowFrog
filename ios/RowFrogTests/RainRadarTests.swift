@@ -131,6 +131,11 @@ final class RainRadarTests: XCTestCase {
         let rowStart = later[3].time.addingTimeInterval(-3600)
         XCTAssertEqual(data(later).forecastRain?.from, rowStart)
         XCTAssertEqual(data(later).rainLines.detail, tr("%@ from %@", tr("Rain"), Format.time(rowStart)))
+        // A rain hour that has begun names no past time.
+        var begun = hours(code: 3, mm: [0, 0, 0, 0])
+        begun[1].weatherCode = 61
+        begun[1].precipitationMm = 0.3
+        XCTAssertEqual(data(begun).rainLines.detail, tr("%@ this hour", tr("Rain")))
         // A dry radar to 22:30: the row's rain starts where the radar stops looking.
         let radared = data(later, radar: [0, 0, 0, 0, 0, 0, 0, 0, 0])
         XCTAssertEqual(radared.forecastRain?.from, radared.radarAhead?.end)

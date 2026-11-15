@@ -215,8 +215,9 @@ struct ConditionData {
     /// the shown moment without radar), and when that rain starts. Open-Meteo's
     /// amount is the sum of the hour before the time stamp, so the rain of the
     /// 14:00 row starts at 13:00, but never before the radar's end (owner's
-    /// pick, 15 Nov 2026: "Regen ab 13:55" after a dry radar). Without radar the
-    /// running hour keeps its full start ("from 12:00" at 12:14).
+    /// pick, 15 Nov 2026: "Regen ab 13:55" after a dry radar). Without radar a
+    /// start in the running hour stays at the hour's start; the lines then say
+    /// "this hour" rather than a time already past.
     var forecastRain: (hour: ForecastHour, from: Date)? {
         let radarEnd = radarAhead?.end
         guard let wet = next24.first(where: { $0.isWet && $0.time > (radarEnd ?? moment) }) else { return nil }
@@ -252,7 +253,9 @@ struct ConditionData {
     var rainLines: (value: String, detail: String, fromRadar: Bool) {
         func later() -> String {
             guard let wet = forecastRain else { return tr("Dry next 24 h") }
-            return tr("%@ from %@", Sky(hour: wet.hour).precipitationKind ?? tr("Rain"), Format.time(wet.from))
+            let kind = Sky(hour: wet.hour).precipitationKind ?? tr("Rain")
+            // An hour that has begun has no start to name (owner's pick, 15 Nov 2026).
+            return wet.from <= moment ? tr("%@ this hour", kind) : tr("%@ from %@", kind, Format.time(wet.from))
         }
         if let outlook = rainOutlook {
             // The radar's dry wins over the forecast's rain, but not over its drizzle under 0.1 mm, which it cannot see.
@@ -1726,7 +1729,7 @@ extension ConditionDetail {
         let wet = (h.precipitationMm ?? 0) >= 0.1
         var value = wet ? Format.rain(h.precipitationMm) : (d.traceNow ?? tr("Dry"))
         var note = wet ? (Sky(hour: h).precipitationKind ?? "") : d.traceNow != nil ? d.rainLines.detail
-            : (d.forecastRain.map { tr("Expected from %@", Format.dayTime($0.from)) } ?? tr("Dry next 24 h"))
+            : (d.forecastRain.map { $0.from <= d.moment ? tr("Expected this hour") : tr("Expected from %@", Format.dayTime($0.from)) } ?? tr("Dry next 24 h"))
         var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })]
         var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
         // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.

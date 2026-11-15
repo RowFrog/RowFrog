@@ -58,6 +58,9 @@ test("forecast rain starts an hour before its row, never before the radar's end"
   const forecast = { hours: [hour(0), hour(1), hour(2), hour(3, 0, 61), hour(4, 0.5, 61), hour(5), hour(6)] };
   const plain = rainLines(conditionData(forecast, forecast.hours[0]));
   assert.equal(plain.detail, `Rain from ${time(H + 2 * 3600000)}`);
+  // A rain hour that has begun names no past time.
+  const begun = { hours: [hour(0), hour(1, 0.3, 61), hour(2), hour(3)] };
+  assert.equal(rainLines(conditionData(begun, begun.hours[0])).detail, "Rain this hour");
   // A dry radar to now + 2 h: the row's rain starts where the radar stops looking.
   const radared = rainLines(conditionData(forecast, forecast.hours[0], radar([0, 0, 0, 0, 0, 0, 0, 0, 0])));
   assert.equal(radared.detail, `Rain from ${time(now + 120 * MIN)}`);

@@ -274,7 +274,7 @@ export function forecastRain(d) {
   const a = radarAhead(d);
   const after = a ? radarEnd(a) : d.moment.getTime();
   const hour = d.next24.find((x) => wetHour(x) && Date.parse(x.time) > after);
-  // Without radar the running hour keeps its full start ("from 12:00" at 12:14), not the clock's minute.
+  // Without radar a start in the running hour stays at the hour's start; the lines then say "this hour".
   return hour ? { hour, from: a ? Math.max(Date.parse(hour.time) - HOUR, after) : Date.parse(hour.time) - HOUR } : null;
 }
 
@@ -297,7 +297,10 @@ const trace = (hour) => ({ value: t(kindOf(hour)), detail: traceNote(), fromRada
 export function rainLines(d) {
   const later = () => {
     const wet = forecastRain(d);
-    return wet ? t("%@ from %@", t(kindOf(wet.hour) ?? "Rain"), time(wet.from)) : t("Dry next 24 h");
+    if (!wet) return t("Dry next 24 h");
+    const kind = t(kindOf(wet.hour) ?? "Rain");
+    // An hour that has begun has no start to name (owner's pick, 15 Nov 2026).
+    return wet.from <= d.moment.getTime() ? t("%@ this hour", kind) : t("%@ from %@", kind, time(wet.from));
   };
   const a = radarAhead(d);
   if (a) {
