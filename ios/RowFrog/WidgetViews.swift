@@ -349,7 +349,7 @@ struct WidgetSky: View {
         case .partlyCloudy: return [rgb(0.3, 0.52, 0.78), rgb(0.6, 0.72, 0.86)]
         case .cloudy: return [rgb(0.36, 0.42, 0.5), rgb(0.59, 0.64, 0.71)]
         case .fog: return [rgb(0.55, 0.59, 0.64), rgb(0.74, 0.77, 0.8)]
-        case .drizzle, .rain, .showers, .freezingRain: return [rgb(0.26, 0.31, 0.39), rgb(0.43, 0.49, 0.57)]
+        case .drizzle, .rain, .showers, .freezingRain, .sleet: return [rgb(0.26, 0.31, 0.39), rgb(0.43, 0.49, 0.57)]
         case .heavyRain, .thunderstorm, .hail: return [rgb(0.17, 0.2, 0.27), rgb(0.32, 0.36, 0.44)]
         case .snow: return [rgb(0.55, 0.62, 0.72), rgb(0.8, 0.84, 0.9)]
         }
