@@ -365,6 +365,10 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 /* The cards span the window, as in the app's list (LocationListView) on iPad and a phone turned sideways. */
 .page.list-page { max-width: none; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: calc(96px + var(--kb, 0px)); }
 .list-bottom.over-keyboard { padding-bottom: 8px; }
+/* iPad sizes: the search at the top right beside "…", the cog alone at the bottom in the middle (wideList). */
+.list-head .head-search { flex: 0 1 340px; margin-left: auto; }
+.list-head .head-search .search { height: 44px; }
+.list-bottom.cog-only { justify-content: center; }
 /* Beside a club page the search sits at the top of the list, under its title (SideListHeader). */
 .side-search { margin: 2px 0 6px; }
 /* Beside the list the page bar keeps to the page's own column. */
@@ -1216,8 +1220,16 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 /* The top tile's daylight line opens the daylight page (LocationPageView.daylightLine). */
 .daylight[data-top] .chev { margin-left: auto; color: var(--sub); }
 .source button.link { color: inherit; font: inherit; }
-.source-parts { list-style: none; padding: 0; margin: 0 0 12px; }
-.source-parts li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+/* The forecast source sheet as the app's inset grouped list (ForecastSourceSheet): the models in one card, the
+   footnote under it, the three facts in a second card with accent symbols (iPhone shots, 15 Nov 2026). */
+.source-parts, .source-legend { list-style: none; margin: 0 0 8px; padding: 0 16px; background: var(--card); border-radius: 16px; }
+.source-parts li { display: flex; flex-direction: column; gap: 2px; padding: 11px 0; }
+.source-parts li + li, .source-legend li + li { border-top: 1px solid var(--line); }
+.source-parts strong { font-size: 17px; font-weight: 600; }
+.source-parts small { font-size: 12px; }
+.source-parts + p.small { margin: 0 16px 20px; font-size: 13px; }
+.legend.source-legend li { margin: 0; padding: 11px 0; }
+.source-legend li > :first-child { color: var(--accent); }
 .pill.wide { display: flex; justify-content: center; margin: 14px 0 0; padding: 12px; }
 .club-head button.link.failed { color: var(--orange); font: inherit; text-align: center; }
 .club-head .place-line { font-size: 17px; position: relative; margin: 2px 0; }
@@ -1538,17 +1550,21 @@ nav.bottom { view-transition-name: page-bar; }
 @keyframes slide-to-right { to { transform: translateX(100%); } }
 @keyframes slide-from-left { from { transform: translateX(-100%); } }
 
-/* ---- Settings over the page on iPad sizes, as the app's sheet: a centred card, the page dimmed behind (settingsOverPage) ---- */
+/* ---- Settings over the page on iPad sizes, as the app's sheet: a centred card, the page dimmed behind (settingsOverPage) ----
+   As tall as the app's page sheet (about 33 px free above and below) and two thirds of the window wide, up to 920 px
+   (iPad 13" landscape shots, 15 Nov 2026: the app's sheet was 919 × 964 pt, the website's 580 × 760). */
 #under { display: none; }
 @media (min-width: 701px) and (min-height: 600px) {
   body.settings-over { background: var(--bg); }
   body.settings-over::before { display: none; }
   body.settings-over #under { display: block; position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
   body.settings-over #under::after { content: ""; position: fixed; inset: 0; background: rgb(0 0 0 / .35); z-index: 30; }
-  body.settings-over #root { position: fixed; z-index: 31; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(580px, 100% - 64px);
-    height: min(760px, 100% - 64px); overflow: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 16px; box-shadow: 0 12px 48px rgb(0 0 0 / .3); }
+  body.settings-over #root { position: fixed; z-index: 31; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(max(580px, 67%), 920px, 100% - 64px);
+    height: calc(100% - 66px); overflow: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 16px; box-shadow: 0 12px 48px rgb(0 0 0 / .3); }
   body.settings-over #root > .nav { top: 0; padding-top: 10px; }
-  body.settings-over .settings-main .settings-search { position: sticky; left: auto; transform: none; bottom: 14px; margin: 0 auto 14px; }
+  body.settings-over .settings-main .settings-search { position: sticky; left: auto; transform: none; bottom: 14px; margin: 0 auto 14px; width: 100%; }
+  /* The rows span the sheet with the app's 16 px margins, as its inset grouped list. */
+  body.settings-over .settings-main { max-width: none; }
 }
 
 /* The club's OpenStreetMap place under the Location map (osmplace.js), the app's "In Apple Maps as …" line. */
