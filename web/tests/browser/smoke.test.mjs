@@ -420,10 +420,13 @@ test("a refused forecast shows No forecast, and a failed update keeps the foreca
   refused.delete(path);
   await page.locator(".loading #retry").click();
   await page.locator(".card.now").first().waitFor({ timeout: 20000 });
-  await page.locator("#refresh").waitFor({ state: "attached", timeout: 20000 });
+  await page.locator("#updated-line").waitFor({ state: "attached", timeout: 20000 });
   refused.add(path);
-  // The header line can sit under the top bar on a phone-size page; the tap itself is what counts.
-  await page.locator("#refresh").dispatchEvent("click");
+  // No Refresh button (owner, 15 Nov 2026): the page loads again on return to the tab once
+  // its forecast is over ten minutes old (refreshOnReturn).
+  await page.clock.install();
+  await page.clock.fastForward("11:00");
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
   await shows("#failed", "Could not update: server refused the download (error 403)");
   assert.ok(await page.locator(".card.now").first().isVisible(), "the forecast stays");
   refused.clear();
