@@ -471,10 +471,13 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
   background: var(--bg);
   --mask: linear-gradient(#000 0, #000 calc(100% - 8px), transparent 100%);
   -webkit-mask-image: var(--mask); mask-image: var(--mask); }
-/* Over a picture the bar is glass all the way up, as the app's (TopEdgeFade: thin material): starting from the page's
-   solid colour made a black band under the clock on the picture (owner's iPhone shots, 12 Nov 2026). */
-body.has-picture .top-title::before { background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); }
+/* Over a picture the bar is glass all the way up, as the app's (TopEdgeFade): starting from the page's solid colour
+   made a black band under the clock on the picture (owner's iPhone shots, 12 Nov 2026). Since 15 Nov 2026 (app #439)
+   it is the lighter regular glass, 90 % at the bar's foot, and fades out over 28 px (TopEdgeFade.pictureTail), so no
+   dark slab with a hard edge lies across the picture (owner's iPad shot). */
+body.has-picture .top-title::before { bottom: -28px; background: color-mix(in srgb, var(--bg) 66%, transparent);
+  backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8);
+  --mask: linear-gradient(#000 0, rgba(0, 0, 0, .9) calc(100% - 28px), transparent 100%); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); bottom: 0; -webkit-mask-image: none; mask-image: none; } }
 @media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); bottom: 0; backdrop-filter: none; -webkit-backdrop-filter: none; -webkit-mask-image: none; mask-image: none; } }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
