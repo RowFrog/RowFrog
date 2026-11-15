@@ -11,11 +11,14 @@ struct HourRow: View {
     var halves: DotHalves?
     /// From a coarser model than the first hours (the night after the 48 hours): "≈" before the time.
     var coarser = false
+    /// The hour running now, the table's first: "Now" instead of its start time, as the
+    /// widget (decision 0039); VoiceOver still reads the hour.
+    var isNow = false
 
     var body: some View {
         let dark = hour.sunUp == false
         HStack(spacing: 6) {
-            Text((coarser ? "≈" : "") + Format.time(hour.time))
+            Text(isNow ? tr("Now") : (coarser ? "≈" : "") + Format.time(hour.time))
                 .frame(width: HourColumn.time, alignment: .leading)
             TrafficLightDot(light: hour.light, size: 12, stale: stale, halves: halves).frame(width: HourColumn.light)
             SkyIcon(sky: Sky(hour: hour), night: dark)
@@ -44,7 +47,7 @@ struct HourRow: View {
     }
 
     private var accessibilityText: String {
-        var parts = [Format.time(hour.time), halves.map { tr("%@, then %@", $0.start.title, $0.end.title) } ?? hour.light.title]
+        var parts = [isNow ? tr("Now, %@ to %@", Format.time(hour.time), Format.time(hour.time.addingTimeInterval(3600))) : Format.time(hour.time), halves.map { tr("%@, then %@", $0.start.title, $0.end.title) } ?? hour.light.title]
         parts.append(Sky(hour: hour).title)
         parts.append(Format.degrees(hour.temperatureC))
         parts.append(tr("Feels like %@", Format.degrees(hour.apparentTemperatureC)))

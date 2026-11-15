@@ -404,7 +404,7 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
     <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="${href}" aria-label="${h(t(water.opens))}">
       <canvas class="mini" style="${aspect >= 1.3 ? `height:${Math.min(320, Math.max(170, 120 * aspect))}px` : ""}" role="img" aria-label="${h(t("Map of %@ coloured by the rowing light", view.name))}"></canvas>
       <div class="lake-summary">
-        <small class="sub">${h(t("Now, %@", time(hour.time)))}</small>
+        <small class="sub">${h(t("Now"))}</small>
         <strong class="headline">${h(headlineText(view, hour))}</strong>
         ${stale ? `<p class="small orange strong">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
         ${lakeWideBanner(hour.lakeWide, view)}

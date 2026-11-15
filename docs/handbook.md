@@ -188,6 +188,13 @@ Management.
 5. A value's view (tap a tile) opens full screen on the iPad: chart and map
    one under the other in portrait, side by side in landscape.
 
+## Which time means what (decision 0039)
+
+- Club page header "Modelllauf 06 UTC · aktualisiert 10:01": the ICON-D2 run by its UTC start hour (`weatherRun.started`), and when the Pi built the club's file (`generatedAt`, every :00/:30). Club list footer, widget clock and out-of-date lines use the same `generatedAt`.
+- "How often data is updated" at the page's end: run start and when it was ready on Open-Meteo (`weatherRun.available`), checked, and loaded on this device.
+- "Gemessen 09:45": the station's own reading time. "Regen ab 15:00": the first forecast hour with rain (with the radar symbol: the radar's time).
+- "Jetzt" (lake view card, first row of the 48-hour table, widget): the hour slot running now, 10:00–10:59 shows the 10:00 values.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot

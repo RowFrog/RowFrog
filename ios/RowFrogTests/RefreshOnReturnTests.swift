@@ -64,13 +64,20 @@ final class RefreshOnReturnTests: XCTestCase {
         XCTAssertEqual(ForecastStub.asked, ["b"])
     }
 
-    func testThePageSaysWhenTheForecastWasMadeAndWhenItLoaded() {
-        let made = Date(timeIntervalSince1970: 1_800_000_000)
-        let line = LocationPageView.updatedLine(forecast: made, loaded: made.addingTimeInterval(48 * 60))
-        XCTAssertTrue(line.contains(Format.time(made)))
-        XCTAssertTrue(line.contains(Format.time(made.addingTimeInterval(48 * 60))))
-        XCTAssertFalse(LocationPageView.updatedLine(forecast: made, loaded: made.addingTimeInterval(10)).contains("·  ·"))
-        XCTAssertEqual(LocationPageView.updatedLine(forecast: made, loaded: nil),
-                       LocationPageView.updatedLine(forecast: made, loaded: made.addingTimeInterval(10)))
+    func testThePageNamesTheModelRunAndWhenTheServerUpdated() {
+        // 06 UTC run, ready 07:26 UTC, file built 10:01 UTC (MRC 1880, 15 Nov 2026).
+        let started = ISO8601DateFormatter().date(from: "2026-11-15T06:00:00Z")!
+        let ready = ISO8601DateFormatter().date(from: "2026-11-15T07:26:27Z")!
+        let updated = ISO8601DateFormatter().date(from: "2026-11-15T10:01:05Z")!
+        let run = WeatherRun(model: "ICON-D2", started: started, available: ready)
+        let line = LocationPageView.updatedLine(run: run, updated: updated)
+        XCTAssertTrue(line.contains("06"), line)
+        XCTAssertTrue(line.contains(Format.time(updated)), line)
+        XCTAssertFalse(line.contains(Format.time(ready)), line)
+        XCTAssertEqual(LocationPageView.runHour(ISO8601DateFormatter().date(from: "2026-11-15T21:00:00Z")!), "21")
+        // Without a run (the club list, older files): only the update time.
+        let plain = LocationPageView.updatedLine(run: nil, updated: updated)
+        XCTAssertTrue(plain.contains(Format.time(updated)), plain)
+        XCTAssertFalse(plain.contains("·"), plain)
     }
 }

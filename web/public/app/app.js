@@ -424,9 +424,8 @@ async function wireList(again) {
     if (at) updated.push(at);
   }));
   if (updated.length) {
-    const loaded = store.clubs.map((c) => forecasts.get(c.id)?.loadedAt ?? undefined);
-    root.querySelector("#updated").textContent = updatedLine(Math.min(...updated.map((d) => new Date(d))),
-      loaded.includes(undefined) ? null : Math.min(...loaded));
+    // The oldest update, only the time: clubs can come from different model runs (decision 0039).
+    root.querySelector("#updated").textContent = updatedLine(null, Math.min(...updated.map((d) => new Date(d))));
   }
 }
 
@@ -1197,12 +1196,6 @@ window.addEventListener("resize", () => {
   }, 300);
 });
 
-/**
- * When the weather in this forecast came out: the model run's arrival, or without it when the server
- * built the file (ClubForecast.forecastTime).
- */
-export const forecastTime = (forecast) => forecast.weatherRun?.available ?? forecast.generatedAt;
-
 /** How often each value is renewed at its source and fetched by Row Frog, with its symbol on the club page (UpdateCyclesSheet). */
 const UPDATE_CYCLES = [
   ["wind", key("Weather forecast"), key("Wind, gusts, temperature, rain, clouds and visibility: DWD's ICON-D2 model, a new run every 3 hours, ready about 1½ to 3 hours after it starts."), key("Fetched once the new run is ready, checked every 30 minutes. Clubs nobody opened lately: every 6 hours.")],
@@ -1218,23 +1211,28 @@ const UPDATE_CYCLES = [
   ["sun-horizon", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
 ];
 
-export function updateCyclesBody(forecast) {
+export function updateCyclesBody(forecast, loaded) {
   const run = forecast.weatherRun;
   const rows = UPDATE_CYCLES.map(([symbol, title, source, fetched]) => `<li><span class="tint">${icon(symbol)}</span><span>
     <strong>${h(t(title))}</strong><small>${h(t(source))}</small><small class="sub">${h(t(fetched))}</small></span></li>`).join("");
-  return `<p>${h(run ? t("This forecast: model run of %@, ready at %@.", time(run.started), time(run.available))
+  return `<p>${h(run ? t("This forecast: model run %@ UTC (started %@), ready at %@.", runHour(run.started), time(run.started), time(run.available))
       : t("This forecast was built at %@.", time(forecast.generatedAt)))}</p>
     <p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    ${loaded ? `<p>${h(t("Loaded on this device at %@.", time(loaded)))}</p>` : ""}
     <p class="small sub">${h(t("The server renews the clubs you use every 30 minutes; your browser loads them when you open or come back to this page, or tap Refresh."))}</p>
     <h3>${h(t("How often values are renewed"))}</h3>
     <ul class="legend cycles">${rows}</ul>`;
 }
 
-/** When the forecast was made and, if another minute, when this browser loaded it (LocationPageView.updatedLine). */
-function updatedLine(made, loaded) {
-  return loaded == null || time(loaded) === time(made)
-    ? t("Forecast from %@", time(made))
-    : t("Forecast from %@ · loaded %@", time(made), time(loaded));
+/** A run's start hour in UTC, two digits ("06"): the name runs go by (LocationPageView.runHour). */
+export const runHour = (started) => String(new Date(started).getUTCHours()).padStart(2, "0");
+
+/**
+ * "Model run 06 UTC · updated 10:01", or only "Updated 10:01" without a run (LocationPageView.updatedLine,
+ * decision 0039). When this browser loaded the file is in the update cycles sheet.
+ */
+export function updatedLine(run, updated) {
+  return run ? t("Model run %@ UTC · updated %@", runHour(run.started), time(updated)) : t("Updated %@", time(updated));
 }
 
 /** Clubs loaded longer ago than this are loaded again on coming back (ForecastStore.reloadAfter). */
@@ -1369,7 +1367,7 @@ function forecastLines(club, forecast, status) {
       return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
     case "current":
     case "updating":
-      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.loadedAt))}</p>`;
+      return `<p class="sub small" id="updated-line">${h(updatedLine(forecast.weatherRun, forecast.generatedAt))}</p>`;
     default:
       return old;
   }
@@ -1380,7 +1378,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
-  root.querySelector("#updates")?.addEventListener("click", () => openSheet(t("Updates"), updateCyclesBody(forecast)));
+  root.querySelector("#updates")?.addEventListener("click", () => openSheet(t("Updates"), updateCyclesBody(forecast, forecasts.get(club?.id ?? id)?.loadedAt)));
   root.querySelector(".hourly-card .fold")?.addEventListener("click", (e) => foldHourly(e.currentTarget));
   root.querySelectorAll(".hourly-card .nightline").forEach((b) => b.addEventListener("click", () => toggleNight(b)));
   root.querySelector("#add")?.addEventListener("click", () => {
@@ -1548,7 +1546,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
-        <span class="checked"><span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></span></button></li>` : ""}
+        <span class="checked"><span class="sub">· ${h(t("checked"))}</span> <span class="tint">${icon("info")}</span></span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
     ${adviceOnly()}
@@ -1962,6 +1960,12 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
 }
 
 
+/** True for the hour running at `now` (LocationPageView.isRunning). */
+export const isRunning = (hour, now = new Date()) => {
+  const start = new Date(hour.time).getTime();
+  return start <= now.getTime() && now.getTime() < start + 3600e3;
+};
+
 /** The next 48 hours and the rest of their last night, a row an hour under a day header
  * with sunrise and sunset (HourlyCard). */
 function hourlyCard(forecast, now, stale) {
@@ -1989,8 +1993,11 @@ function hourlyCard(forecast, now, stale) {
     const halves = hourHalves(forecast, x, stale);
     const coarser = coarserModel(forecast, x) ? "≈" : "";
     const sentence = hourSentence(x, stale, halves) + (coarser ? `, ${t("coarser model")}` : "");
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(sentence)}">
-      <span>${h(coarser + time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
+    // The hour running now says "Now" (HourRow.isNow, decision 0039).
+    const running = isRunning(x, now);
+    const label = running ? t("Now, %@ to %@", time(x.time), time(new Date(new Date(x.time).getTime() + 3600e3))) + sentence.slice(time(x.time).length) : sentence;
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(label)}">
+      <span>${h(running ? t("Now") : coarser + time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
       <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>

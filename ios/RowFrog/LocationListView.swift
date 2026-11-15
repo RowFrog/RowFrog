@@ -86,9 +86,9 @@ struct LocationListView: View {
                         offsets.map { saved[$0] }.forEach(locations.remove)
                     }
                     if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
-                        // The oldest forecast, and the oldest load: what the whole list is at least as new as.
-                        let loaded = locations.saved.map { forecasts.loadedAt[$0.id] }
-                        Text(LocationPageView.updatedLine(forecast: updated, loaded: loaded.contains(nil) ? nil : loaded.compactMap { $0 }.min()))
+                        // The oldest update: what the whole list is at least as new as. Only the
+                        // time, as the widget: clubs can come from different model runs (decision 0039).
+                        Text(LocationPageView.updatedLine(run: nil, updated: updated))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)

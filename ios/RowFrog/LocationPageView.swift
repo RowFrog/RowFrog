@@ -43,14 +43,22 @@ struct LocationPageView: View {
     /// Heights of the map cards when last shown, kept for their stand-ins.
     @State private var mapHeights: [PageCard: CGFloat] = [:]
 
-    /// "Forecast from 14:51 · loaded 15:39", or only the forecast's time when both
-    /// are the same minute or nothing loaded yet. No "pull down to refresh": as in
-    /// Apple's apps, the gesture goes without saying.
-    static func updatedLine(forecast: Date, loaded: Date?) -> String {
-        guard let loaded, Format.time(loaded) != Format.time(forecast) else {
-            return tr("Forecast from %@", Format.time(forecast))
-        }
-        return tr("Forecast from %@ · loaded %@", Format.time(forecast), Format.time(loaded))
+    /// "Model run 06 UTC · updated 10:01": the weather model run by its usual name (the hour
+    /// it started, in UTC, as forecasters call it) and when the server last built the file.
+    /// Without a run, only "Updated 10:01". One time for the page, the club list and the
+    /// widget (owner's pick, 15 Nov 2026, decision 0039); when the phone loaded it is in
+    /// the update cycles sheet. No "pull down to refresh": as in Apple's apps, the gesture
+    /// goes without saying.
+    static func updatedLine(run: WeatherRun?, updated: Date) -> String {
+        guard let run else { return tr("Updated %@", Format.time(updated)) }
+        return tr("Model run %@ UTC · updated %@", runHour(run.started), Format.time(updated))
+    }
+
+    /// A run's start hour in UTC, two digits ("06"): the name runs go by.
+    static func runHour(_ started: Date) -> String {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = TimeZone(identifier: "UTC")!
+        return String(format: "%02d", utc.component(.hour, from: started))
     }
 
     /// Whose satellite picture the page shows: the lake's or river section's, or for water
@@ -338,7 +346,7 @@ struct LocationPageView: View {
                     .cardBackground(surface, cornerRadius: 18)
             }
             .id("arrange")
-            UpdateCyclesButton(forecast: forecast)
+            UpdateCyclesButton(forecast: forecast, loaded: forecasts.loadedAt[club.id])
             credits(forecast)
         }
         .frame(maxWidth: .infinity)
@@ -910,7 +918,8 @@ private struct NowCard: View {
                 HStack(spacing: 6) {
                     Label(tr("No official warning"), systemImage: "checkmark.shield.fill")
                         .foregroundStyle(.green)
-                    Text("· " + tr("checked %@", Format.time(forecast.generatedAt)))
+                    // The time is the header's "updated" (decision 0039).
+                    Text("· " + tr("checked"))
                         .foregroundStyle(.secondary)
                     Image(systemName: "info.circle").foregroundStyle(.tint)
                 }
@@ -1302,7 +1311,7 @@ private struct HourlyCard: View {
                 case let .hour(hour):
                     Button { openHour = hour } label: {
                         HourRow(hour: hour, stale: stale, halves: forecast.dotHalves(for: hour, stale: stale),
-                                coarser: forecast.coarserModel(for: hour) != nil).contentShape(Rectangle())
+                                coarser: forecast.coarserModel(for: hour) != nil, isNow: isRunning(hour)).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     // One hour in full points at the table's first hour (rule R2).
@@ -1419,6 +1428,10 @@ private struct HourlyCard: View {
     }
 
     private var firstHour: Date? { shownHours.first?.time }
+    /// True for the hour running now: its row says "Now" (decision 0039).
+    private func isRunning(_ hour: ForecastHour, at date: Date = .now) -> Bool {
+        hour.time <= date && date < hour.time.addingTimeInterval(3600)
+    }
     /// When the last hour of the whole forecast ends, so a night cut off there says "from".
     private var tableEnd: Date? { forecast.hours.map(\.time).max()?.addingTimeInterval(3600) }
 

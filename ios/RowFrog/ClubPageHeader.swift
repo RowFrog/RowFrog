@@ -69,9 +69,9 @@ struct ClubPageHeader: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 case .current:
-                    // The forecast's time is when the weather model run came out; the load time is when it
-                    // reached the phone. How often each value is renewed sits at the page's end (owner, 6 Nov 2026).
-                    Text(LocationPageView.updatedLine(forecast: forecast.forecastTime, loaded: forecasts.loadedAt[club.id]))
+                    // The model run by its name and when the server last updated the file (decision 0039).
+                    // When it reached the phone is in the update cycles sheet. How often each value is renewed sits at the page's end (owner, 6 Nov 2026).
+                    Text(LocationPageView.updatedLine(run: forecast.weatherRun, updated: forecast.generatedAt))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
