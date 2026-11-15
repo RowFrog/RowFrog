@@ -361,7 +361,7 @@ How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simu
 
 Sundays 03:30 CET (02:30 UTC), by the merge queue, only when the Mac is idle. The 03:30 run only lists what it would delete, with sizes; the deletions run at the next idle gap after the owner writes "Run the weekly cleanup" in the merge thread (a standing OK does not pass the Mac's safety check). It also reports when something fails or the RowFrog folder grows past 5 GB.
 
-1. **Screenshot sets** (`inbox/shots/`, `log/screenshots/`, `refs/screenshots/*`, on the Mac and the Pi): a set of an unmerged branch stays; a merged branch's set goes 7 days after the merge; for `main` the newest set and the one before stay; review sets stay until the owner closes the review; release sets stay for good.
+1. **Screenshot sets** (`screenshots.nosync/` since 15 Nov 2026, `inbox/shots/`, `log/screenshots/` and the older `refs/screenshots/*`, on the Mac and the Pi): a set of an unmerged branch stays; a merged branch's set goes 7 days after the merge; for `main` the newest set and the one before stay; review sets stay until the owner closes the review; release sets stay for good.
 2. **Logs:** the newest 10 coverage files and the newest 20 check logs stay; older logs go once they are more than 30 days old.
 3. **Finder copies** such as `main 2.bundle` go once their head is in `main`.
 4. **Git:** local branches merged more than 14 days ago are deleted (their bundles stay in `inbox/done/`), worktrees are pruned, `git gc` runs.
