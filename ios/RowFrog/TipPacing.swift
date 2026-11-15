@@ -54,7 +54,8 @@ enum TipPacing {
             Tips.Action(id: "got-it", title: tr("Got it")) { tip.invalidate(reason: .tipClosed) },
             Tips.Action(id: "no-more-tips", title: tr("No more tips")) {
                 tip.invalidate(reason: .tipClosed)
-                TipPacing.stop()
+                // Older SDKs don't run a tip's action on the main actor (iOS 18 CI job).
+                Task { @MainActor in TipPacing.stop() }
             },
         ]
     }
