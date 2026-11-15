@@ -136,3 +136,43 @@ for (const layout of LAYOUTS) {
     });
   }
 }
+
+// The lake map opens on the street map, and in dark mode that is MapTiler's dark street map, not OpenStreetMap
+// with turned-round colours, whose dark green forests read as satellite pictures on a phone (owner, 15 Nov 2026).
+// The globe button switches to the satellite pictures and back; the street map follows a change of dark mode.
+test("phone: the lake map opens on the street map, dark in dark mode, and the globe button switches back and forth", async () => {
+  const { page, errors, context } = await openIn(LAYOUTS[0], visitor(), "dark");
+  await context.route((url) => url.pathname.endsWith("/app/config.json"), (route) => route.fulfill({ contentType: "application/json", body: '{"maptilerKey":"k"}' }));
+  // A small square lake (as smoke.test.mjs), as the sample data has no lake view.
+  const cols = 12, rows = 12, n = cols * rows, start = new Date(forecast.generatedAt);
+  const lake = {
+    id: club.lakeId, name: "Square lake", generatedAt: forecast.generatedAt, waterC: 14,
+    grid: { south: 47.985, west: 11.33, dLat: 0.002, dLon: 0.003, cols, rows, cells: [...Array(n).keys()], cellPoint: Array(n).fill(0), cellZone: Array(n).fill(0) },
+    zones: ["west"], outline: [], clubs: [{ id: club.id, name: club.name, shortName: club.shortName, launchPoint: club.launchPoint }],
+    points: [{ lat: 47.997, lon: 11.348 }],
+    hours: [...Array(6).keys()].map((i) => ({
+      time: new Date(start.getTime() + i * 3600e3).toISOString(), lakeWide: { light: "green", reasons: [] }, lights: "0".repeat(n), wavesCm: Array(n).fill(5),
+      wind: [{ speedMs: 2, gustMs: 4, fromDeg: 270, other: 0 }], zones: [{ light: "green", maxWaveM: 0.05 }],
+    })),
+  };
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`), (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  const tiles = () => page.evaluate(() => [...document.querySelectorAll("#lake-map img.leaflet-tile")].map((i) => i.src).filter((src) => src.startsWith("http")));
+  const kinds = async () => [...new Set((await tiles()).map((s) => s.includes("hybrid") ? "satellite" : s.includes("streets-v2-dark") ? "dark street" : s.includes("openstreetmap") ? "street" : s))];
+  await page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  const button = page.locator("#lake-map .sat-switch");
+  await button.waitFor({ timeout: 20000 });
+  await page.waitForFunction(() => document.querySelectorAll("#lake-map img.leaflet-tile").length > 0);
+  assert.deepEqual(await kinds(), ["dark street"], "opens on the dark street map");
+  assert.equal(await button.getAttribute("aria-label"), "Show satellite pictures");
+  await button.tap();
+  await page.waitForFunction(() => [...document.querySelectorAll("#lake-map img.leaflet-tile")].filter((i) => i.src.startsWith("http")).every((i) => i.src.includes("hybrid")));
+  assert.equal(await button.getAttribute("aria-label"), "Show the map");
+  await button.tap();
+  await page.waitForFunction(() => [...document.querySelectorAll("#lake-map img.leaflet-tile")].filter((i) => i.src.startsWith("http")).every((i) => i.src.includes("streets-v2-dark")));
+  assert.deepEqual(await kinds(), ["dark street"], "and back to the street map");
+  await page.evaluate(() => { document.documentElement.dataset.theme = "light"; });
+  await page.waitForFunction(() => [...document.querySelectorAll("#lake-map img.leaflet-tile")].filter((i) => i.src.startsWith("http")).every((i) => i.src.includes("openstreetmap")));
+  assert.deepEqual(await kinds(), ["street"], "light mode: the OpenStreetMap street map");
+  assert.deepEqual(errors, []);
+  await context.close();
+});

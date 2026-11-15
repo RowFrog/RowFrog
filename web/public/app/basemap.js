@@ -1,4 +1,4 @@
-// The ground under a Leaflet map: the OpenStreetMap street map, or satellite pictures with roads and
+// The ground under a Leaflet map: the OpenStreetMap street map (MapTiler's dark street map in dark mode), or satellite pictures with roads and
 // names (MapTiler "hybrid") behind a round glass button at the top right, as the app's globe button on the
 // lake map, the Location card, Suggest a launch point and Add a place (Apple's satellite pictures there).
 // The satellite pictures need a MapTiler key: the deploy writes it to config.json from the MAPTILER_KEY
@@ -27,6 +27,19 @@ const MAPTILER_CREDIT = '<a href="https://www.maptiler.com/copyright/" target="_
  * on a phone (owner, 12 Nov 2026); the number of tiles, and so the free plan's count, stays the same.
  */
 export const satelliteUrl = (key) => `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}{r}.jpg?key=${encodeURIComponent(key)}`;
+
+/**
+ * The dark street map (MapTiler "streets-v2-dark"), as the app's Apple map in dark mode. OpenStreetMap has no
+ * dark tiles, and its turned-round colours (CSS .street-tiles) showed the forests as dark green patches, so
+ * on a phone the map read as satellite pictures (owner, 15 Nov 2026). Only with a MapTiler key.
+ */
+export const darkStreetUrl = (key) => `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(key)}`;
+
+/** Whether the page is in dark mode: the page's own setting, else the device's. */
+export function darkMode() {
+  const theme = document.documentElement.dataset.theme;
+  return theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+}
 
 function remembered(storeKey, fallback) {
   if (!storeKey) return fallback;
@@ -64,7 +77,11 @@ export async function baseMap(L, map, { storeKey = null, start = false, small = 
   const imagery = L.tileLayer(satelliteUrl(maptilerKey), {
     tileSize: 512, zoomOffset: -1, minZoom: 1, maxZoom: 20, crossOrigin: true, attribution: MAPTILER_CREDIT,
   });
+  const darkStreet = L.tileLayer(darkStreetUrl(maptilerKey), {
+    tileSize: 512, zoomOffset: -1, minZoom: 1, maxZoom: 20, crossOrigin: true, attribution: MAPTILER_CREDIT,
+  });
   let on = remembered(storeKey, start);
+  let streetNow = darkMode() ? darkStreet : street;
   const Control = L.Control.extend({
     options: { position: "topright" },
     onAdd() {
@@ -78,8 +95,8 @@ export async function baseMap(L, map, { storeKey = null, start = false, small = 
   });
   const control = new Control();
   function show() {
-    map.removeLayer(on ? street : imagery);
-    (on ? imagery : street).addTo(map);
+    for (const layer of [street, darkStreet, imagery]) if (layer !== (on ? imagery : streetNow)) map.removeLayer(layer);
+    (on ? imagery : streetNow).addTo(map);
     control.button.innerHTML = icon(on ? "map" : "earth");
     const label = on ? t("Show the map") : t("Show satellite pictures");
     control.button.setAttribute("aria-label", label);
@@ -95,5 +112,22 @@ export async function baseMap(L, map, { storeKey = null, start = false, small = 
   control.addTo(map);
   show();
   onChange(on);
+  // Dark mode switched on or off while the map is open (the page's setting or the device's): the street map follows.
+  const follow = () => {
+    if (!map.getContainer().isConnected) return stopFollowing();
+    const next = darkMode() ? darkStreet : street;
+    if (next === streetNow) return;
+    streetNow = next;
+    if (!on) show();
+  };
+  const media = matchMedia("(prefers-color-scheme: dark)");
+  const watcher = new MutationObserver(follow);
+  watcher.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  media.addEventListener?.("change", follow);
+  function stopFollowing() {
+    watcher.disconnect();
+    media.removeEventListener?.("change", follow);
+  }
+  map.on("unload", stopFollowing);
   return { satellite: () => on };
 }
