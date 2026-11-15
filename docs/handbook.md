@@ -188,7 +188,7 @@ Management.
 5. A value's view (tap a tile) opens full screen on the iPad: chart and map
    one under the other in portrait, side by side in landscape.
 
-## Schneeregen settings (decision 0041)
+## Schneeregen settings (decision 0042)
 
 - Pi `~/.config/rowfrog.env`: `RW_SLEET=off` stops asking Open-Meteo for rain and snowfall (the app then shows rain or snow as before); `RW_SLEET_MIN_C` / `RW_SLEET_MAX_C` set the cold band (default −2 and 4 °C).
 - Cost: `journalctl -u rowfrog-publish --since today | grep Schneeregen` shows each run's clubs in the band and extra calls; the usage counter lists them as job `sleet` (Open-Meteo).

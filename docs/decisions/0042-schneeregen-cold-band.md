@@ -1,4 +1,4 @@
-# 0041. Schneeregen from rain and snowfall, asked only in the cold band
+# 0042. Schneeregen from rain and snowfall, asked only in the cold band
 
 - Date: 2026-11-15
 - Status: decided (owner, thread "Check rain start time jumping", 15 Nov 2026 14:48 CET: "implement it with guardrails", with a log of the extra calls)
