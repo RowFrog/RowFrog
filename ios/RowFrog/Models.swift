@@ -748,7 +748,8 @@ struct WeatherRun: Codable, Hashable {
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
-    let generatedAt: Date
+    /// A var only for the widget gallery's night hook (`-RWWidgetNight YES`).
+    var generatedAt: Date
     let waterTemperature: WaterTemperature?
     /// Missing from older backends.
     var warnings: Warnings? = nil

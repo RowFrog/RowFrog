@@ -161,6 +161,31 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertNil(late.days(1).first?.good)
     }
 
+    // MARK: Night hours
+
+    func testTheNightFoldsIntoOneColumnUpToSunrise() {
+        // 01:00 to 12:00, dark until the sunrise at 06:22 (owner pick B, 15 Nov 2026).
+        let sunrise = start.addingTimeInterval(6 * 3600 + 22 * 60)
+        let sun = [SunDay(sunrise: sunrise, sunset: start.addingTimeInterval(15 * 3600))]
+        let hours = (0..<12).map { hour($0, $0 < 7 ? .red : .green, sunUp: $0 >= 7) }
+        let columns = snapshot(hours, daylight: sun).hourColumns(6)
+        XCTAssertEqual(columns.count, 6)
+        guard case let .hour(now) = columns[0], case let .night(night, until) = columns[1] else {
+            return XCTFail("Now, then the rest of the night")
+        }
+        XCTAssertEqual(now.time, start, "Now keeps its own column")
+        XCTAssertEqual(night.hours.map(\.time), (1...5).map { start.addingTimeInterval(Double($0) * 3600) })
+        XCTAssertEqual(until, sunrise, "the night ends at sunrise")
+        let after = columns.dropFirst(2).compactMap { if case let .hour(hour) = $0 { hour.time } else { nil } }
+        XCTAssertEqual(after, (6...9).map { start.addingTimeInterval(Double($0) * 3600) }, "the sunrise hour, then the morning")
+    }
+
+    func testDaytimeHoursStayAsTheyAre() {
+        let sun = [SunDay(sunrise: start.addingTimeInterval(-3 * 3600), sunset: start.addingTimeInterval(12 * 3600))]
+        let columns = snapshot((0..<8).map { hour($0) }, daylight: sun).hourColumns(6)
+        XCTAssertEqual(columns.map(\.id), (0..<6).map { start.addingTimeInterval(Double($0) * 3600) })
+    }
+
     // MARK: Lock screen
 
     func testLockScreenLineNamesLightAndTemperatureWithoutTheClub() {
@@ -178,6 +203,8 @@ final class WidgetContentTests: XCTestCase {
         let full = snapshot((0..<12).map { hour($0, $0 % 4 == 3 ? .amber : .green) },
                             water: WaterTemperature(celsius: 6, measuredAt: start), daylight: sun)
         let empty = RowingSnapshot(date: start, clubName: "MRC 1880", isHome: false, forecast: nil)
+        let night = snapshot((0..<14).map { hour($0, $0 < 7 ? .red : .green, sunUp: $0 >= 7) },
+                             daylight: [SunDay(sunrise: start.addingTimeInterval(6.4 * 3600), sunset: start.addingTimeInterval(15 * 3600))])
         let sizes: [(WidgetFamily, CGSize)] = [
             (.systemSmall, CGSize(width: 170, height: 170)), (.systemMedium, CGSize(width: 364, height: 170)),
             (.systemLarge, CGSize(width: 364, height: 382)), (.systemExtraLarge, CGSize(width: 715, height: 382)),
@@ -185,7 +212,7 @@ final class WidgetContentTests: XCTestCase {
             (.accessoryInline, CGSize(width: 234, height: 26)),
         ]
         for (family, size) in sizes {
-            for snap in [full, empty] {
+            for snap in [full, night, empty] {
                 for focus in WidgetFocus.allCases {
                     for layout in WidgetLayout.allCases {
                         for (plain, marks) in [(false, true), (true, false)] {
