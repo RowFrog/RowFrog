@@ -342,11 +342,11 @@ async function renderList() {
     <div class="top-title"><strong>${h(t("Locations"))}</strong></div>
     ${testing()}
     <main class="page list-page">
-      <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${moreMenu()}</header>
+      <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${wideList.matches ? searchBar("head-search", false) : ""}${moreMenu()}</header>
       ${listBody()}
       ${footerLinks()}
     </main>
-    ${searchBar("list-bottom")}`;
+    ${wideList.matches ? cogBar() : searchBar("list-bottom")}`;
   await wireList(renderList);
 }
 
@@ -360,6 +360,17 @@ function moreMenu() {
       <a href="#/add-place">${icon("map-pin-ellipse")} ${h(t("Add a place yourself"))}</a>
     </div></details>`;
 }
+
+/**
+ * On iPad sizes the list's search sits at the top right beside "…", where iPadOS puts the app's search, and the cog
+ * alone at the bottom in the middle (iPad 11" upright shots, 15 Nov 2026); on a phone both share the bottom bar.
+ */
+const wideList = matchMedia("(min-width: 701px)");
+wideList.addEventListener("change", () => root.querySelector(".list-page") && renderList());
+
+/** The cog alone at the bottom of the list on iPad sizes. */
+const cogBar = () => `<div class="list-bottom search-bar cog-only">
+    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a></div>`;
 
 /** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the search alone, at the top of the list. */
 function searchBar(cls, cog = true) {
@@ -2209,7 +2220,7 @@ function sourceBody(source) {
     <small class="sub">${h(t("Hours %@ to %@ · %@", String(part.fromHour), String(part.toHour), gridText(part.resolutionKm)))}</small></li>`).join("");
   return `<ul class="source-parts">${parts}</ul>
     <p class="small sub">${h(t("Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it."))}</p>
-    <ul class="legend">
+    <ul class="legend source-legend">
       ${source.picked == null ? `<li>${icon("badge-check")}<span>${h(t("The app picks the weather model that does best for this region."))}</span></li>` : ""}
       <li>${icon("chart-line")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
       <li>${icon("server")}<span>${h(t("Data via Open-Meteo."))}</span></li>
