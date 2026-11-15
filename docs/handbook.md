@@ -188,6 +188,12 @@ Management.
 5. A value's view (tap a tile) opens full screen on the iPad: chart and map
    one under the other in portrait, side by side in landscape.
 
+## Schneeregen settings (decision 0041)
+
+- Pi `~/.config/rowfrog.env`: `RW_SLEET=off` stops asking Open-Meteo for rain and snowfall (the app then shows rain or snow as before); `RW_SLEET_MIN_C` / `RW_SLEET_MAX_C` set the cold band (default −2 and 4 °C).
+- Cost: `journalctl -u rowfrog-publish --since today | grep Schneeregen` shows each run's clubs in the band and extra calls; the usage counter lists them as job `sleet` (Open-Meteo).
+- To see it in the app: a forecast hour with weather code 68 or 69 shows "Schneeregen" with the sleet symbol.
+
 ## Which time means what (decision 0039)
 
 - Club page header "Modelllauf 06 UTC · aktualisiert 10:01": the ICON-D2 run by its UTC start hour (`weatherRun.started`), and when the Pi built the club's file (`generatedAt`, every :00/:30). Club list footer, widget clock and out-of-date lines use the same `generatedAt`.

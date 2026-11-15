@@ -418,6 +418,7 @@ export function sky(code, cloudCoverPct = null, precipitationMm = null) {
     case 45: case 48: return "fog";
     case 51: case 53: case 55: return "drizzle";
     case 56: case 57: case 66: case 67: return "freezingRain";
+    case 68: case 69: return "sleet";
     case 61: case 63: return "rain";
     case 80: case 81: return "showers";
     case 65: case 82: return "heavyRain";
@@ -439,12 +440,12 @@ export function sky(code, cloudCoverPct = null, precipitationMm = null) {
 export const SKY_TITLES = {
   clear: key("Clear"), mostlyClear: key("Mostly clear"), partlyCloudy: key("Partly cloudy"), cloudy: key("Cloudy"), fog: key("Fog"),
   drizzle: key("Drizzle"), rain: key("Rain"), showers: key("Showers"), heavyRain: key("Heavy rain"), freezingRain: key("Freezing rain"),
-  snow: key("Snow"), thunderstorm: key("Thunderstorm"), hail: key("Thunderstorm with hail"),
+  sleet: key("Sleet"), snow: key("Snow"), thunderstorm: key("Thunderstorm"), hail: key("Thunderstorm with hail"),
 };
 
 /** What falls from this sky, or null when nothing does. */
 export function precipitationKind(kind) {
-  return { drizzle: key("Drizzle"), rain: key("Rain"), showers: key("Rain"), heavyRain: key("Rain"), thunderstorm: key("Rain"), freezingRain: key("Freezing rain"), snow: key("Snow"), hail: key("Hail") }[kind] ?? null;
+  return { drizzle: key("Drizzle"), rain: key("Rain"), showers: key("Rain"), heavyRain: key("Rain"), thunderstorm: key("Rain"), freezingRain: key("Freezing rain"), sleet: key("Sleet"), snow: key("Snow"), hail: key("Hail") }[kind] ?? null;
 }
 
 /** The icon and its colour class for a sky, by day or by night. */
@@ -458,7 +459,7 @@ export function skyIcon(kind, night = false) {
     case "drizzle": return ["cloud-drizzle", "rain"];
     case "rain": case "showers": return ["cloud-rain", "rain"];
     case "heavyRain": return ["cloud-rain", "rain"];
-    case "freezingRain": return ["cloud-hail", "ice"];
+    case "freezingRain": case "sleet": return ["cloud-hail", "ice"];
     case "snow": return ["cloud-snow", "ice"];
     case "thunderstorm": return ["cloud-lightning", "storm"];
     case "hail": return ["cloud-hail", "ice"];

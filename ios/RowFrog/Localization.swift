@@ -206,6 +206,7 @@ enum German {
         "Showers": "Schauer",
         "Heavy rain": "Starkregen",
         "Freezing rain": "Eisregen",
+        "Sleet": "Schneeregen",
         "Snow": "Schnee",
         "Thunderstorm": "Gewitter",
         "Thunderstorm with hail": "Gewitter mit Hagel",

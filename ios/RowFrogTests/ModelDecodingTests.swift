@@ -219,6 +219,8 @@ final class ModelDecodingTests: XCTestCase {
 
     func testSkyFromWeatherCode() {
         XCTAssertEqual(Sky(code: 96, cloudCoverPct: 100, precipitationMm: 3).precipitationKind, "Hail")
+        XCTAssertEqual(Sky(code: 68, cloudCoverPct: 100, precipitationMm: 1), .sleet)
+        XCTAssertEqual(Sky(code: 69, cloudCoverPct: 100, precipitationMm: 3).precipitationKind, "Sleet")
         XCTAssertEqual(Sky(code: 2, cloudCoverPct: 50, precipitationMm: 0).symbol(night: true), "cloud.moon.fill")
         // Without a code, cloud cover and precipitation decide.
         XCTAssertEqual(Sky(code: nil, cloudCoverPct: 95, precipitationMm: 0), .cloudy)

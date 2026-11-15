@@ -64,7 +64,7 @@ import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, sleet, water_estimate, water_stations, weather_models
 from rowfrog.api import LOCAL
 from rowfrog.sources import dwd_radar, dwd_warnings, gkd, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
@@ -157,6 +157,8 @@ class RunCounts:
         self.forecasts = 0  # club forecasts written
         self.no_water: dict[str, int] = {"no station": 0, "station without reading": 0}
         self.old_water = 0  # club forecasts with a water reading older than gkd.MAX_AGE
+        self.sleet_clubs: set[str] = set()  # clubs asked for rain and snowfall (sleet.py)
+        self.sleet_calls = 0.0  # what that cost in Open-Meteo calls, also inside open_meteo.calls_counted
 
 
 RUN = RunCounts()
@@ -351,6 +353,29 @@ async def _batched(points: list[tuple[float, float]], hourly: list[str]) -> tupl
     return out, problems
 
 
+def count_sleet(clubs: list[locations.Club], hours: int) -> None:
+    """Notes the clubs asked for rain and snowfall and what the two values cost:
+    Open-Meteo counts each point by its number of variables (call_weight)."""
+    if not clubs:
+        return
+    days = hours / 24
+    base = len(open_meteo.HOURLY)
+    extra = open_meteo.call_weight(base + len(sleet.HOURLY), 1, days) - open_meteo.call_weight(base, 1, days)
+    RUN.sleet_clubs.update(c.id for c in clubs)
+    RUN.sleet_calls += extra * len(clubs)
+
+
+def sleet_line() -> str:
+    """The run's Schneeregen line: how many clubs were in the cold band and what it cost."""
+    if not sleet.enabled():
+        return "  Schneeregen: off (RW_SLEET=off)"
+    low, high = sleet.band()
+    return (
+        f"  Schneeregen: {len(RUN.sleet_clubs)} clubs in the cold band ({low:g} to {high:g} °C),"
+        f" +{RUN.sleet_calls:.1f} Open-Meteo calls"
+    )
+
+
 def club_weather(state: State, clubs: list[locations.Club], used: set[str], with_usage: bool, now: datetime) -> None:
     """Loads the forecasts that are due and hands every club's last forecast to the API."""
     other = WEATHER_HOURS["other with usage" if with_usage else "other"]
@@ -358,8 +383,18 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
         c for c in clubs if due(state.clubs.get(c.id, (None,))[0], now, WEATHER_HOURS["used"] if c.id in used else other)
     ]
     if stale:
-        points = [(c.launch_point.lat, c.launch_point.lon) for c in stale]
-        forecasts, problems = asyncio.run(_batched(points, open_meteo.HOURLY))
+        # Clubs in the cold band also get rain and snowfall, for Schneeregen (sleet.py); the others cost nothing extra.
+        cold = [c for c in stale if sleet.in_cold_band(state.clubs.get(c.id, (None, None))[1], now)]
+        warm = [c for c in stale if c not in cold]
+        stale = cold + warm
+        forecasts: list[list | None] = []
+        problems: list[str] = []
+        for group, hourly in ((cold, open_meteo.HOURLY + sleet.HOURLY), (warm, open_meteo.HOURLY)):
+            if group:
+                loaded, trouble = asyncio.run(_batched([(c.launch_point.lat, c.launch_point.lon) for c in group], hourly))
+                forecasts += loaded
+                problems += trouble
+        count_sleet(cold, FETCH_HOURS)
         for line in problems:
             print("  weather", line)
         for club, weather in zip(stale, forecasts):
@@ -445,8 +480,12 @@ def club_outlooks(state: State, clubs: list[locations.Club], used: set[str], now
     async def load(stale: list[locations.Club]) -> None:
         async with httpx.AsyncClient() as client:
             for club in stale:
+                cold = sleet.in_cold_band(state.clubs.get(club.id, (None, None))[1], now)
+                hourly = open_meteo.HOURLY + sleet.HOURLY if cold else open_meteo.HOURLY
+                if cold:
+                    count_sleet([club], open_meteo.OUTLOOK_HOURS + open_meteo.OUTLOOK_PAST_HOURS)
                 try:
-                    hours = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
+                    hours = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon, hourly)
                 except (httpx.HTTPError, ValueError, KeyError) as e:
                     print(f"  outlook {club.id}: {e!r}")
                     continue
@@ -1277,11 +1316,15 @@ def publish(args, now: datetime, state: "State") -> int:
     lakes_only = [i for i in all_lakes if i not in sections]
     areas = club_areas(c for c in every if c.id in used_clubs and c.lake_id in lakes_only)
     publish_pictures(args.out, lakes_only + sorted(places), used_lakes | set(places), now, places, areas)
-    calls = round(open_meteo.calls_counted, 1)
+    # The Schneeregen values are reported as their own job, so their cost can be read apart (decision 0041).
+    sleet_calls = round(RUN.sleet_calls, 1)
+    calls = round(open_meteo.calls_counted - RUN.sleet_calls, 1)
     copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made
-    print(f"Open-Meteo calls: {calls}, Copernicus requests: {copernicus}")
+    print(sleet_line())
+    print(f"Open-Meteo calls: {calls} + {sleet_calls} for Schneeregen, Copernicus requests: {copernicus}")
     if usage:
         usage.report_calls("open-meteo", calls, "publish")
+        usage.report_calls("open-meteo", sleet_calls, "sleet")
         usage.report_calls("copernicus", copernicus, "publish")
     for line in failed:
         print("  failed", line)

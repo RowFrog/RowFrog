@@ -56,6 +56,9 @@ test("the sky as in the app: symbol, title and what falls", () => {
   assert.equal(sky(0), "clear");
   assert.equal(sky(65), "heavyRain");
   assert.equal(sky(96), "hail");
+  assert.equal(sky(68), "sleet");
+  assert.equal(sky(69), "sleet");
+  assert.equal(precipitationKind("sleet"), "Sleet");
   assert.deepEqual(skyIcon("clear", true), ["moon-star", "moon"]);
   assert.equal(precipitationKind("showers"), "Rain");
   assert.equal(precipitationKind("partlyCloudy"), null);
