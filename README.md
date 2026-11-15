@@ -414,7 +414,10 @@ light** (all six values in two columns) or, on the large one, **All values in a
 row** under the full sentence. Under each hour the large and extra large
 widgets show wind, waves and visibility with a small legend (only temperature
 and wind where even a tighter layout doesn't fit, e.g. at very large text);
-the medium one shows just the time, sky and light per hour. **Marks** (on by default) put a check, ! or ×
+the medium one shows just the time, sky and light per hour. At night, as in
+the 48-hour table, the dark hours after "Now" fold into one moon column up to
+sunrise (in the large ones with the night's worst values), then the morning
+hours follow. **Marks** (on by default) put a check, ! or ×
 in the light's dots and stripes or outlines on amber and red day bars, so the
 light reads without colour. Values that set the light are coloured; the rain
 value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
