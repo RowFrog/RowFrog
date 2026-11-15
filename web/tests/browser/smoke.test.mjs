@@ -744,3 +744,18 @@ test("a route link from the app saves its route in this browser once and opens i
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("the Home Screen web app opens straight on the forecasts, a browser tab keeps the welcome page (owner, 15 Nov 2026)", async () => {
+  const tab = await open(visitor());
+  await tab.page.goto(`${base}/`);
+  await tab.page.locator("a[href='/app/'] button").waitFor();
+  assert.equal(new URL(tab.page.url()).pathname, "/", "a browser tab stays on the welcome page");
+  await tab.context.close();
+  const { page, errors, context } = await open(visitor());
+  await page.addInitScript(() => Object.defineProperty(navigator, "standalone", { value: true }));
+  await page.goto(`${base}/`);
+  await page.waitForURL((url) => url.pathname === "/app/", { timeout: 10000 });
+  await page.locator(".club-head h1").waitFor({ timeout: 20000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
