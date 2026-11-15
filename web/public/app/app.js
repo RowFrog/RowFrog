@@ -486,9 +486,9 @@ async function fillRow(row) {
       <strong>${h(lightTitle(hour.light, stale))}</strong>
       ${stale ? `<small class="orange">${icon("clock-alert")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
       <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
-      ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
+      ${kit ? `<small class="kit-line lead" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")}<span>${h(coldWaterText(kit)[0])}</span></small>` : ""}
       ${headline ? warningListLine(headline) : ""}
-      ${sun ? `<small class="sub"><span role="img" aria-label="${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}">${icon(sun.up ? "sunset" : "sunrise")} ${h(time(sun.up ? sun.sunset : sun.sunrise))}</span></small>` : ""}
+      ${sun ? `<small class="sub lead sun-line" role="img" aria-label="${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}">${icon(sun.up ? "sunset" : "sunrise")}<span>${h(time(sun.up ? sun.sunset : sun.sunrise))}</span></small>` : ""}
     </div>
     <div class="metrics">
       <span class="${water == null && estimate != null ? "sub" : ""}">${conditionIcon("waterTemperature")}${h(water == null && estimate != null ? `≈ ${degrees(estimate, 1)}` : degrees(water, 1))}</span>
@@ -508,8 +508,8 @@ function shortWarning(w) {
 
 /** The list's warning line: amber or red when it changes the light now or soon; later or frost-like ones grey and short, "Frost from 23:00". */
 function warningListLine({ warning, urgency }) {
-  if (urgency === "info") return `<small class="warn sub">${icon("info")} ${h(warningLine(warning, new Date(), true))}</small>`;
-  return `<small class="warn strong ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(warningLine(warning))}</small>`;
+  if (urgency === "info") return `<small class="warn sub lead">${icon("info")}<span>${h(warningLine(warning, new Date(), true))}</span></small>`;
+  return `<small class="warn strong lead ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")}<span>${h(warningLine(warning))}</span></small>`;
 }
 
 /** The event alone, e.g. "Frost" or "Wind gusts" (DWDWarning.eventName). */

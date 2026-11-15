@@ -553,6 +553,20 @@ body.wide-bar.title-gone .hhead { top: calc(var(--head-mid, 22px) + 22px + var(-
 .row-why .warn.sub { font-weight: 400; }
 .metrics { display: grid; grid-template-columns: auto auto; gap: 6px 12px; font-size: 12px; flex: none; }
 .metrics span { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+/* Symbols as large as the app's caption Labels in the list row (LocationListView): about 17 pt in a 20 pt column,
+   with the text hung beside them; the sunset in its orange (sunset.fill, multicolour). */
+.metrics span { gap: 8px; }
+.metrics .cond, .row-why .lead > .i { width: 20px; flex: none; display: flex; justify-content: center; }
+.metrics .cond .i, .row-why .lead > .i { width: 17px; height: 17px; }
+.row-why .lead { display: grid; grid-template-columns: 20px minmax(0, 1fr); column-gap: 8px; align-items: start; }
+.row-why .lead > .i { width: 17px; justify-self: center; margin-top: -1px; }
+.row-why .lead > span { min-width: 0; }
+.row-why .kit-line.lead > span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.row-why .warn.lead { white-space: normal; }
+.row-why .warn.lead > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-why .sun-line > .i { color: var(--orange); }
+.row-now small .i { width: 15px; height: 15px; vertical-align: -3px; }
+.row-now .now-line > .cond .i { width: 22px; height: 22px; }
 .round { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--fill); color: var(--accent); flex: none; }
 .round.red { background: var(--red); color: #fff; }
 .spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--fill); border-top-color: var(--sub); animation: spin 1s linear infinite; }
