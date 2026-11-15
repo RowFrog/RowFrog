@@ -1,12 +1,14 @@
 name: App screenshots
 
 # Runs the backend on the runner with live data, starts the app in the iOS
-# Simulator and saves screenshots under refs/screenshots/<branch>, outside
-# every branch's history (owner, 25 Oct 2026: 1.4 GB of old screenshots made
-# the repository large). Each run starts from that branch's earlier set (or
-# main's) and replaces it with one new commit, so nothing piles up. Get them
-# with: git fetch origin refs/screenshots/<branch> && git archive FETCH_HEAD | tar -x -C <folder>
-# They are also attached to the run as the "screenshots" download.
+# Simulator and attaches the screenshots to the run as the "screenshots"
+# download (kept as long as the repository keeps downloads, 14 days since
+# 15 Nov 2026). Nothing goes into git: no branch history and, since 15 Nov 2026,
+# no refs/screenshots/<branch> either (owner, 25 Oct and 15 Nov 2026: old
+# screenshots made the repository large). Each run starts from the newest
+# "screenshots" download of the same branch, else main's, so a run with `only`
+# keeps the other screens; with none left it starts empty.
+# Get them: gh run download <run id> -n screenshots -D <folder>
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
 # so both warning states show; every other warning is live.
@@ -42,7 +44,9 @@ on:
         default: iPhone
 
 permissions:
-  contents: write
+  contents: read
+  # Reads earlier runs' "screenshots" downloads to start from.
+  actions: read
 
 jobs:
   newest-xcode:
@@ -63,13 +67,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Get the earlier screenshots
-        # This branch's last set, else main's, so a run with `only` keeps the other screens.
+        # The newest "screenshots" download of this branch, else main's, so a run with `only` keeps the other screens.
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p docs/screenshots
-          for ref in "refs/screenshots/$GITHUB_REF_NAME" refs/screenshots/main; do
-            if git fetch -q --depth 1 origin "+$ref:refs/earlier-screenshots" 2>/dev/null; then
-              git archive refs/earlier-screenshots | tar -x -C docs/screenshots
-              echo "Started from $ref"; break
+          for branch in "$GITHUB_REF_NAME" main; do
+            run=$(gh run list -R "$GITHUB_REPOSITORY" --workflow screenshots.yml --branch "$branch" --status success \
+              --json databaseId --jq '.[].databaseId' -L 20 | while read -r id; do
+                if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts" --jq '.artifacts[] | select(.name == "screenshots" and (.expired | not)) | .id' | grep -q .; then echo "$id"; break; fi
+              done) || true  # no earlier run (or the lookup failed): start empty
+            if [ -n "$run" ] && gh run download "$run" -R "$GITHUB_REPOSITORY" -n screenshots -D "$RUNNER_TEMP/earlier"; then
+              [ -d "$RUNNER_TEMP/earlier/docs/screenshots" ] && cp -R "$RUNNER_TEMP/earlier/docs/screenshots/." docs/screenshots/
+              echo "Started from run $run of $branch"; break
             fi
           done
       - uses: actions/setup-python@v7
@@ -723,21 +733,7 @@ jobs:
         if: always()
         with:
           name: screenshots
-          retention-days: 90
+          retention-days: 14
           path: |
             docs/screenshots
             uvicorn.log
-      - name: Save screenshots under refs/screenshots
-        run: |
-          # One commit with only the pictures, kept outside the branch history.
-          export GIT_INDEX_FILE="$RUNNER_TEMP/screenshots.index"
-          git --work-tree=docs/screenshots add -A -f .
-          tree=$(git write-tree)
-          commit=$(git -c user.name="github-actions[bot]" -c user.email="41898283+github-actions[bot]@users.noreply.github.com" \
-            commit-tree "$tree" -m "Screenshots of $GITHUB_REF_NAME at ${GITHUB_SHA::7}")
-          git push -f origin "$commit:refs/screenshots/$GITHUB_REF_NAME"
-          # Sets of branches that are gone (merged and deleted) are removed.
-          branches=$(git ls-remote --heads origin | sed 's|.*refs/heads/||')
-          git ls-remote origin 'refs/screenshots/*' | sed 's|.*refs/screenshots/||' | while read -r name; do
-            if ! printf '%s\n' "$branches" | grep -qxF "$name"; then git push -q origin ":refs/screenshots/$name" || true; fi
-          done
