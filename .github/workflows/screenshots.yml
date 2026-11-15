@@ -9,6 +9,11 @@ name: App screenshots
 # "screenshots" download of the same branch, else main's, so a run with `only`
 # keeps the other screens; with none left it starts empty.
 # Get them: gh run download <run id> -n screenshots -D <folder>
+# The shots of each run are also pushed as one commit with no history to the
+# branch screenshots/<branch>, replaced on every run and deleted once <branch>
+# is gone, so cloud threads that cannot reach the download can read them with
+# git (owner, 15 Nov 2026): git fetch --depth 1 origin refs/heads/screenshots/<branch>
+# && git archive FETCH_HEAD | tar -x -C <folder>. No workflow runs on those branches.
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
 # so both warning states show; every other warning is live.
@@ -44,7 +49,8 @@ on:
         default: iPhone
 
 permissions:
-  contents: read
+  # Writes the branch screenshots/<branch> (pictures only, no history).
+  contents: write
   # Reads earlier runs' "screenshots" downloads to start from.
   actions: read
 
@@ -725,6 +731,8 @@ jobs:
           # The radar line: rain on DWD's radar within two hours replaces the wind under a green light.
           shoot 123-widgets-radar light -RWWidgetGallery YES -RWWidgetRadar YES
           shoot_pages 34-widgets-night-german dark -RWWidgetGallery YES -RWWidgetNight YES -RWLanguage de
+          # At 14:56: today's day bar with its gone hours faint and the tick at now.
+          shoot_pages 35-widgets-afternoon-german dark -RWWidgetGallery YES -RWWidgetAfternoon YES -RWLanguage de
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2
@@ -738,3 +746,19 @@ jobs:
           path: |
             docs/screenshots
             uvicorn.log
+      - name: Save the screenshots on the branch screenshots/<branch>
+        if: always()
+        run: |
+          # One commit with only the pictures and no parent, replacing the last one.
+          [ -d docs/screenshots ] || exit 0
+          export GIT_INDEX_FILE="$RUNNER_TEMP/screenshots.index"
+          git --work-tree=docs/screenshots add -A -f .
+          tree=$(git write-tree)
+          commit=$(git -c user.name=RowFrog -c user.email=344322998+RowFrog@users.noreply.github.com \
+            commit-tree "$tree" -m "Screenshots of $GITHUB_REF_NAME at ${GITHUB_SHA::7}")
+          git push -f origin "$commit:refs/heads/screenshots/$GITHUB_REF_NAME"
+          # The sets of branches that are gone (merged and deleted) go too.
+          branches=$(git ls-remote --heads origin | sed 's|.*refs/heads/||')
+          printf '%s\n' "$branches" | sed -n 's|^screenshots/||p' | while read -r name; do
+            if ! printf '%s\n' "$branches" | grep -qxF "$name"; then git push -q origin ":refs/heads/screenshots/$name" || true; fi
+          done
