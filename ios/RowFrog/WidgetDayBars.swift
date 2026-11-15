@@ -7,17 +7,48 @@ import WidgetKit
 extension RowingWidgetView {
     /// The good rowing times as one bar per day: green, amber (striped with marks)
     /// and red (an outline with marks), past hours faint, and the first good stretch.
+    /// All bars share one clock axis, from the earliest first hour to the latest last
+    /// hour of the days shown, so an hour sits at the same place every day and today's
+    /// bar does not stretch as the day ends; a tick marks now (owner's pick B, 15 Nov 2026).
     func dayBars(_ count: Int, header: Bool, big: Bool, fit: WidgetFit = .regular) -> some View {
         let days = snapshot.days(count)
+        let axisStart = days.map(\.firstHour).min() ?? 0
+        let axisEnd = days.map { $0.firstHour + $0.slots }.max() ?? 0
+        let texts = days.map { dayText($0) }
         return VStack(alignment: .leading, spacing: big ? fit.dayGap : 4) {
             if header {
                 Label(tr("Good to row"), systemImage: "figure.rower")
                     .font(.caption.weight(.semibold))
+                if axisEnd - axisStart >= 3 {
+                    // The clock above the bars: every third hour.
+                    HStack(spacing: 8) {
+                        Color.clear.frame(width: big ? 64 : 54, height: 1)
+                        GeometryReader { geometry in
+                            ForEach(Array(stride(from: axisStart, to: axisEnd, by: 3)), id: \.self) { hour in
+                                Text(String(format: "%02d", hour))
+                                    .fixedSize()
+                                    .offset(x: geometry.size.width * Double(hour - axisStart) / Double(axisEnd - axisStart))
+                            }
+                        }
+                        ZStack {
+                            ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
+                                Text(text).font(.caption.monospacedDigit()).hidden()
+                            }
+                        }
+                        .fixedSize()
+                        .frame(height: 1)
+                    }
+                    .font(.system(size: 9).monospacedDigit())
+                    .opacity(0.7)
+                    .frame(height: 10)
+                    .padding(.bottom, -(big ? fit.dayGap : 4) / 2)
+                    .accessibilityHidden(true)
+                }
             }
             if days.isEmpty {
                 Text(snapshot.noWindowsText).font(.caption).opacity(0.85)
             }
-            ForEach(Array(days.enumerated()), id: \.offset) { _, day in
+            ForEach(Array(days.enumerated()), id: \.offset) { index, day in
                 HStack(spacing: 8) {
                     Text(day.label)
                         .font(.caption.weight(.medium))
@@ -25,26 +56,59 @@ extension RowingWidgetView {
                         .minimumScaleFactor(0.8)
                         .frame(width: big ? 64 : 54, alignment: .leading)
                     HStack(spacing: 2) {
+                        slots(day.firstHour - axisStart) { Color.clear }
+                        slots(day.earlier) { segment(.green, past: true) }
                         ForEach(Array(day.lights.enumerated()), id: \.offset) { index, light in
                             segment(light, past: day.past[index])
                         }
                         // Not forecast yet: room kept, a faint dashed outline.
-                        ForEach(0..<day.missing, id: \.self) { _ in
+                        slots(day.missing) {
                             RoundedRectangle(cornerRadius: 2, style: .continuous)
                                 .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
                                 .opacity(0.35)
                         }
+                        slots(axisEnd - day.firstHour - day.slots) { Color.clear }
                     }
                     .frame(height: big ? 10 : 8)
+                    .overlay(alignment: .leading) {
+                        if let now = day.now, axisEnd > axisStart, !snapshot.isStale {
+                            nowTick(at: (now - Double(axisStart)) / Double(axisEnd - axisStart), big: big)
+                        }
+                    }
                     .accessibilityHidden(true)
-                    Text(day.good ?? (snapshot.isStale ? "–" : day.missing > 0 ? tr("Not known yet") : tr("Not good")))
-                        .font(.caption.monospacedDigit())
-                        .opacity(day.good == nil ? 0.75 : 1)
-                        .lineLimit(1)
-                        .fixedSize()
+                    // Every text takes the widest one's room, so all bars end in line.
+                    ZStack(alignment: .leading) {
+                        ForEach(Array(texts.enumerated()), id: \.offset) { _, text in
+                            Text(text).hidden()
+                        }
+                        Text(texts[index])
+                            .opacity(day.good == nil ? 0.75 : 1)
+                    }
+                    .font(.caption.monospacedDigit())
+                    .lineLimit(1)
+                    .fixedSize()
                 }
                 .accessibilityElement(children: .combine)
             }
+        }
+    }
+
+    private func dayText(_ day: WidgetDay) -> String {
+        day.good ?? (snapshot.isStale ? "–" : day.missing > 0 ? tr("Not known yet") : tr("Not good"))
+    }
+
+    /// `count` equal slots of the bar (none when `count` is 0 or less).
+    private func slots<Slot: View>(_ count: Int, @ViewBuilder _ slot: @escaping () -> Slot) -> some View {
+        ForEach(0..<max(count, 0), id: \.self) { _ in slot() }
+    }
+
+    /// A small upright line at `fraction` of the bar's width: now.
+    private func nowTick(at fraction: Double, big: Bool) -> some View {
+        GeometryReader { geometry in
+            Capsule()
+                .fill(plain ? Color.primary : Color.white)
+                .frame(width: 2, height: (big ? 10 : 8) + 6)
+                .offset(x: geometry.size.width * min(max(fraction, 0), 1) - 1, y: -3)
         }
     }
 

@@ -41,6 +41,17 @@ struct WidgetDay: Equatable {
     /// first hour or two. They keep their place in the bar, empty, and the day
     /// without a good stretch reads "Not known yet" instead of "Not good".
     var missing = 0
+    /// Daylight hours before the forecast's first hour (today, once its morning is gone):
+    /// they keep their place in the bar, faint, so the bar does not stretch as the day ends.
+    var earlier = 0
+    /// The hour of the day of the bar's first slot, so the bars of all days share one
+    /// clock axis (owner's pick B, 15 Nov 2026).
+    var firstHour = 0
+    /// Today only: now as an hour of the day with its minutes (14.93 at 14:56), for the tick.
+    var now: Double? = nil
+
+    /// All slots of the bar: the earlier ones, the forecast hours and the missing ones.
+    var slots: Int { earlier + lights.count + missing }
 }
 
 /// The words of the new layouts, worked out here so the tests can read them.
@@ -201,13 +212,19 @@ extension RowingSnapshot {
         for _ in 0..<(count + 1) where result.count < count {
             let hours = daylight.filter { calendar.isDate($0.time, inSameDayAs: day) }
             let past = hours.map { $0.time.addingTimeInterval(3600) <= date }
-            if !hours.isEmpty, past.contains(false) {
+            if let first = hours.first, past.contains(false) {
                 let label = calendar.isDateInToday(day) || calendar.isDateInTomorrow(day)
                     ? Format.day(day, calendar: calendar)
                     : day.formatted(.dateTime.weekday(.abbreviated).day().locale(Format.locale))
+                let earlier = earlierHours(before: first.time, on: day, calendar: calendar)
+                let start = calendar.date(byAdding: .hour, value: -earlier, to: first.time) ?? first.time
+                let isToday = calendar.isDate(date, inSameDayAs: day)
                 result.append(WidgetDay(label: label, lights: hours.map(\.light), past: past,
                                         good: isStale ? nil : goodStretch(hours),
-                                        missing: missingHours(after: forecast.hours.last?.time, on: day, calendar: calendar)))
+                                        missing: missingHours(after: forecast.hours.last?.time, on: day, calendar: calendar),
+                                        earlier: earlier,
+                                        firstHour: calendar.component(.hour, from: start),
+                                        now: isToday ? hourOfDay(date, calendar: calendar) : nil))
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
@@ -223,13 +240,28 @@ extension RowingSnapshot {
         return Int((sun.sunset.timeIntervalSince(from) / 3600).rounded(.up))
     }
 
+    /// The daylight hours of `day` before `first` (the day's first forecast hour), from the
+    /// day's sunrise: the hours of today that are gone before the forecast starts.
+    private func earlierHours(before first: Date, on day: Date, calendar: Calendar) -> Int {
+        guard let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }),
+              let rise = calendar.dateInterval(of: .hour, for: sun.sunrise)?.start, first > rise else { return 0 }
+        return Int((min(first, sun.sunset).timeIntervalSince(rise) / 3600).rounded(.up))
+    }
+
+    private func hourOfDay(_ time: Date, calendar: Calendar) -> Double {
+        let parts = calendar.dateComponents([.hour, .minute], from: time)
+        return Double(parts.hour ?? 0) + Double(parts.minute ?? 0) / 60
+    }
+
     /// The first stretch of at least an hour of green from now on, "Now–15:00" or "11:00–15:00".
+    /// The running hour counts whole: at 14:56 a green 14:00 hour still reads "Now–15:00",
+    /// as the light at the top says "Good, until 15:00" (owner, 15 Nov 2026).
     private func goodStretch(_ hours: [ForecastHour]) -> String? {
         var start: Date?
         var end: Date?
         for hour in hours where hour.time.addingTimeInterval(3600) > date {
             if hour.light == .green {
-                if start == nil { start = max(hour.time, date) }
+                if start == nil { start = hour.time }
                 end = hour.time.addingTimeInterval(3600)
             } else if let s = start, let e = end {
                 if e.timeIntervalSince(s) >= 3600 { break }
@@ -573,7 +605,11 @@ extension RowingWidgetView {
         // At night the dark hours after "Now" fold into one column up to sunrise, as in the
         // app's 48-hour table (owner pick B, 15 Nov 2026), so the row reaches the morning.
         let columns = snapshot.hourColumns(count)
-        return Grid(horizontalSpacing: 0, verticalSpacing: big ? fit.rowGap : 4) {
+        let gap = big ? fit.rowGap : 4
+        // The last row closes the night band.
+        let dotsLast = !temperature && lines.isEmpty
+        let temperatureLast = temperature && lines.isEmpty
+        return Grid(horizontalSpacing: 0, verticalSpacing: gap) {
             GridRow {
                 if legend { Color.clear.frame(width: 0, height: 0) }
                 ForEach(Array(columns.enumerated()), id: \.element.id) { index, column in
@@ -588,6 +624,7 @@ extension RowingWidgetView {
                     .minimumScaleFactor(0.7)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity)
+                    .background(nightBand(column, .top, gap: gap))
                 }
             }
             GridRow {
@@ -603,6 +640,7 @@ extension RowingWidgetView {
                     .font(big ? .title3 : .subheadline)
                     .frame(height: big ? fit.skyHeight : 20)
                     .frame(maxWidth: .infinity)
+                    .background(nightBand(column, .middle, gap: gap))
                 }
             }
             GridRow {
@@ -615,6 +653,7 @@ extension RowingWidgetView {
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .background(nightBand(column, dotsLast ? .bottom : .middle, gap: gap))
                 }
             }
             if temperature {
@@ -630,6 +669,7 @@ extension RowingWidgetView {
                             text
                                 .font((big ? Font.subheadline : .caption).weight(.semibold))
                                 .frame(maxWidth: .infinity)
+                                .background(nightBand(column, temperatureLast ? .bottom : .middle, gap: gap))
                         } else {
                             text
                                 .font(.caption2)
@@ -638,6 +678,7 @@ extension RowingWidgetView {
                                 .minimumScaleFactor(0.7)
                                 .modifier(TintedIf(color: column.hour.flatMap { tint(Condition.temperature.cause(in: $0)) }))
                                 .frame(maxWidth: .infinity)
+                                .background(nightBand(column, temperatureLast ? .bottom : .middle, gap: gap))
                         }
                     }
                 }
@@ -653,19 +694,40 @@ extension RowingWidgetView {
                             .minimumScaleFactor(0.7)
                             .modifier(TintedIf(color: column.hour.flatMap { tint(line.condition.cause(in: $0)) }))
                             .frame(maxWidth: .infinity)
+                            .background(nightBand(column, line == lines.last ? .bottom : .middle, gap: gap))
                     }
                 }
             }
         }
     }
 
-    /// The night column's dot: plain, no rowing in the dark.
+    /// The night column's dot: red, as the night hours in the app's 48-hour table (no rowing
+    /// in the dark), dimmed, with the ✕ when the widget shows marks (owner's pick, 15 Nov 2026).
     private func nightDot(_ night: NightFold.Night, until: Date, size: CGFloat) -> some View {
-        Circle()
-            .fill(plain ? Color.secondary.opacity(0.35) : Color.white.opacity(0.3))
-            .frame(width: size, height: size)
-            .accessibilityElement()
+        lightDot(.red, size: size, hour: true)
+            .opacity(snapshot.isStale ? 1 : 0.6)
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel(String(format: tr("Night until %@"), Format.time(until)))
+    }
+
+    /// Where a cell sits in the night column's band, for its rounded ends.
+    enum BandEdge { case top, middle, bottom }
+
+    /// The night column's indigo band behind its cells, as the app's folded night line;
+    /// it reaches over the gaps between the rows, so the column reads as one.
+    private func nightBand(_ column: WidgetHourColumn, _ edge: BandEdge, gap: CGFloat) -> some View {
+        Group {
+            if case .night = column {
+                UnevenRoundedRectangle(topLeadingRadius: edge == .top ? 6 : 0, bottomLeadingRadius: edge == .bottom ? 6 : 0,
+                                       bottomTrailingRadius: edge == .bottom ? 6 : 0, topTrailingRadius: edge == .top ? 6 : 0,
+                                       style: .continuous)
+                    .fill(Color.indigo.opacity(plain ? 0.14 : 0.32))
+                    .padding(.top, edge == .top ? -2 : -gap / 2)
+                    .padding(.bottom, edge == .bottom ? -2 : -gap / 2)
+                    .padding(.horizontal, 1)
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     /// The legend's symbol and unit at the start of an hour line.

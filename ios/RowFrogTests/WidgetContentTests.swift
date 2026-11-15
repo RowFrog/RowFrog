@@ -156,6 +156,26 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertEqual(whole?.missing, 0)
     }
 
+    /// At 14:56 the green 14:00 hour still counts whole, as the light at the top says
+    /// "Good, until 15:00" (owner, 15 Nov 2026: the bar said "Not good").
+    func testARunningGreenHourCountsAsGood() {
+        let late = snapshot([hour(0), hour(1, .amber), hour(2, .red)], at: start.addingTimeInterval(56 * 60))
+        XCTAssertEqual(late.days(1).first?.good, "\(tr("Now"))–\(Format.time(start.addingTimeInterval(3600)))")
+    }
+
+    /// Today's hours gone before the forecast starts keep their place, faint, so the
+    /// bar keeps its length; all days share one clock axis (owner's pick B, 15 Nov 2026).
+    func testTodaysGoneHoursKeepTheirPlaceOnTheClockAxis() {
+        let sun = [SunDay(sunrise: start.addingTimeInterval(-3 * 3600 + 600), sunset: start.addingTimeInterval(2.5 * 3600))]
+        let day = snapshot([hour(0), hour(1), hour(2)], at: start.addingTimeInterval(1800), daylight: sun).days(1).first
+        XCTAssertEqual(day?.earlier, 3)
+        XCTAssertEqual(day?.slots, 6)
+        let first = Calendar.current.component(.hour, from: start.addingTimeInterval(-3 * 3600))
+        XCTAssertEqual(day?.firstHour, first)
+        let now = Calendar.current.dateComponents([.hour, .minute], from: start.addingTimeInterval(1800))
+        XCTAssertEqual(day?.now, Double(now.hour ?? 0) + Double(now.minute ?? 0) / 60)
+    }
+
     func testAnOutOfDateForecastHasNoGoodStretch() {
         let late = snapshot((0..<8).map { hour($0) }, at: start.addingTimeInterval(4 * 3600))
         XCTAssertNil(late.days(1).first?.good)
