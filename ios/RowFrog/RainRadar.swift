@@ -951,8 +951,10 @@ struct RainOutlook {
             if let heavier {
                 return (tr("Heavier from %@", Format.time(heavier.time)), true)
             }
-            if let dry = hours.first(where: { $0.time >= radar.end && ($0.precipitationMm ?? 0) < 0.1 }) {
-                return (tr("Until about %@", Format.time(dry.time)), false)
+            // A forecast row holds the hour before its time stamp, so the dry
+            // hour of the 15:00 row starts at 14:00, but not before the radar's end.
+            if let dry = hours.first(where: { $0.time > radar.end && ($0.precipitationMm ?? 0) < 0.1 }) {
+                return (tr("Until about %@", Format.time(max(dry.time.addingTimeInterval(-3600), radar.end))), false)
             }
             return (tr("No end in sight"), false)
         }

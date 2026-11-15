@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ahead, rainOutlook, rainLines, skyNow, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers, radarTitleMark, radarStatus } from "../public/app/radar.js";
 import { conditionData } from "../public/app/values.js";
+import { time } from "../public/app/shared.js";
 
 const MIN = 60000;
 const now = Math.floor(Date.now() / (5 * MIN)) * 5 * MIN;
@@ -49,6 +50,21 @@ test("the tile's lines: the radar for two hours, the forecast after them", () =>
   assert.equal(wet.fromRadar, true);
   // Without the radar, the forecast as before.
   assert.equal(rainLines(conditionData(forecast, forecast.hours[0])).value, "Dry");
+});
+
+test("forecast rain starts an hour before its row, never before the radar's end", () => {
+  // Open-Meteo's amount at 15:00 is the rain from 14:00 to 15:00 (owner's pick, 15 Nov 2026).
+  const H = Math.floor(now / 3600000) * 3600000;
+  const forecast = { hours: [hour(0), hour(1), hour(2), hour(3, 0, 61), hour(4, 0.5, 61), hour(5), hour(6)] };
+  const plain = rainLines(conditionData(forecast, forecast.hours[0]));
+  assert.equal(plain.detail, `Rain from ${time(H + 2 * 3600000)}`);
+  // A dry radar to now + 2 h: the row's rain starts where the radar stops looking.
+  const radared = rainLines(conditionData(forecast, forecast.hours[0], radar([0, 0, 0, 0, 0, 0, 0, 0, 0])));
+  assert.equal(radared.detail, `Rain from ${time(now + 120 * MIN)}`);
+  // Raining to the radar's end: the first dry row's hour starts an hour before its time.
+  const wet = { hours: [hour(0, 1, 61), hour(1, 1, 61), hour(2, 1, 61), hour(3, 1, 61), hour(4), hour(5)] };
+  const until = rainOutlook(radar([1, 1, 1, 1, 1, 1, 1, 1, 1]), wet.hours);
+  assert.equal(until.next.text, `Until about ${time(H + 3 * 3600000)}`);
 });
 
 test("drizzle under 0.1 mm is named, never called dry beside its symbol", () => {
