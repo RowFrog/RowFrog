@@ -369,7 +369,7 @@ const BUILDERS = {
     // Drizzle under 0.1 mm is named, as on the tiles, never called dry beside its symbol.
     const trace = traceKind(x);
     let value = wet ? rain(x.precipitationMm) : trace ? t(trace) : t("Dry");
-    let note = wet ? (kind ? t(kind) : "") : trace ? traceNote() : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h");
+    let note = wet ? (kind ? t(kind) : "") : trace ? traceNote() : first ? (first.from <= d.moment.getTime() ? t("Expected this hour") : t("Expected from %@", dayTime(first.from))) : t("Dry next 24 h");
     let big = "";
     const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
     let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");

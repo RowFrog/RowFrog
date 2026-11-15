@@ -12,6 +12,7 @@ import { closeTip } from "./tour.js";
 export const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
 const LAYER = "dwd:Niederschlagsradar";
 const MIN = 60000;
+const HOUR = 60 * MIN;
 /** mm/h; less is noise or drizzle that does not count. */
 export const RAIN_FROM = 0.1;
 export const RADAR_CREDIT = key("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0");
@@ -227,8 +228,9 @@ export function rainOutlook(r, hours) {
     else if (heavier) next = { text: t("Heavier from %@", time(heavier.time)), fromRadar: true };
     else {
       const end = radarEnd(r);
-      const after = hours.find((x) => Date.parse(x.time) >= end && (x.precipitationMm ?? 0) < 0.1);
-      next = { text: after ? t("Until about %@", time(after.time)) : t("No end in sight"), fromRadar: false };
+      // A forecast row holds the hour before its time stamp, so the dry hour of the 15:00 row starts at 14:00, but not before the radar's end.
+      const after = hours.find((x) => Date.parse(x.time) > end && (x.precipitationMm ?? 0) < 0.1);
+      next = { text: after ? t("Until about %@", time(Math.max(Date.parse(after.time) - HOUR, end))) : t("No end in sight"), fromRadar: false };
     }
   } else if (wet) {
     next = { text: t("%@ from %@", kind(wet.time), time(wet.time)), fromRadar: true };
@@ -262,11 +264,18 @@ export function skyNow(d) {
   return wet && !traceKind(hour) ? sky(null, hour.cloudCoverPct, 0) : model;
 }
 
-/** The first forecast hour with rain after the radar's two hours (or from the shown hour without radar). */
+/**
+ * The first forecast hour with rain after the radar's two hours (or after the shown moment without
+ * radar), and when that rain starts (ConditionData.forecastRain). Open-Meteo's amount is the sum of
+ * the hour before the time stamp, so the rain of the 14:00 row starts at 13:00, but never before the
+ * radar's end (owner's pick, 15 Nov 2026).
+ */
 export function forecastRain(d) {
   const a = radarAhead(d);
-  const after = a ? radarEnd(a) : -Infinity;
-  return d.next24.find((x) => wetHour(x) && Date.parse(x.time) >= after) ?? null;
+  const after = a ? radarEnd(a) : d.moment.getTime();
+  const hour = d.next24.find((x) => wetHour(x) && Date.parse(x.time) > after);
+  // Without radar a start in the running hour stays at the hour's start; the lines then say "this hour".
+  return hour ? { hour, from: a ? Math.max(Date.parse(hour.time) - HOUR, after) : Date.parse(hour.time) - HOUR } : null;
 }
 
 /**
@@ -288,7 +297,10 @@ const trace = (hour) => ({ value: t(kindOf(hour)), detail: traceNote(), fromRada
 export function rainLines(d) {
   const later = () => {
     const wet = forecastRain(d);
-    return wet ? t("%@ from %@", t(kindOf(wet) ?? "Rain"), time(wet.time)) : t("Dry next 24 h");
+    if (!wet) return t("Dry next 24 h");
+    const kind = t(kindOf(wet.hour) ?? "Rain");
+    // An hour that has begun has no start to name (owner's pick, 15 Nov 2026).
+    return wet.from <= d.moment.getTime() ? t("%@ this hour", kind) : t("%@ from %@", kind, time(wet.from));
   };
   const a = radarAhead(d);
   if (a) {

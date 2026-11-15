@@ -115,6 +115,37 @@ final class RainRadarTests: XCTestCase {
         XCTAssertTrue(data(later).rainLines.detail.hasPrefix("Drizzle from "), data(later).rainLines.detail)
     }
 
+    /// Open-Meteo's amount at 23:00 is the rain from 22:00 to 23:00, so the forecast's
+    /// rain starts an hour before its row, but never before the radar's end (owner's pick, 15 Nov 2026).
+    func testForecastRainStartsAnHourBeforeItsRowNeverBeforeTheRadarsEnd() {
+        func data(_ hours: [ForecastHour], radar values: [Double]? = nil) -> ConditionData {
+            let forecast = ClubForecast(
+                clubId: "mrc-1880", lakeId: "starnberger-see", generatedAt: hours[0].time, waterTemperature: nil,
+                attribution: [], daylight: nil, hours: hours
+            )
+            return ConditionData(forecast: forecast, now: hours[0], radar: values.map(radar))
+        }
+        var later = hours(code: 3, mm: [0, 0, 0, 0, 0, 0])
+        later[3].weatherCode = 61
+        later[3].precipitationMm = 0.5
+        let rowStart = later[3].time.addingTimeInterval(-3600)
+        XCTAssertEqual(data(later).forecastRain?.from, rowStart)
+        XCTAssertEqual(data(later).rainLines.detail, tr("%@ from %@", tr("Rain"), Format.time(rowStart)))
+        // A rain hour that has begun names no past time.
+        var begun = hours(code: 3, mm: [0, 0, 0, 0])
+        begun[1].weatherCode = 61
+        begun[1].precipitationMm = 0.3
+        XCTAssertEqual(data(begun).rainLines.detail, tr("%@ this hour", tr("Rain")))
+        // A dry radar to 22:30: the row's rain starts where the radar stops looking.
+        let radared = data(later, radar: [0, 0, 0, 0, 0, 0, 0, 0, 0])
+        XCTAssertEqual(radared.forecastRain?.from, radared.radarAhead?.end)
+        XCTAssertEqual(radared.rainLines.detail, tr("%@ from %@", tr("Rain"), Format.time(radared.radarAhead!.end)))
+        // Raining past the radar: the first dry row's hour starts an hour before its time.
+        let rain = hours(code: 61, mm: [1, 1, 1, 1, 0])
+        let long = RainOutlook(radar: radar([0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]), hours: rain)
+        XCTAssertEqual(long.next?.text, tr("Until about %@", Format.time(rain[3].time)))
+    }
+
     @MainActor
     func testAFailedRadarReadIsTriedAgainSoonThenAtTheUsualPace() {
         XCTAssertEqual(RadarStore.retryDelay(after: 1), 30)
