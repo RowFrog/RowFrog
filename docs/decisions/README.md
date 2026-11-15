@@ -59,3 +59,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 36 | 2026-11-14 | [Wind, waves and visibility under the hours in the large widgets](0036-widget-hour-lines.md) |
 | 37 | 2026-11-14 | [App and website detail check: the owner's picks](0037-app-web-detail-check-picks.md) |
 | 38 | 2026-11-14 | [Routes reach the browser by link first, GPX export second](0038-route-links-and-gpx-export.md) |
+| 39 | 2026-11-15 | [One update time, the model run by its name, "Now" for the running hour](0039-times-on-the-club-page.md) |

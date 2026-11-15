@@ -14,7 +14,7 @@ enum ForecastStatus: Equatable {
     case loading
     /// Nothing to show, and loading failed: the reason and Try again.
     case noForecast(RefreshFailure)
-    /// Shown and fresh: "Forecast from … · loaded …".
+    /// Shown and fresh: "Model run … UTC · updated …".
     case current
     /// Shown, and a newer one is on its way.
     case updating

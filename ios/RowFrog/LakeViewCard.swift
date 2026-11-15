@@ -83,7 +83,8 @@ struct LakeViewCard: View {
 
     private func summary(_ view: LakeView, _ hour: LakeHour) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(tr("Now, %@", Format.time(hour.time)))
+            // The running hour; its start time read like a wrong clock (decision 0039).
+            Text(tr("Now"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Text(view.headline(for: hour))

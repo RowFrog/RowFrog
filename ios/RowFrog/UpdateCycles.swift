@@ -4,6 +4,8 @@ import SwiftUI
 /// renewed (owner, 6 Nov 2026: kept out of the crowded header).
 struct UpdateCyclesButton: View {
     let forecast: ClubForecast
+    /// When this phone loaded the file, shown in the sheet (decision 0039).
+    var loaded: Date? = nil
     @Environment(\.isCurrentPage) private var isCurrentPage
     @Environment(\.surface) private var surface
     @State private var showing = false
@@ -18,7 +20,7 @@ struct UpdateCyclesButton: View {
                 .cardBackground(surface, cornerRadius: 18)
         }
         .sheet(isPresented: $showing) {
-            UpdateCyclesSheet(run: forecast.weatherRun, checked: forecast.generatedAt)
+            UpdateCyclesSheet(run: forecast.weatherRun, checked: forecast.generatedAt, loaded: loaded)
         }
         // Screenshot hook: `-RWOpenUpdates YES` opens the sheet on the page in front.
         .task {
@@ -37,6 +39,8 @@ struct UpdateCyclesSheet: View {
     let run: WeatherRun?
     /// When the server last built this club's file (warnings, water, gauges).
     let checked: Date
+    /// When this phone loaded the file, when known.
+    var loaded: Date? = nil
     @Environment(\.dismiss) private var dismiss
 
     struct Cycle: Identifiable {
@@ -90,11 +94,14 @@ struct UpdateCyclesSheet: View {
             List {
                 Section {
                     if let run {
-                        Text(tr("This forecast: model run of %@, ready at %@.", Format.time(run.started), Format.time(run.available)))
+                        Text(tr("This forecast: model run %@ UTC (started %@), ready at %@.", LocationPageView.runHour(run.started), Format.time(run.started), Format.time(run.available)))
                     } else {
                         Text(tr("This forecast was built at %@.", Format.time(checked)))
                     }
                     Text(tr("Warnings, water and gauges checked at %@.", Format.time(checked)))
+                    if let loaded {
+                        Text(tr("Loaded on this device at %@.", Format.time(loaded)))
+                    }
                 } footer: {
                     Text(tr("The server renews the clubs you use every 30 minutes; your phone loads them when you open or come back to the app, or pull down."))
                 }

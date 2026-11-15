@@ -778,9 +778,6 @@ struct ClubForecast: Codable, Hashable {
     /// and when the server could not ask Open-Meteo.
     var weatherRun: WeatherRun? = nil
 
-    /// When the weather in this forecast came out: the model run's arrival, or
-    /// without it when the server built the file.
-    var forecastTime: Date { weatherRun?.available ?? generatedAt }
     /// Without a station, for lakes the satellites see; missing from older backends.
     var waterEstimate: WaterEstimate? = nil
     /// Without a station or a recent satellite reading: worked out from the air
