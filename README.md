@@ -532,7 +532,7 @@ or FIT), value pages with chart and weather map, the satellite picture with its
 layers, browsing by country and adding a place, Arrange this page, units,
 appearance, background pictures, the tour (on a first visit with the
 home base and more clubs to pick, as in the app) and the tips, the River and Canal view with the Current tile, and the rain radar in
-the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser.
+the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser. Added to the Home Screen, it opens straight on the forecasts, without the welcome page.
 
 ## Layout
 
