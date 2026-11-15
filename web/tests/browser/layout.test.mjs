@@ -99,6 +99,10 @@ const LAYOUTS = [
   { name: "computer small", viewport: { width: 700, height: 800 } },
   { name: "computer wide", viewport: { width: 1400, height: 1000 }, wide: true },
   { name: "computer very wide", viewport: { width: 2000, height: 1125 }, wide: true },
+  // Added to the Home Screen (owner, 14 Nov 2026): no Safari bars, so the page runs under the clock and the
+  // home bar, and keeps its buttons clear of both (safe-area insets of an iPhone 17 and an iPad Air 11").
+  { name: "phone Home Screen app", viewport: { width: 402, height: 874 }, touch: true, home: { top: 62, bottom: 34 } },
+  { name: "tablet Home Screen app", viewport: { width: 820, height: 1180 }, touch: true, home: { top: 24, bottom: 20 } },
 ];
 
 async function openIn(layout) {
@@ -115,7 +119,23 @@ async function openIn(layout) {
       for (const [k, v] of Object.entries(entries)) localStorage.setItem(k, JSON.stringify(v));
     }
   }, [`${base}/v1`, visitor()]);
+  if (layout.home) await homeScreen(context, page, layout.home);
   return { page, errors, context };
+}
+
+/**
+ * The page as a Home Screen web app: the clock's and home bar's safe-area insets (Chromium's override), and
+ * navigator.standalone with (display-mode: standalone) as Safari reports them there (web/public/start.js).
+ */
+async function homeScreen(context, page, insets) {
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: insets.top, bottom: insets.bottom, left: 0, right: 0 } });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "standalone", { value: true });
+    const match = window.matchMedia.bind(window);
+    window.matchMedia = (query) => /display-mode:\s*standalone/.test(query)
+      ? Object.assign(match("all"), { media: query, matches: true }) : match(query);
+  });
 }
 
 /** Where the bars' buttons, the big name and the list's buttons are, read in the page. */
@@ -153,6 +173,11 @@ function check(at, layout, state) {
   for (const b of [...at.bars, ...at.dialogs]) {
     assert.ok(b.top >= -0.5 && b.bottom <= at.height + 0.5 && b.left >= -0.5 && b.right <= at.width + 0.5,
       `${where}: "${b.label}" leaves the window (${Math.round(b.left)},${Math.round(b.top)} to ${Math.round(b.right)},${Math.round(b.bottom)})`);
+  }
+  // As a Home Screen app the buttons stay clear of the clock and the home bar.
+  if (layout.home) for (const b of at.bars) {
+    assert.ok(b.top >= layout.home.top - 0.5 && b.bottom <= at.height - layout.home.bottom + 0.5,
+      `${where}: "${b.label}" runs under the ${b.top < layout.home.top ? "clock" : "home bar"} (${Math.round(b.top)} to ${Math.round(b.bottom)})`);
   }
   // The bar's glass spans the whole area beside the list, edge to edge, never just the page's column (owner, 12 Nov 2026).
   if (at.bar) {
@@ -204,6 +229,8 @@ for (const layout of LAYOUTS) {
     await page.locator(".title-row h1").waitFor();
     await page.waitForTimeout(300);
     await checkSettled(page, layout, "loaded");
+    // For the screenshot matrix: RF_SHOTS=<folder> keeps a picture of each layout as loaded.
+    if (process.env.RF_SHOTS) await page.screenshot({ path: join(process.env.RF_SHOTS, `layout-${layout.name.replaceAll(" ", "-")}.png`) });
     for (const y of [40, 400]) {
       await page.evaluate((y) => scrollTo(0, y), y);
       await page.waitForTimeout(150);
