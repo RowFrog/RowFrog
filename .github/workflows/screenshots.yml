@@ -12,7 +12,7 @@ name: App screenshots
 # The shots of each run are also pushed as one commit with no history to the
 # branch screenshots/<branch>, replaced on every run and deleted once <branch>
 # is gone, so cloud threads that cannot reach the download can read them with
-# git (owner, 15 Nov 2026): git fetch --depth 1 origin screenshots/<branch>
+# git (owner, 15 Nov 2026): git fetch --depth 1 origin refs/heads/screenshots/<branch>
 # && git archive FETCH_HEAD | tar -x -C <folder>. No workflow runs on those branches.
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
@@ -731,6 +731,8 @@ jobs:
           # The radar line: rain on DWD's radar within two hours replaces the wind under a green light.
           shoot 123-widgets-radar light -RWWidgetGallery YES -RWWidgetRadar YES
           shoot_pages 34-widgets-night-german dark -RWWidgetGallery YES -RWWidgetNight YES -RWLanguage de
+          # At 14:56: today's day bar with its gone hours faint and the tick at now.
+          shoot_pages 35-widgets-afternoon-german dark -RWWidgetGallery YES -RWWidgetAfternoon YES -RWLanguage de
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

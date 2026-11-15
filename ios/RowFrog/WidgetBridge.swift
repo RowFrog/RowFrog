@@ -190,7 +190,7 @@ struct WidgetGalleryView: View {
                 if failed {
                     Text("The forecast could not be loaded.").foregroundStyle(.secondary)
                 }
-                let snapshot = galleryNight ? nightSnapshot
+                let snapshot = galleryNight ? nightSnapshot : galleryAfternoon ? afternoonSnapshot
                     : RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: forecast)
                 caption(sizes.name)
                 // Each size in its layouts (Edit Widget > Layout): fewer values first, the default.
@@ -272,6 +272,17 @@ struct WidgetGalleryView: View {
         var shifted = forecast
         shifted?.generatedAt = night.addingTimeInterval(-30 * 60)
         return RowingSnapshot(date: night, clubName: "MRC 1880", isHome: true, forecast: shifted)
+    }
+
+    /// `-RWWidgetAfternoon YES`: every widget as at 14:56 (today's, else tomorrow's), to show
+    /// today's day bar with its gone hours faint and the tick at now (owner, 15 Nov 2026).
+    private var galleryAfternoon: Bool { UserDefaults.standard.bool(forKey: "RWWidgetAfternoon") }
+
+    private var afternoonSnapshot: RowingSnapshot {
+        let afternoon = Calendar.current.nextDate(after: .now, matching: DateComponents(hour: 14, minute: 56), matchingPolicy: .nextTime) ?? .now
+        var shifted = forecast
+        shifted?.generatedAt = afternoon.addingTimeInterval(-25 * 60)
+        return RowingSnapshot(date: afternoon, clubName: "MRC 1880", isHome: true, forecast: shifted)
     }
 
     /// The picture WidgetBridge.preparePictures writes for the satellite background, with the club's place.
