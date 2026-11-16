@@ -96,6 +96,13 @@ jobs:
         run: |
           (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
+          # When a warm-up call fails, show why: the backend's own warnings and
+          # one direct call to Open-Meteo (a 429 there = the runner's address is
+          # over Open-Meteo's limit, not a fault in the app).
+          trap 'if [ $? -ne 0 ]; then
+            echo "::group::Backend warnings"; grep -iE "warning|error|open-meteo" uvicorn.log | tail -40; echo "::endgroup::"
+            curl -sS -m 30 -o /dev/null -w "Open-Meteo direct: HTTP %{http_code}\n" "https://api.open-meteo.com/v1/forecast?latitude=47.9&longitude=11.3&hourly=precipitation&forecast_hours=1" || true
+          fi' EXIT
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
           for club in mrc-1880 mrsv-bayern tutzinger-rv akademischer-ruderclub-wuerzburg seeclub-zuerich ruderverein-albatros-klagenfurt; do
