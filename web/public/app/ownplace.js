@@ -61,6 +61,22 @@ export function daylight(start, days, isDay) {
   return [worst === "amber" ? "twilight" : "daylight", worst, sunUp];
 }
 
+/**
+ * As the backend's open_meteo.rain_to_hour_start (decision 0043; OwnPlaces.rainAtHourStart): Open-Meteo's
+ * precipitation at a time stamp is the hour before it, so each hour takes the next row's amount, and a
+ * weather code that names something falling (51 on) moves with it. The last row has no amount.
+ */
+export function rainAtHourStart(times, rain, codes) {
+  const out = { rain: [], codes: [] };
+  times.forEach((t, i) => {
+    const next = i + 1 < times.length && times[i + 1] - t === 3600e3 ? i + 1 : null;
+    const nextCode = next == null ? null : codes[next];
+    out.rain.push(next == null ? null : rain[next]);
+    out.codes.push(nextCode != null && nextCode >= 51 ? nextCode : codes[i] != null && codes[i] >= 51 ? nextCode : codes[i]);
+  });
+  return out;
+}
+
 /** The hours in the backend's forecast format, so the club page shows them like any club's. */
 export function ownForecast(club, payload, now = new Date()) {
   const hr = payload.hourly ?? {};
@@ -68,6 +84,7 @@ export function ownForecast(club, payload, now = new Date()) {
   const times = (hr.time ?? []).map((x) => Date.parse(`${x}Z`));
   const { lat, lon } = club.launchPoint;
   const days = times.length ? sunDays(times[0], times[times.length - 1], lat, lon) : [];
+  const { rain, codes } = rainAtHourStart(times, times.map((_, i) => at("precipitation", i)), times.map((_, i) => at("weather_code", i)));
   const hours = times.map((start, i) => {
     const wind = at("wind_speed_10m", i);
     const gust = at("wind_gusts_10m", i);
@@ -78,7 +95,7 @@ export function ownForecast(club, payload, now = new Date()) {
     const add = (condition, light) => light !== "green" && reasons.push({ condition, light });
     add("wind", rising(wind ?? 0, T.windAmber, T.windRed));
     add("gusts", rising(gust ?? 0, T.gustAmber, T.gustRed));
-    add("thunderstorm", thunderstorm(at("cape", i), at("precipitation", i)));
+    add("thunderstorm", thunderstorm(at("cape", i), rain[i]));
     add(daylightName, daylightLight);
     if (visibility != null) {
       if (visibility < T.visibilityRed) add("fog", "red");
@@ -89,7 +106,7 @@ export function ownForecast(club, payload, now = new Date()) {
       time: new Date(start).toISOString(), light: reasons[0]?.light ?? "green", reasons,
       windSpeedMs: wind, windGustMs: gust, windFromDeg: at("wind_direction_10m", i), waveHeightM: null, fetchM: null,
       visibilityM: visibility, temperatureC: at("temperature_2m", i), cloudCoverPct: at("cloud_cover", i), sunUp,
-      precipitationMm: at("precipitation", i), weatherCode: at("weather_code", i),
+      precipitationMm: rain[i], weatherCode: codes[i],
       apparentTemperatureC: at("apparent_temperature", i), humidityPct: at("relative_humidity_2m", i),
       dewPointC: at("dew_point_2m", i), pressureHpa: at("pressure_msl", i), capeJkg: at("cape", i),
     };

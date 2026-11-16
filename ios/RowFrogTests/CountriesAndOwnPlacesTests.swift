@@ -128,6 +128,10 @@ final class CountriesAndOwnPlacesTests: XCTestCase {
         XCTAssertEqual(forecast.hours[2].reasons.map(\.condition), ["daylight"])  // 22:00 UTC is dark in Bavaria
         XCTAssertNil(forecast.hours[0].waveHeightM)
         XCTAssertFalse(forecast.daylight?.isEmpty ?? true)
+        // The 11:00 row's rain and thunderstorm fell from 10:00 to 11:00 (decision 0043);
+        // 11:00 has no next hour in this list, so no amount.
+        XCTAssertEqual(forecast.hours.map(\.precipitationMm), [2, nil, nil])
+        XCTAssertEqual(forecast.hours.map(\.weatherCode), [95, nil, 0])
     }
 
     func testSunTimesMatchTheBackend() throws {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ownForecast, sunDay, daylight, isOwn } from "../public/app/ownplace.js";
+import { ownForecast, sunDay, daylight, isOwn, rainAtHourStart } from "../public/app/ownplace.js";
 import { countryRows, rowMatches, inCountry } from "../public/app/countries.js";
 import { nearestWater } from "../public/app/addplace.js";
 
@@ -36,6 +36,15 @@ test("an own place's hours get the backend's rowing light", () => {
   assert.deepEqual(f.hours[1].reasons.map((r) => r.condition), ["wind", "gusts", "fog"]);
   assert.deepEqual(f.hours[2].reasons.map((r) => r.condition), ["wind", "gusts", "thunderstorm"]);
   assert.ok(isOwn(club.id) && !isOwn("mrc-1880"));
+  // Each hour's rain is the next row's, as the backend does it (decision 0043).
+  assert.deepEqual(f.hours.map((x) => x.precipitationMm), [0, 2, null]);
+});
+
+test("an own place's rain and falling weather code move to the hour they fell in", () => {
+  const t = [10, 11, 12, 14].map((h) => Date.UTC(2026, 10, 16, h));
+  const { rain, codes } = rainAtHourStart(t, [0, 0.8, 0, 1], [3, 61, 2, 63]);
+  assert.deepEqual(rain, [0.8, 0, null, null]);
+  assert.deepEqual(codes, [61, 2, 2, null]);
 });
 
 const lakes = [
