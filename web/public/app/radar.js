@@ -228,9 +228,9 @@ export function rainOutlook(r, hours) {
     else if (heavier) next = { text: t("Heavier from %@", time(heavier.time)), fromRadar: true };
     else {
       const end = radarEnd(r);
-      // A forecast row holds the hour before its time stamp, so the dry hour of the 15:00 row starts at 14:00, but not before the radar's end.
-      const after = hours.find((x) => Date.parse(x.time) > end && (x.precipitationMm ?? 0) < 0.1);
-      next = { text: after ? t("Until about %@", time(Math.max(Date.parse(after.time) - HOUR, end))) : t("No end in sight"), fromRadar: false };
+      // The first dry forecast hour that ends after the radar's end, from its start but not before the radar's end (decision 0043).
+      const after = hours.find((x) => Date.parse(x.time) + HOUR > end && (x.precipitationMm ?? 0) < 0.1);
+      next = { text: after ? t("Until about %@", time(Math.max(Date.parse(after.time), end))) : t("No end in sight"), fromRadar: false };
     }
   } else if (wet) {
     next = { text: t("%@ from %@", kind(wet.time), time(wet.time)), fromRadar: true };
@@ -265,17 +265,17 @@ export function skyNow(d) {
 }
 
 /**
- * The first forecast hour with rain after the radar's two hours (or after the shown moment without
- * radar), and when that rain starts (ConditionData.forecastRain). Open-Meteo's amount is the sum of
- * the hour before the time stamp, so the rain of the 14:00 row starts at 13:00, but never before the
- * radar's end (owner's pick, 15 Nov 2026).
+ * The first forecast hour with rain still to come after the radar's two hours (or after the shown
+ * moment without radar), and when that rain starts (ConditionData.forecastRain): the hour's own start,
+ * never before the radar's end (owner's pick, 15 Nov 2026). The backend puts each hour's rain under the
+ * hour it fell (decision 0043), so the 13:00 row is 13:00 to 14:00.
  */
 export function forecastRain(d) {
   const a = radarAhead(d);
   const after = a ? radarEnd(a) : d.moment.getTime();
-  const hour = d.next24.find((x) => wetHour(x) && Date.parse(x.time) > after);
+  const hour = d.next24.find((x) => wetHour(x) && Date.parse(x.time) + HOUR > after);
   // Without radar a start in the running hour stays at the hour's start; the lines then say "this hour".
-  return hour ? { hour, from: a ? Math.max(Date.parse(hour.time) - HOUR, after) : Date.parse(hour.time) - HOUR } : null;
+  return hour ? { hour, from: Math.max(Date.parse(hour.time), a ? after : -Infinity) } : null;
 }
 
 /**
