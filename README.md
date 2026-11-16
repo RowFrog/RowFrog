@@ -323,7 +323,11 @@ often data is updated". The website shows the same header and sheet, and loads t
 its tab after more than 10 minutes (it has no Refresh button).
 
 **Data use.** Forecasts that have not changed are not downloaded again, and
-the club list is kept on the phone for a day. With "Save mobile data" on
+the club list is kept on the phone for a day. Each club's last forecast is kept
+too: after a fresh start, or without internet, it shows at once with
+"Updating…", and stays with "Could not update: …" when the download fails
+(the app gives up after 15 s without data, the website after 20 s; the
+website does the same on its club pages and list, `docs/decisions/0044`). With "Save mobile data" on
 (while on mobile data) or in iOS Low Data Mode, satellite pictures load only
 when tapped, the radar map steps in half hours and the radar (rain tile, top tile and
 radar card) updates every 15 minutes.
