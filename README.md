@@ -277,8 +277,9 @@ others (`backend/rowfrog/river.py`,
 **Rain radar.** The rain tile (titled "Precipitation"), the top tile's rain value and the rain detail
 view read DWD's rain radar and 2-hour nowcast for the launch point, then the
 forecast: "Light rain" now, with a line such as "Rain from 12:45" (forecast
-rain starts an hour before its row, since Open-Meteo sums the hour before the time stamp, and never before the
-radar's end, decision 0040; a small
+rain starts at its hour and never before the radar's end, decision 0040; Open-Meteo sums the hour before
+its time stamp, so the backend puts each hour's rain under the hour it fell, and the 13:00 row, the
+48 hours, the charts and the widget all mean 13:00 to 14:00, decision 0043; a small
 radar symbol marks the radar, no symbol the forecast; the symbol is struck through while the radar can't be
 loaded; it is tried again soon and on pull to refresh) and small bars, thin for
 the radar's quarter hours and paler for the forecast hours. Snow, hail,

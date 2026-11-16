@@ -17,7 +17,7 @@ import math
 import time
 from collections import deque
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import httpx
 
@@ -234,7 +234,39 @@ def parse(payload: dict) -> list[ForecastHour]:
         )
         for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa, ccm, cch, uv in rows
     ]
-    return [derive(h) for h in hours]
+    return [derive(h) for h in rain_to_hour_start(hours)]
+
+
+# WMO codes from drizzle on: something falls (51-99).
+FALLING_FROM = 51
+
+
+def rain_to_hour_start(hours: list[ForecastHour]) -> list[ForecastHour]:
+    """Puts each hour's rain under the hour it fell (decision 0043).
+
+    Open-Meteo's precipitation at a time stamp is the sum of the hour before
+    it: the 13:00 row holds the rain from 12:00 to 13:00. Everything downstream
+    (rowing light, the 48 hours, charts, widget, rain tile) reads a row as the
+    hour from its time stamp on, so the rain moves one row earlier: the 12:00
+    row then holds 12:00 to 13:00. A falling weather code (drizzle to hail) moves
+    with it, so the symbol and the amount stay together; whether Open-Meteo's
+    code describes the hour before or the moment is not documented clearly
+    (unclear, 15 Nov 2026), and following the amount keeps the tile, the
+    headline and the list in step. The last row, with no next hour, has no
+    amount and keeps only a code that names nothing falling.
+    """
+    out = []
+    for i, h in enumerate(hours):
+        nxt = hours[i + 1] if i + 1 < len(hours) and hours[i + 1].time - h.time == timedelta(hours=1) else None
+        nxt_code = nxt.weather_code if nxt else None
+        if nxt_code is not None and nxt_code >= FALLING_FROM:
+            code = nxt_code
+        elif h.weather_code is not None and h.weather_code >= FALLING_FROM:
+            code = nxt_code  # its own code named the hour before; the next row's names this one
+        else:
+            code = h.weather_code
+        out.append(replace(h, precipitation_mm=nxt.precipitation_mm if nxt else None, weather_code=code))
+    return out
 
 
 # When this many calls in a row cannot reach Open-Meteo, it counts as down and

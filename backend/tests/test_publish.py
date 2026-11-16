@@ -634,3 +634,29 @@ def test_the_run_ends_with_one_summary_line(monkeypatch):
         " · lake views 1, 0 empty, 1 older than 13 h"
     )
     api.reset_water_counts()
+
+
+def test_a_state_saved_before_0043_gets_its_rain_moved_once(tmp_path):
+    import pickle
+
+    def hour(h, mm, code):
+        return open_meteo.ForecastHour(
+            time=utc(16, h), temperature_c=5, wind_speed_ms=2, wind_gust_ms=4, wind_from_deg=0, cloud_cover_pct=90,
+            cloud_cover_low_pct=None, visibility_m=20000, precipitation_mm=mm, cape_jkg=0, is_day=True, weather_code=code,
+        )
+
+    old = [hour(12, 0.0, 3), hour(13, 0.8, 61)]
+    path = tmp_path / "state.pickle"
+    path.write_bytes(pickle.dumps({
+        "clubs": {"a": (utc(16, 11), old)}, "lakes": {"see": (utc(16, 11), 1, [old, None])}, "ice_map": (None, {}),
+        "ice_temps": {}, "outlooks": {"a": (utc(16, 11), old)},
+    }))
+    state = publish.State(path)
+    assert [h.precipitation_mm for h in state.clubs["a"][1]] == [0.8, None]
+    assert [h.weather_code for h in state.lakes["see"][2][0]] == [61, None]
+    assert state.lakes["see"][2][1] is None
+    assert state.outlooks["a"][1][0].precipitation_mm == 0.8
+    state.save()
+    # Saved again with the mark, it is not moved a second time.
+    again = publish.State(path)
+    assert [h.precipitation_mm for h in again.clubs["a"][1]] == [0.8, None]

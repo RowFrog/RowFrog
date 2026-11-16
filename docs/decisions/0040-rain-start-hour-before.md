@@ -1,7 +1,7 @@
 # 0040. Forecast rain starts an hour before its row, never before the radar's end
 
 - Date: 2026-11-15
-- Status: decided (owner, thread "Check rain start time jumping", 15 Nov 2026 12:12 CET: option 1)
+- Status: decided, the "hour before" part now done once in the backend (decision 0043); decided by the owner, thread "Check rain start time jumping", 15 Nov 2026 12:12 CET: option 1)
 - Where: `ios/RowFrog/ConditionsCard.swift` (`forecastRain`, `rainLines`, the precipitation detail's "Expected from"), `ios/RowFrog/RainRadar.swift` (`RainOutlook.next`, "Until about"); website `web/public/app/radar.js` (`forecastRain`, `rainLines`, `rainOutlook`), `values.js`
 
 ## Decision

@@ -64,14 +64,15 @@ def test_rain_and_snow_in_one_hour_is_68_or_69():
 
 def test_parse_marks_mixed_hours_only_when_rain_and_snowfall_were_asked():
     hourly = {
-        "time": ["2026-11-15T12:00", "2026-11-15T13:00"],
-        "temperature_2m": [1.0, 1.2],
-        "precipitation": [0.8, 0.5],
-        "weather_code": [61, 61],
+        "time": ["2026-11-15T12:00", "2026-11-15T13:00", "2026-11-15T14:00"],
+        "temperature_2m": [1.0, 1.2, 1.1],
+        "precipitation": [0.0, 0.8, 0.5],
+        "weather_code": [3, 61, 61],
     }
-    assert [h.weather_code for h in open_meteo.parse({"hourly": hourly})] == [61, 61]
-    asked = {**hourly, "rain": [0.5, 0.5], "snowfall": [0.21, 0.0]}
-    assert [h.weather_code for h in open_meteo.parse({"hourly": asked})] == [68, 61]
+    # Each row's rain fell in the hour before it, so the 12:00 hour gets the 13:00 row (decision 0043).
+    assert [h.weather_code for h in open_meteo.parse({"hourly": hourly})] == [61, 61, None]
+    asked = {**hourly, "rain": [0.0, 0.5, 0.5], "snowfall": [0.0, 0.21, 0.0]}
+    assert [h.weather_code for h in open_meteo.parse({"hourly": asked})] == [68, 61, None]
 
 
 def test_the_extra_cost_is_counted_per_club(monkeypatch):

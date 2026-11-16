@@ -297,6 +297,10 @@ class State:
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
+                if not saved.get("rain_at_hour_start"):
+                    # Saved before decision 0043: move their rain to the hour it fell once, as parse now does.
+                    for key in ("clubs", "lakes", "outlooks", "models"):
+                        saved[key] = {k: _rain_to_hour_start(v) for k, v in saved.get(key, {}).items()}
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
                 self.outlooks = saved.get("outlooks", {})
                 self.models = saved.get("models", {})
@@ -329,8 +333,18 @@ class State:
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
             "club_runs": self.club_runs,
+            "rain_at_hour_start": True,  # decision 0043
         }
         self.path.write_bytes(pickle.dumps(body))
+
+
+def _rain_to_hour_start(value):
+    """A saved entry with its forecast hours' rain moved to the hour it fell (open_meteo.rain_to_hour_start)."""
+    if isinstance(value, list) and value and all(isinstance(h, open_meteo.ForecastHour) for h in value):
+        return open_meteo.rain_to_hour_start(value)
+    if isinstance(value, (list, tuple)):
+        return type(value)(_rain_to_hour_start(v) for v in value)
+    return value
 
 
 async def _batched(points: list[tuple[float, float]], hourly: list[str]) -> tuple[list[list | None], list[str]]:
