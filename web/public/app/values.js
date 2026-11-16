@@ -371,7 +371,7 @@ const BUILDERS = {
     let value = wet ? rain(x.precipitationMm) : trace ? t(trace) : t("Dry");
     let note = wet ? (kind ? t(kind) : "") : trace ? traceNote() : first ? (first.from <= d.moment.getTime() ? t("Expected this hour") : t("Expected from %@", dayTime(first.from))) : t("Dry next 24 h");
     let big = "";
-    const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
+    const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", drawOffset: 0.5, points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
     let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");
     // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
     const ahead = radarAhead(d);
@@ -390,11 +390,12 @@ const BUILDERS = {
     }
     if (d.radar?.steps.length) {
       lines[0].name = t("Forecast");
-      // First in the legend, as it comes first on the chart.
+      // First in the legend, as it comes first on the chart. It hides the forecast hours whose middle
+      // (where their bar stands) lies under the radar.
       lines.unshift({
         name: t("Radar"), colour: COLOURS.indigo, kind: "bars", barWidth: 2.5,
         points: d.radar.steps.map((s) => ({ x: d.x(s.time), y: inUnit("rain", s.mm) })),
-        covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar))],
+        covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar)) - 0.5],
       });
       source += ` ${t(RADAR_CREDIT)}`;
     }

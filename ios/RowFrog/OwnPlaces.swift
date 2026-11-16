@@ -180,6 +180,10 @@ enum PlaceForecaster {
         let times = h.time.compactMap(parser.date(from:))
         let p = club.launchPoint
         let days = times.isEmpty ? [] : Sun.days(from: times[0], to: times[times.count - 1], lat: p.lat, lon: p.lon)
+        let (rain, codes) = Self.rainAtHourStart(
+            times: times, rain: times.indices.map { at(h.precipitation, $0) },
+            codes: times.indices.map { at(h.weather_code, $0).map { Int($0) } }
+        )
         let hours = times.indices.map { i -> ForecastHour in
             let wind = at(h.wind_speed_10m, i)
             let gust = at(h.wind_gusts_10m, i)
@@ -190,7 +194,7 @@ enum PlaceForecaster {
             func add(_ name: String, _ light: Light) { if light > .green { reasons.append(Reason(condition: name, light: light)) } }
             add("wind", rising(wind ?? 0, windAmber, windRed))
             add("gusts", rising(gust ?? 0, gustAmber, gustRed))
-            add("thunderstorm", thunderstorm(cape: at(h.cape, i), rain: at(h.precipitation, i)))
+            add("thunderstorm", thunderstorm(cape: at(h.cape, i), rain: rain[i]))
             add(daylightName, daylight)
             if let visibility {
                 if visibility < visibilityRed { add("fog", .red) } else if visibility <= visibilityAmber { add("fog", .amber) }
@@ -201,7 +205,7 @@ enum PlaceForecaster {
                 windSpeedMs: wind, windGustMs: gust, windFromDeg: at(h.wind_direction_10m, i),
                 waveHeightM: nil, fetchM: nil, visibilityM: visibility,
                 temperatureC: at(h.temperature_2m, i), cloudCoverPct: at(h.cloud_cover, i), sunUp: sunUp,
-                precipitationMm: at(h.precipitation, i), weatherCode: at(h.weather_code, i).map { Int($0) },
+                precipitationMm: rain[i], weatherCode: codes[i],
                 apparentTemperatureC: at(h.apparent_temperature, i),
                 humidityPct: at(h.relative_humidity_2m, i), dewPointC: at(h.dew_point_2m, i),
                 pressureHpa: at(h.pressure_msl, i), capeJkg: at(h.cape, i)
@@ -213,6 +217,28 @@ enum PlaceForecaster {
             daylight: days,
             hours: hours
         )
+    }
+
+    /// As the backend's `open_meteo.rain_to_hour_start` (decision 0043): Open-Meteo's
+    /// precipitation at a time stamp is the hour before it, so each hour takes the
+    /// next row's amount, and a weather code that names something falling (51 on)
+    /// moves with it. The last row, with no next hour, has no amount.
+    static func rainAtHourStart(times: [Date], rain: [Double?], codes: [Int?]) -> ([Double?], [Int?]) {
+        var outRain: [Double?] = []
+        var outCodes: [Int?] = []
+        for i in times.indices {
+            let next = i + 1 < times.count && times[i + 1].timeIntervalSince(times[i]) == 3600 ? i + 1 : nil
+            let nextCode = next.flatMap { codes[$0] }
+            outRain.append(next.flatMap { rain[$0] })
+            if let nextCode, nextCode >= 51 {
+                outCodes.append(nextCode)
+            } else if let own = codes[i], own >= 51 {
+                outCodes.append(nextCode)
+            } else {
+                outCodes.append(codes[i])
+            }
+        }
+        return (outRain, outCodes)
     }
 
     static func rising(_ value: Double, _ amber: Double, _ red: Double) -> Light {

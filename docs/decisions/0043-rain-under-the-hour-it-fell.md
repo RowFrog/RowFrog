@@ -2,7 +2,7 @@
 
 - Date: 2026-11-16
 - Status: decided (owner, thread "Check rain start time jumping", 16 Nov 2026 13:26 CET: option 2, "Tile, list, charts, widget")
-- Where: `backend/rowfrog/sources/open_meteo.py` (`rain_to_hour_start`, called by `parse`), `scripts/publish_static.py` (saved forecasts moved once, mark `rain_at_hour_start`); app `ios/RowFrog/ConditionsCard.swift` (`forecastRain`), `ios/RowFrog/RainRadar.swift` ("Until about"); website `web/public/app/radar.js` (`forecastRain`, `rainOutlook`)
+- Where: `backend/rowfrog/sources/open_meteo.py` (`rain_to_hour_start`, called by `parse`), `scripts/publish_static.py` (saved forecasts moved once, mark `rain_at_hour_start`); app `ios/RowFrog/ConditionsCard.swift` (`forecastRain`), `ios/RowFrog/RainRadar.swift` ("Until about"); website `web/public/app/radar.js` (`forecastRain`, `rainOutlook`); own places, which the phone and the website fetch from Open-Meteo themselves: `ios/RowFrog/OwnPlaces.swift` (`PlaceForecaster.rainAtHourStart`), `web/public/app/ownplace.js` (`rainAtHourStart`)
 
 ## Decision
 
@@ -11,6 +11,7 @@
 - The last row of a forecast has no next hour, so it has no amount (beyond the 48 hours and the night after them).
 - Schneeregen (decision 0042) is worked out per Open-Meteo row first and then moves with its rain.
 - The app and website no longer subtract an hour themselves (decision 0040's "row time minus 1 h"). "Rain from" is the wet hour's start, never before the radar's end. "Until about" is the first dry hour's start.
+- Own places skip the backend, so the app and the website make the same move when they read Open-Meteo, before the thunderstorm light combines storm energy with the hour's rain (added 16 Nov 2026 after the Website thread's parity check).
 - Forecasts the Pi saved before this change are moved once when it reads its state, so no saved forecast is moved twice and none stays an hour late.
 
 ## Why
