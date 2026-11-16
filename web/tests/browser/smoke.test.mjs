@@ -768,14 +768,11 @@ test("the Home Screen web app opens straight on the forecasts, a browser tab kee
 test("the top tile's \"For small boats\" and weather word are 12 px, the app's caption size (owner's iPhone comparison, 16 Nov 2026)", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/${club.id}`);
-  await page.locator(".now-title .boat-for").waitFor({ timeout: 20000 });
-  await page.locator(".now-sky small").waitFor({ timeout: 20000 });
-  // Read in one go once both are there: the page can draw again after the catalog arrives
-  // (refreshSavedClubs), which empties it for a moment between the waits and the reading.
-  const sizes = await (await page.waitForFunction(() => {
-    const parts = [".now-title .boat-for", ".now-sky small"].map((s) => document.querySelector(s));
-    return parts.every(Boolean) && parts.map((el) => getComputedStyle(el).fontSize);
-  }, null, { timeout: 20000 })).jsonValue();
+  // Each read waits for its element: the page may draw the top tile again (radar, refresh) in between.
+  const sizes = await page.waitForFunction(() => {
+    const read = [".now-title .boat-for", ".now-sky small"].map((s) => document.querySelector(s)).map((el) => (el?.isConnected ? getComputedStyle(el).fontSize : ""));
+    return read.every(Boolean) ? read : false;
+  }, null, { timeout: 20000 }).then((x) => x.jsonValue());
   assert.deepEqual(sizes, ["12px", "12px"]);
   assert.deepEqual(errors, []);
   await context.close();
@@ -804,6 +801,15 @@ test("a visit without internet shows the last visit's forecast at once with Upda
   // The list shows it too.
   await page.goto(`${base}/app/#/list`);
   await page.locator("#saved .row.tinted").waitFor({ timeout: 20000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a browser without the iPhone's text size setting keeps the text at 100 % (textsize.js)", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  await page.locator(".club-head h1").waitFor({ timeout: 20000 });
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.textScale), "100");
   assert.deepEqual(errors, []);
   await context.close();
 });
