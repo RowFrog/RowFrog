@@ -764,3 +764,14 @@ test("the Home Screen web app opens straight on the forecasts, a browser tab kee
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("the top tile's \"For small boats\" and weather word are 12 px, the app's caption size (owner's iPhone comparison, 16 Nov 2026)", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  await page.locator(".now-title .boat-for").waitFor({ timeout: 20000 });
+  await page.locator(".now-sky small").waitFor({ timeout: 20000 });
+  const sizes = await page.evaluate(() => [".now-title .boat-for", ".now-sky small"].map((s) => getComputedStyle(document.querySelector(s)).fontSize));
+  assert.deepEqual(sizes, ["12px", "12px"]);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
