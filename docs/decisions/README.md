@@ -60,3 +60,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 37 | 2026-11-14 | [App and website detail check: the owner's picks](0037-app-web-detail-check-picks.md) |
 | 38 | 2026-11-14 | [Routes reach the browser by link first, GPX export second](0038-route-links-and-gpx-export.md) |
 | 39 | 2026-11-15 | [One update time, the model run by its name, "Now" for the running hour](0039-times-on-the-club-page.md) |
+| 43 | 2026-11-16 | [Without internet the last forecast shows, and downloads give up sooner](0043-last-forecast-without-internet.md) |

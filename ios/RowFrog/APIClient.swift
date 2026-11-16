@@ -7,7 +7,7 @@ struct HTTPStatusError: Error {
 
 struct APIClient {
     let baseURL: URL
-    var session: URLSession = .shared
+    var session: URLSession = APIClient.session
     /// The last copy of each file, so an unchanged one is not downloaded again; nil = none.
     var cache: KeptFiles? = .shared
 
@@ -23,6 +23,18 @@ struct APIClient {
         let raw = bundle.object(forInfoDictionaryKey: "RWPublishedBaseURL") as? String ?? "https://api.rowfrog.com/v1"
         return APIClient(baseURL: URL(string: raw)!)
     }
+
+    /// The app's downloads give up after 15 seconds without a byte from the
+    /// server, and after a minute in all. The system's own default waits a
+    /// minute for each byte: on a plane's Wi-Fi that lets only messaging apps
+    /// through, the page said "Loading the forecast…" for that long (owner's
+    /// screenshot, 16 Nov 2026) instead of saying the update failed.
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 15
+        configuration.timeoutIntervalForResource = 60
+        return URLSession(configuration: configuration)
+    }()
 
     /// Made once: a new formatter for every date took most of the time to read
     /// a 10-day forecast (the speed guard's tests). The formatters are thread safe.
@@ -73,6 +85,20 @@ struct APIClient {
         let found: ClubForecast = if let model { try await get("clubs/\(clubID)/models/\(model)/forecast", keepFor: keepFor) }
             else { try await get("clubs/\(clubID)/forecast", keepFor: keepFor) }
         return found.withSampleNearby()
+    }
+
+    /// The last forecast for a club kept on the phone, however old, and when it
+    /// came (or the server last said it was unchanged); nil = none, unreadable,
+    /// or every hour of it is past. The club page shows it at start until the
+    /// download answers, and keeps it, with the reason, when the download fails:
+    /// started without internet, the app said "No forecast" although it had
+    /// one from half an hour before (owner's screenshot, 16 Nov 2026).
+    func keptForecast(clubID: String, model: String? = nil, at now: Date = .now) async -> (forecast: ClubForecast, at: Date)? {
+        let path = model.map { "clubs/\(clubID)/models/\($0)/forecast" } ?? "clubs/\(clubID)/forecast"
+        guard let kept = cache?.copy(of: baseURL.appending(path: path)),
+              let forecast = try? Self.decoder.decode(ClubForecast.self, from: kept.data),
+              let last = forecast.hours.map(\.time).max(), last > now else { return nil }
+        return (forecast.withSampleNearby(), now.addingTimeInterval(-kept.age))
     }
 
 #if !WIDGET_EXTENSION

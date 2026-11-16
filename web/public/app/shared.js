@@ -271,8 +271,16 @@ export const forBoat = (raw, clubId = pageClub) => applyLimits(raw, currentLimit
 
 // ---- Loading ---------------------------------------------------------------
 
+/**
+ * A download gives up after 20 seconds (it was 30): on a plane's Wi-Fi that lets
+ * only messaging through, the page said "Loading the forecast…" that long
+ * before saying why (owner's screenshot from the app, 16 Nov 2026; the app
+ * gives up after 15 seconds without a byte, APIClient.session).
+ */
+const READ_TIMEOUT = 20000;
+
 export async function getJSON(path) {
-  const response = await fetch(`${API}/${path}`, { cache: "no-cache", signal: AbortSignal.timeout?.(30000) });
+  const response = await fetch(`${API}/${path}`, { cache: "no-cache", signal: AbortSignal.timeout?.(READ_TIMEOUT) });
   if (!response.ok) throw Object.assign(new Error(`${response.status} ${path}`), { status: response.status });
   return response.json();
 }
@@ -380,11 +388,44 @@ export async function loadForecast(id, fresh = false) {
   try {
     const forecast = own ? await loadOwnForecast(own) : await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
     forecasts.set(id, loadable.loaded(forecast));
+    if (!own) keepForecast(id, forecast);
     return forecast;
   } catch (error) {
     // The error itself; refreshFailure() turns it into words when shown.
-    forecasts.set(id, loadable.failing(forecasts.get(id), error));
+    let state = loadable.failing(forecasts.get(id), error);
+    // Nothing loaded in this visit: the forecast kept from the last one shows, with the
+    // reason, as in the app (ForecastStore.showKept) instead of "No forecast".
+    const old = state.value || own ? null : await keptForecast(id);
+    if (old) state = { ...loadable.loaded(old.forecast, old.at), failure: error };
+    forecasts.set(id, state);
+    if (state.value) return state.value;
     throw error;
+  }
+}
+
+// ---- The last forecast per club, for a visit without internet (KeptFiles in the app) ----
+
+/** Cache Storage rather than localStorage: a forecast is about 100 KB, localStorage holds about 5 MB in all. */
+const KEPT_FORECASTS = "rf-forecasts";
+const keptKey = (id) => `${API}/clubs/${encodeURIComponent(id)}/forecast`;
+
+/** Keeps a club's forecast with the time it came; silently does nothing where the browser has no Cache Storage. */
+export async function keepForecast(id, forecast, at = Date.now()) {
+  try {
+    const box = await globalThis.caches?.open(KEPT_FORECASTS);
+    await box?.put(keptKey(id), new Response(JSON.stringify({ at, forecast }), { headers: { "Content-Type": "application/json" } }));
+  } catch {}
+}
+
+/** The last forecast kept for a club and when it came; null = none, unreadable, or every hour of it is past. */
+export async function keptForecast(id, now = Date.now()) {
+  try {
+    const box = await globalThis.caches?.open(KEPT_FORECASTS);
+    const kept = await (await box?.match(keptKey(id)))?.json();
+    const last = Math.max(...(kept?.forecast?.hours ?? []).map((hour) => new Date(hour.time).getTime()));
+    return kept && last > now ? kept : null;
+  } catch {
+    return null;
   }
 }
 
