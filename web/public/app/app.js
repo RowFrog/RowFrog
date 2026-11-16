@@ -8,6 +8,7 @@
 import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
 import { icon, filledIcon, skyArt } from "./icons.js";
 import { baseMap } from "./basemap.js";
+import { followTextSize } from "./textsize.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
@@ -3066,6 +3067,8 @@ document.addEventListener("visibilitychange", () => {
 
 applyAppearance();
 await setLanguage(savedLanguage());
+// The text follows the iPhone's or iPad's text size, as the app's Dynamic Type (owner's pick, 16 Nov 2026).
+followTextSize();
 route();
 // Saved clubs that moved to another water or were renamed: show them as they are now.
 refreshSavedClubs().then((changed) => changed && route());
