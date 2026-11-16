@@ -38,8 +38,37 @@ def test_parse_open_meteo_payload():
     assert len(hours) == 2
     assert hours[0].time.isoformat() == "2026-10-18T06:00:00+00:00"
     assert hours[1].wind_gust_ms == 14.0
-    assert hours[1].weather_code == 96  # thunderstorm with hail
+    # The 07:00 row's hail fell from 06:00 to 07:00, so it belongs to the 06:00 hour (decision 0043).
+    assert hours[0].weather_code == 96
+    assert hours[1].weather_code is None
     assert hours[0].apparent_temperature_c == 5.2
+
+
+def _hour(time: str, mm, code) -> open_meteo.ForecastHour:
+    return open_meteo.ForecastHour(
+        time=open_meteo.datetime.fromisoformat(time).replace(tzinfo=open_meteo.timezone.utc), temperature_c=5, wind_speed_ms=2,
+        wind_gust_ms=4, wind_from_deg=0, cloud_cover_pct=90, cloud_cover_low_pct=None, visibility_m=20000,
+        precipitation_mm=mm, cape_jkg=0, is_day=True, weather_code=code,
+    )
+
+
+def test_rain_moves_to_the_hour_it_fell():
+    """Open-Meteo's 13:00 row holds 12:00-13:00; the 12:00 hour gets it (decision 0043)."""
+    hours = open_meteo.rain_to_hour_start([
+        _hour("2026-11-16T11:00", 0.0, 3),
+        _hour("2026-11-16T12:00", 0.0, 3),
+        _hour("2026-11-16T13:00", 0.8, 61),
+        _hour("2026-11-16T14:00", 0.0, 2),
+    ])
+    assert [h.precipitation_mm for h in hours] == [0.0, 0.8, 0.0, None]
+    # A falling code goes with its rain; the hour it leaves takes the next row's code; cloud codes stay.
+    assert [h.weather_code for h in hours] == [3, 61, 2, 2]
+
+
+def test_rain_does_not_jump_a_gap():
+    hours = open_meteo.rain_to_hour_start([_hour("2026-11-16T11:00", 0.0, 3), _hour("2026-11-16T13:00", 1.0, 63)])
+    assert hours[0].precipitation_mm is None
+    assert hours[0].weather_code == 3
 
 
 def test_parse_tolerates_missing_variables():
@@ -123,7 +152,7 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     day = body["daylight"][0]
     assert day["sunrise"] < day["sunset"]
     assert body["hours"][0]["sunUp"] is True
-    assert body["hours"][1]["weatherCode"] == 96
+    assert body["hours"][0]["weatherCode"] == 96
     assert body["hours"][1]["apparentTemperatureC"] == 9.8
     assert body["hours"][0]["humidityPct"] == 93
     assert body["hours"][0]["dewPointC"] == 6.1

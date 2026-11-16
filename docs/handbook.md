@@ -198,7 +198,7 @@ Management.
 
 - Club page header "Modelllauf 06 UTC · aktualisiert 10:01": the ICON-D2 run by its UTC start hour (`weatherRun.started`), and when the Pi built the club's file (`generatedAt`, every :00/:30). Club list footer, widget clock and out-of-date lines use the same `generatedAt`.
 - "How often data is updated" at the page's end: run start and when it was ready on Open-Meteo (`weatherRun.available`), checked, and loaded on this device.
-- "Gemessen 09:45": the station's own reading time. "Regen ab 15:00": when forecast rain starts, the hour before the first wet row (Open-Meteo sums the hour before its time stamp), never before the radar's end; with the radar symbol: the radar's time; "Regen in dieser Stunde" once that start has passed (decision 0040).
+- "Gemessen 09:45": the station's own reading time. "Regen ab 15:00": when forecast rain starts, the start of the first wet hour, never before the radar's end; with the radar symbol: the radar's time; "Regen in dieser Stunde" once that start has passed (decision 0040). Every hourly rain value (tile, 48 hours, charts, widget) is the hour from its time on: Open-Meteo sums the hour before its time stamp, so the backend moves each value one row earlier (`open_meteo.rain_to_hour_start`, decision 0043).
 - "Jetzt" (lake view card, first row of the 48-hour table, widget): the hour slot running now, 10:00–10:59 shows the 10:00 values.
 
 ## Without internet (decision 0043)

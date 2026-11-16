@@ -211,18 +211,17 @@ struct ConditionData {
     /// The radar's words for rain from the shown moment on, while it reaches.
     var rainOutlook: RainOutlook? { radarAhead.map { RainOutlook(radar: $0, hours: timeline) } }
 
-    /// The first forecast hour with rain after the radar's two hours (or after
-    /// the shown moment without radar), and when that rain starts. Open-Meteo's
-    /// amount is the sum of the hour before the time stamp, so the rain of the
-    /// 14:00 row starts at 13:00, but never before the radar's end (owner's
-    /// pick, 15 Nov 2026: "Regen ab 13:55" after a dry radar). Without radar a
-    /// start in the running hour stays at the hour's start; the lines then say
-    /// "this hour" rather than a time already past.
+    /// The first forecast hour with rain that is still to come after the radar's
+    /// two hours (or after the shown moment without radar), and when that rain
+    /// starts: the hour's own start, but never before the radar's end (owner's
+    /// pick, 15 Nov 2026: "Regen ab 13:55" after a dry radar). The backend puts
+    /// each hour's rain under the hour it fell (decision 0043), so the 13:00 row
+    /// is 13:00 to 14:00. Without radar a start in the running hour stays at the
+    /// hour's start; the lines then say "this hour" rather than a time already past.
     var forecastRain: (hour: ForecastHour, from: Date)? {
         let radarEnd = radarAhead?.end
-        guard let wet = next24.first(where: { $0.isWet && $0.time > (radarEnd ?? moment) }) else { return nil }
-        let start = wet.time.addingTimeInterval(-3600)
-        return (wet, radarEnd.map { max(start, $0) } ?? start)
+        guard let wet = next24.first(where: { $0.isWet && $0.time.addingTimeInterval(3600) > (radarEnd ?? moment) }) else { return nil }
+        return (wet, radarEnd.map { max(wet.time, $0) } ?? wet.time)
     }
 
     /// Drizzle and the like whose amount stays under 0.1 mm: named, with how little it is.
