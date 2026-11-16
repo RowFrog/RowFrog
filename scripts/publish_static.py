@@ -644,6 +644,45 @@ def log_station_water(state: State, now: datetime) -> None:
         print(f"  water log not written: {e!r}")
 
 
+def station_lake_water(state: State, now: datetime) -> None:
+    """Once a night, asks the GKD stations of water_log.STATION_LAKES for their
+    page (about a day of readings) and logs the hours. One request per station,
+    no retry; after a firewall rejection the rest wait for the next night."""
+    if not WATER_LOG or now.hour not in STATION_LAKE_HOURS:
+        return
+    today = now.date().isoformat()
+    if state.water_logged.get("station-night") == today:
+        return
+    state.water_logged["station-night"] = today
+
+    async def ask() -> dict[str, list]:
+        found = {}
+        async with httpx.AsyncClient() as client:
+            # TODO: once a persisted GKD pause (gkd_due in api, branch gkd-ask-less) is on main, skip while it says no.
+            for i, s in enumerate(water_log.STATION_LAKES):
+                if i:
+                    await asyncio.sleep(STATION_LAKE_PAUSE_S)
+                try:
+                    _, history = await gkd.fetch_recent(client, s.station, now)
+                    found[s.key] = history
+                except gkd.Rejected:
+                    # The block is on the Pi's address: the other stations would only make it worse.
+                    print(f"  water log: GKD rejected {s.station}; the rest wait for tomorrow")
+                    break
+                except (httpx.HTTPError, ValueError) as e:
+                    print(f"  water log: {s.station} {e!r}")
+        return found
+
+    history = asyncio.run(ask())
+    names = {s.key: s.name for s in water_log.STATION_LAKES}
+    lakes = {s.key: [s.id] for s in water_log.STATION_LAKES}
+    try:
+        n = water_log.log_stations(WATER_LOG, history, names, lakes, state.water_logged, now)
+        print(f"  water log: {n} rows from {len(history)} of {len(water_log.STATION_LAKES)} station lakes")
+    except OSError as e:
+        print(f"  water log not written: {e!r}")
+
+
 def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
     """Looks once a day for satellite lake temperatures of the lakes without a GKD station and hands them to the API."""
     today = now.astimezone(LOCAL).date()
@@ -658,6 +697,10 @@ def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
             rings = outlines.load(lake_id) if lake and lake.kind == "lake" else None
             if rings:
                 shores[lake_id] = rings[0]
+        if WATER_LOG:
+            # Lakes with a GKD station and no club, for the log only (no lake in the app has these ids).
+            for s in water_log.STATION_LAKES:
+                shores.setdefault(s.id, water_log.circle(s.lon, s.lat, s.radius_m))
         # Landsat scenes stay readable, so after the first look only the last days are searched.
         days = 4 if readings else lake_temperature_satellite.LANDSAT_DAYS
         lake_temperature_satellite.landsat_looks.clear()
@@ -1076,6 +1119,11 @@ class Uploader:
 UPLOADER: Uploader | None = None
 # Folder of the long-running water temperature log (water_log.py); set next to --state, else no log.
 WATER_LOG: Path | None = None
+# UTC hour of the publish run that asks the station lakes (water_log.STATION_LAKES), once a night.
+# The ask comes after the club forecasts and lake views, so not with the run's own GKD asks at its
+# start, and an hour after the model check's 01:05 UTC GKD pull (agreed with the GKD thread, 17 Nov 2026).
+STATION_LAKE_HOURS = {2}
+STATION_LAKE_PAUSE_S = 5
 
 
 def start_uploader(out: Path) -> Uploader | None:
@@ -1361,6 +1409,7 @@ def publish(args, now: datetime, state: "State") -> int:
     for line in water_lines():
         print(" ", line)
     log_station_water(state, now)
+    station_lake_water(state, now)
     state.save()
 
     weather_maps(state, args.out, every, now)

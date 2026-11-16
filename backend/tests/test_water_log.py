@@ -54,3 +54,12 @@ def test_station_hours_written_once_in_utc(tmp_path):
     got = rows(tmp_path / "station-water-2026-11.csv")
     assert [r["time"] for r in got] == ["2026-11-17T04:00+00:00", "2026-11-17T05:00+00:00", "2026-11-17T06:00+00:00"]
     assert got[0]["lakes"] == "starnberger-see" and got[0]["name"] == "Starnberg"
+
+
+def test_station_lakes_are_not_club_lakes():
+    from rowfrog import locations
+
+    lakes = locations.load().lakes
+    assert all(s.id not in lakes for s in water_log.STATION_LAKES)
+    ring = water_log.circle(11.19, 48.03, 350)
+    assert len(ring) == 48 and abs(max(x for x, _ in ring) - 11.19) > 0.004

@@ -12,6 +12,11 @@ nothing is asked of GKD or the satellites for it:
 - station-water-YYYY-MM.csv: the hourly readings of the stations on lakes that
   clubs read (GKD, PEGELONLINE, BAFU), each hour once.
 
+Six GKD lake stations that no club reads are logged as well (STATION_LAKES):
+the publisher asks each once a night (publish_static.station_lake_water) and
+looks at the lake by satellite as a circle in open water, as
+scripts/water_temperature_backtest.py does.
+
 What was written is remembered in `logged` (kept in the publish state), so a
 reading seen again by a later run is not written twice. Keys older than
 KEEP_DAYS are dropped from it; by then no run sees them again.
@@ -20,13 +25,50 @@ KEEP_DAYS are dropped from it; by then no run sees them again.
 from __future__ import annotations
 
 import csv
+import math
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .sources import lake_temperature_satellite as sat
 
 KEEP_DAYS = 60
+
+
+@dataclass(frozen=True)
+class StationLake:
+    """A lake with a GKD water temperature station but no club: a point in open water and a radius (m)."""
+
+    id: str
+    station: str
+    name: str
+    lon: float
+    lat: float
+    radius_m: float
+
+    @property
+    def key(self) -> str:
+        return f"gkd:{self.station}"
+
+
+# Owner's pick 2026-11-17 (steps 1+2+3); points and radii as in scripts/water_temperature_backtest.py.
+STATION_LAKES = [
+    StationLake("chiemsee", "stock-18400503", "Stock (Chiemsee)", 12.47, 47.88, 3000),
+    StationLake("tegernsee", "tegernsee-18201303", "Tegernsee", 11.755, 47.72, 700),
+    StationLake("woerthsee", "woerthsee-16651003", "Wörthsee", 11.165, 48.063, 600),
+    StationLake("pilsensee", "pilsensee-16628055", "Pilsensee", 11.19, 48.03, 350),
+    StationLake("schliersee", "schliersee-18222008", "Schliersee", 11.86, 47.725, 400),
+    StationLake("koenigssee", "koenigssee-18624806", "Königssee", 12.982, 47.565, 250),
+]
+
+
+def circle(lon: float, lat: float, radius_m: float, points: int = 48) -> list[tuple[float, float]]:
+    kx = 111_320 * math.cos(math.radians(lat))
+    return [
+        (lon + radius_m * math.cos(2 * math.pi * i / points) / kx, lat + radius_m * math.sin(2 * math.pi * i / points) / 110_540)
+        for i in range(points)
+    ]
 
 SATELLITE_FIELDS = ["logged", "lake", "source", "platform", "day", "time", "first", "last", "celsius", "pixels", "seen_share", "usable"]
 STATION_FIELDS = ["logged", "station", "name", "lakes", "time", "celsius"]
