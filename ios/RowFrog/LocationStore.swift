@@ -324,6 +324,7 @@ final class ForecastStore {
         if !force, states[clubID]?.forecast != nil { return }
         defer { applyTestOutcome(clubID) }
         states[clubID] = ForecastLoad.started(from: states[clubID])
+        await showKept(clubID)
         if let model = AppSettings.shared.pickedModel(for: clubID) {
             if let forecast = try? await api.forecast(clubID: clubID, model: model) {
                 applied[clubID] = nil
@@ -355,6 +356,21 @@ final class ForecastStore {
             let failure = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
             states[clubID] = ForecastLoad.started(from: states[clubID]).failing(with: failure)
         }
+    }
+
+    /// Nothing shown yet (the app has just started): the forecast kept from the
+    /// last download shows while the new one loads, and stays with the reason
+    /// if that fails, as when the app was only in the background. Its time
+    /// says how old it is; an old one gets the out-of-date line.
+    private func showKept(_ clubID: String) async {
+        guard states[clubID]?.forecast == nil, !clubID.hasPrefix(OwnPlace.idPrefix) else { return }
+        let model = AppSettings.shared.pickedModel(for: clubID)
+        var kept = await api.keptForecast(clubID: clubID, model: model)
+        if kept == nil, model != nil { kept = await api.keptForecast(clubID: clubID) }
+        // Another load may have finished meanwhile; its forecast is newer.
+        guard let kept, states[clubID]?.forecast == nil else { return }
+        applied[clubID] = nil
+        states[clubID] = .shown(kept.forecast, loadedAt: kept.at, updating: true, failure: states[clubID]?.failure)
     }
 
     /// Screenshots and UI tests: `-RWForecastFailure refused` (any RefreshFailure

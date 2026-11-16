@@ -35,7 +35,15 @@ final class TapTests: XCTestCase {
         let end = Date().addingTimeInterval(timeout)
         var retries = 0
         while Date() < end {
-            if element.waitForExistence(timeout: 5) { return true }
+            if element.waitForExistence(timeout: 5) {
+                // The forecast kept from the last run shows at once with "Updating…"
+                // (decision 0044); the page moves up when that line goes, which
+                // can make a tap miss, so the new forecast is waited for too.
+                let updating = app.staticTexts["Updating…"]
+                let gone = NSPredicate(format: "exists == false")
+                _ = XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: gone, object: updating)], timeout: max(1, end.timeIntervalSinceNow))
+                return true
+            }
             let again = app.buttons["Try again"]
             if retries < 3, again.exists, again.isHittable {
                 again.tap()

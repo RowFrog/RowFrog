@@ -778,6 +778,33 @@ test("the top tile's \"For small boats\" and weather word are 12 px, the app's c
   await context.close();
 });
 
+test("a visit without internet shows the last visit's forecast at once with Updating…, then the reason (decision 0044)", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  await page.locator(".card.now").waitFor({ timeout: 20000 });
+  // Kept in the background once it came.
+  await page.waitForFunction(async () => (await (await caches.open("rf-forecasts")).keys()).length > 0, null, { timeout: 10000 });
+  // The next visit: the forecast download hangs, then the connection is gone.
+  let release;
+  const held = new Promise((resolve) => (release = resolve));
+  await context.route((url) => url.pathname.endsWith(`/clubs/${club.id}/forecast`), async (route) => {
+    await held;
+    await route.abort("internetdisconnected");
+  });
+  await page.reload();
+  await page.locator(".club-head .updating").waitFor({ timeout: 20000 });
+  assert.equal(await page.locator(".card.now").count(), 1, "the kept forecast shows while loading");
+  release();
+  await page.locator(".club-head #failed").waitFor({ timeout: 20000 });
+  assert.equal(await page.locator(".club-head .updating").count(), 0);
+  assert.equal(await page.locator(".card.now").count(), 1, "and stays with the reason");
+  // The list shows it too.
+  await page.goto(`${base}/app/#/list`);
+  await page.locator("#saved .row.tinted").waitFor({ timeout: 20000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("a browser without the iPhone's text size setting keeps the text at 100 % (textsize.js)", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/${club.id}`);
