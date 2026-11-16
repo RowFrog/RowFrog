@@ -15,13 +15,13 @@ import {
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon, closeX } from "./shared.js";
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon, closeX, keptForecast } from "./shared.js";
 import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel, endsAtSunrise,
+  forecastStatus, coarserModel, endsAtSunrise, loadable,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -459,13 +459,29 @@ function rowSkeleton(club, isHome) {
 }
 
 async function fillRow(row) {
+  const id = row.dataset.id;
+  const pending = loadForecast(id);
+  // Nothing loaded in this visit: the forecast kept from the last one shows while the new one loads (decision 0043).
+  let painted = false;
+  if (!isOwn(id) && !forecasts.get(id)?.value) {
+    const old = await keptForecast(id);
+    if (old && forecasts.get(id)?.loading && !forecasts.get(id)?.value) {
+      paintRow(row, old.forecast);
+      painted = true;
+    }
+  }
   let raw;
   try {
-    raw = await loadForecast(row.dataset.id);
+    raw = await pending;
   } catch {
-    row.querySelector(".row-now").innerHTML = `<span class="sub">${h(t("No forecast"))}</span>`;
+    if (!painted) row.querySelector(".row-now").innerHTML = `<span class="sub">${h(t("No forecast"))}</span>`;
     return null;
   }
+  return paintRow(row, raw);
+}
+
+/** A list row from a forecast; returns when the server made it. */
+function paintRow(row, raw) {
   const forecast = forBoat(raw, row.dataset.id);
   const stale = isStale(forecast);
   const hour = nowHour(forecast);
@@ -654,7 +670,7 @@ function keepAboveKeyboard(bar) {
 let clubRenders = 0;
 
 async function renderClub(id) {
-  const shown = ++clubRenders;
+  let shown = ++clubRenders;
   setPageClub(id);
   let club = store.clubs.find((c) => c.id === id);
   if (!club?.launchPoint) club = (await findClub(id)) ?? club;
@@ -676,7 +692,29 @@ async function renderClub(id) {
   wireLaunchOpen(club);
   // The club's load state (loadable): a forecast loaded before stays, with why
   // the update failed (as ForecastStore and LocationPageView in the app).
-  await loadForecast(id, true).catch(() => {});
+  const draw = () => {
+    const mine = shown;
+    drawClubPage(id, club, saved, name, isHome, () => mine === clubRenders);
+  };
+  const pending = loadForecast(id, true).catch(() => {});
+  // Nothing loaded in this visit: the forecast kept from the last one shows at once with
+  // "Updating…" while the new one loads, as in the app (ForecastStore.showKept, decision 0043).
+  if (!isOwn(id) && !forecasts.get(id)?.value) {
+    const old = await keptForecast(id);
+    if (old && shown === clubRenders && forecasts.get(id)?.loading && !forecasts.get(id)?.value) {
+      forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
+      draw();
+    }
+  }
+  await pending;
+  if (shown !== clubRenders) return;
+  // Drawn again with what came (or the kept one with the reason); the first drawing's radar stops.
+  if (forecasts.get(id)?.value && root.querySelector("main.club .card.now")) shown = ++clubRenders;
+  draw();
+}
+
+/** Draws a club page from its load state; `alive` is false once another page or drawing took over. */
+function drawClubPage(id, club, saved, name, isHome, alive) {
   const state = forecasts.get(id);
   const raw = state?.value ?? null;
   const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
@@ -718,7 +756,7 @@ async function renderClub(id) {
   };
   root.querySelector("main").innerHTML = `
     <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right", true)}</div>
-    ${clubHeader(club, name, isHome, forecast, stale, failure)}
+    ${clubHeader(club, name, isHome, forecast, stale, failure, state.loading)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
@@ -739,7 +777,7 @@ async function renderClub(id) {
   updateTopBar();
   if (root.querySelector("#launch-map")) showLaunchMap(club);
   wireRadarCard(root.querySelector("#radar"), club?.launchPoint, markIcon(club?.id));
-  followRadar(club?.launchPoint, () => shown === clubRenders && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
+  followRadar(club?.launchPoint, () => alive() && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
   const lakeBox = root.querySelector("#lake-view");
@@ -1341,7 +1379,7 @@ function openLaunchPoint(club) {
   });
 }
 
-function clubHeader(club, name, isHome, forecast, stale = false, failure = null) {
+function clubHeader(club, name, isHome, forecast, stale = false, failure = null, loading = false) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${filledIcon("house")} ${h(t("Home base"))}</p>` : ""}
@@ -1351,7 +1389,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
       ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`
       : `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>`) : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin-ellipse")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
-    ${forecastLines(club, forecast, forecastStatus({ hasForecast: !!forecast, outOfDate: stale, failure }))}
+    ${forecastLines(club, forecast, forecastStatus({ hasForecast: !!forecast, outOfDate: stale, loading, failure }))}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
 }
@@ -1366,8 +1404,11 @@ function forecastLines(club, forecast, status) {
     case "outOfDateAndUpdateFailed":
       return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
     case "current":
-    case "updating":
       return `<p class="sub small" id="updated-line">${h(updatedLine(forecast.weatherRun, forecast.generatedAt))}</p>`;
+    // The kept forecast while the new one loads (decision 0043), as ClubPageHeader's "Updating…".
+    case "updating":
+      return `<p class="sub small" id="updated-line">${h(updatedLine(forecast.weatherRun, forecast.generatedAt))}</p>
+        <p class="sub small updating">${icon("rotate-ccw")} ${h(t("Updating…"))}</p>`;
     default:
       return old;
   }

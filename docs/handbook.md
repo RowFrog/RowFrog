@@ -203,7 +203,7 @@ Management.
 
 ## Without internet (decision 0043)
 
-- The app keeps each club's last forecast in Caches/API (`KeptFiles`, file names like `api.rowfrog.com_v1_clubs_mrc-1880_forecast.body`); after a fresh start it shows at once with "Updating…", and with "Could not update: … Showing data from …" when the download fails. The website keeps it in Cache Storage `rf-forecasts` (browser developer tools > Application > Cache storage) and shows it only after a failed download.
+- The app keeps each club's last forecast in Caches/API (`KeptFiles`, file names like `api.rowfrog.com_v1_clubs_mrc-1880_forecast.body`); after a fresh start it shows at once with "Updating…", and with "Could not update: … Showing data from …" when the download fails. The website keeps it in Cache Storage `rf-forecasts` (browser developer tools > Application > Cache storage) and shows it the same way, on the club page and in the list.
 - App downloads give up after 15 s without a byte and 60 s in all (`APIClient.session`); website downloads after 20 s.
 - To try it: load a club, quit the app, switch on flight mode, open the app again.
 

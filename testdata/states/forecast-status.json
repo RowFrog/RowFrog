@@ -4,7 +4,7 @@
   "loading": "Nothing to show yet: stand-in cards.",
   "noForecast": "Nothing to show: the reason and Try again.",
   "current": "Forecast from … · loaded …",
-  "updating": "Updating… (app only; the website reloads the whole page).",
+  "updating": "Updating… (on the website only while the forecast kept from the last visit shows, decision 0043).",
   "outOfDate": "Forecast out of date: from <day, time>.",
   "updateFailed": "Could not update: <reason>. Showing data from <time>.",
   "outOfDateAndUpdateFailed": "Both lines: out of date, then Could not update with <day, time>."
