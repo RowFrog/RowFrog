@@ -201,7 +201,7 @@ Management.
 - "Gemessen 09:45": the station's own reading time. "Regen ab 15:00": when forecast rain starts, the start of the first wet hour, never before the radar's end; with the radar symbol: the radar's time; "Regen in dieser Stunde" once that start has passed (decision 0040). Every hourly rain value (tile, 48 hours, charts, widget) is the hour from its time on: Open-Meteo sums the hour before its time stamp, so the backend moves each value one row earlier (`open_meteo.rain_to_hour_start`, decision 0043).
 - "Jetzt" (lake view card, first row of the 48-hour table, widget): the hour slot running now, 10:00–10:59 shows the 10:00 values.
 
-## Without internet (decision 0043)
+## Without internet (decision 0044)
 
 - The app keeps each club's last forecast in Caches/API (`KeptFiles`, file names like `api.rowfrog.com_v1_clubs_mrc-1880_forecast.body`); after a fresh start it shows at once with "Updating…", and with "Could not update: … Showing data from …" when the download fails. The website keeps it in Cache Storage `rf-forecasts` (browser developer tools > Application > Cache storage) and shows it the same way, on the club page and in the list.
 - App downloads give up after 15 s without a byte and 60 s in all (`APIClient.session`); website downloads after 20 s.

@@ -1,4 +1,4 @@
-# 0043. Without internet the last forecast shows, and downloads give up sooner
+# 0044. Without internet the last forecast shows, and downloads give up sooner
 
 - Date: 2026-11-16
 - Status: done from the owner's bug report (three iPhone screenshots, build 885, 16 Nov 2026: flight mode, and a plane's Wi-Fi that lets only messaging through); no open choice

@@ -462,7 +462,7 @@ function rowSkeleton(club, isHome) {
 async function fillRow(row) {
   const id = row.dataset.id;
   const pending = loadForecast(id);
-  // Nothing loaded in this visit: the forecast kept from the last one shows while the new one loads (decision 0043).
+  // Nothing loaded in this visit: the forecast kept from the last one shows while the new one loads (decision 0044).
   let painted = false;
   if (!isOwn(id) && !forecasts.get(id)?.value) {
     const old = await keptForecast(id);
@@ -699,7 +699,7 @@ async function renderClub(id) {
   };
   const pending = loadForecast(id, true).catch(() => {});
   // Nothing loaded in this visit: the forecast kept from the last one shows at once with
-  // "Updating…" while the new one loads, as in the app (ForecastStore.showKept, decision 0043).
+  // "Updating…" while the new one loads, as in the app (ForecastStore.showKept, decision 0044).
   if (!isOwn(id) && !forecasts.get(id)?.value) {
     const old = await keptForecast(id);
     if (old && shown === clubRenders && forecasts.get(id)?.loading && !forecasts.get(id)?.value) {
@@ -1406,7 +1406,7 @@ function forecastLines(club, forecast, status) {
       return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
     case "current":
       return `<p class="sub small" id="updated-line">${h(updatedLine(forecast.weatherRun, forecast.generatedAt))}</p>`;
-    // The kept forecast while the new one loads (decision 0043), as ClubPageHeader's "Updating…".
+    // The kept forecast while the new one loads (decision 0044), as ClubPageHeader's "Updating…".
     case "updating":
       return `<p class="sub small" id="updated-line">${h(updatedLine(forecast.weatherRun, forecast.generatedAt))}</p>
         <p class="sub small updating">${icon("rotate-ccw")} ${h(t("Updating…"))}</p>`;

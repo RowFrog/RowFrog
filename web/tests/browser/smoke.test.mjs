@@ -778,7 +778,7 @@ test("the top tile's \"For small boats\" and weather word are 12 px, the app's c
   await context.close();
 });
 
-test("a visit without internet shows the last visit's forecast at once with Updating…, then the reason (decision 0043)", async () => {
+test("a visit without internet shows the last visit's forecast at once with Updating…, then the reason (decision 0044)", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/${club.id}`);
   await page.locator(".card.now").waitFor({ timeout: 20000 });
