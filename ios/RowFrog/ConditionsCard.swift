@@ -365,6 +365,10 @@ struct ChartLine: Identifiable {
     /// other bars (the radar's quarter hours over the forecast's hours).
     var barWidth: CGFloat = 5
     var covers: ClosedRange<Double>? = nil
+    /// Bars only: hours past each point's x where the bar is drawn. A rain bar
+    /// stands for the hour from its time on (decision 0043), so it is drawn in
+    /// the middle of that hour; scrubbing and the values still read the point's x.
+    var drawOffset: Double = 0
     var id: String { name }
 }
 
@@ -1188,7 +1192,7 @@ private struct ConditionChart: View {
                 .lineStyle(StrokeStyle(lineWidth: 2, dash: line.dashed ? [5, 4] : []))
                 .interpolationMethod(.monotone)
         case .bars:
-            BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(line.barWidth))
+            BarMark(x: .value("Hour", p.x + line.drawOffset), y: .value("Value", p.y), width: .fixed(line.barWidth))
                 .foregroundStyle(line.color.opacity(0.7))
         case .area:
             AreaMark(x: .value("Hour", p.x), y: .value("Value", p.y), series: .value("Series", line.name))
@@ -1729,7 +1733,7 @@ extension ConditionDetail {
         var value = wet ? Format.rain(h.precipitationMm) : (d.traceNow ?? tr("Dry"))
         var note = wet ? (Sky(hour: h).precipitationKind ?? "") : d.traceNow != nil ? d.rainLines.detail
             : (d.forecastRain.map { $0.from <= d.moment ? tr("Expected this hour") : tr("Expected from %@", Format.dayTime($0.from)) } ?? tr("Dry next 24 h"))
-        var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })]
+        var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) }, drawOffset: 0.5)]
         var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
         // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
         if let ahead = d.radarAhead, let outlook = d.rainOutlook {
@@ -1743,10 +1747,11 @@ extension ConditionDetail {
         }
         if let radar = d.radar, let first = radar.steps.first {
             let points = radar.steps.map { ChartPoint(x: d.x($0.time), y: r.convert($0.mmPerHour)) }
-            lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points)
-            // First in the legend, as it comes first on the chart.
+            lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points, drawOffset: 0.5)
+            // First in the legend, as it comes first on the chart. It hides the forecast hours whose
+            // middle (where their bar stands) lies under the radar.
             lines.insert(ChartLine(name: tr("Radar"), color: .indigo, kind: .bars, points: points, barWidth: 2.5,
-                                   covers: (d.x(first.time) - 0.5)...d.x(radar.end)), at: 0)
+                                   covers: (d.x(first.time) - 0.5)...(d.x(radar.end) - 0.5)), at: 0)
             source += " " + tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0")
         }
         let highest = max(d.timeline.compactMap(\.precipitationMm).max() ?? 0, d.radar?.peak ?? 0)

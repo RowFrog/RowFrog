@@ -281,7 +281,8 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         const w = l.barWidth ?? 5;
         for (const p of l.points) {
           if (p.y <= 0 || covered.some(([a, b]) => p.x >= a && p.x <= b)) continue;
-          parts.push(`<rect x="${px(p.x) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
+          // drawOffset: a rain bar stands for the hour from its time on (decision 0043), drawn in its middle (ChartLine.drawOffset).
+          parts.push(`<rect x="${px(p.x + (l.drawOffset ?? 0)) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
         }
       } else if (l.kind === "area" && l.points.length) {
         // A soft area down to the axis (the cloud chart's "All"), as the app's AreaMark.
