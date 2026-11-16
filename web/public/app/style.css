@@ -120,8 +120,11 @@ button.wide { margin-top: 0; }
 .now-title h2 { font-size: 22px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; }
 .now-title h2 .verdict { white-space: nowrap; }
 .now-title h2 .info { flex: none; }
+/* "For small boats" and the weather's word in the caption size, 12 px, as the app's (boatLine, skyWordWidth 88 pt): as a
+   <small> they had shrunk to 14 px and 10 px (owner's iPhone comparison, 16 Nov 2026). */
+.now-title small.boat-for { font-size: 12px; }
 .now-sky { display: flex; flex-direction: column; align-items: center; font-size: 12px; flex: none; }
-.now-sky small { width: 7.33em; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.now-sky small { font-size: inherit; width: 7.33em; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .now-head.step .now-title h2 { font-size: 20px; }
 .now-head.stacked { flex-wrap: wrap; align-items: flex-start; row-gap: 8px; }
 .now-head.wrap .now-title h2 { overflow: visible; }
