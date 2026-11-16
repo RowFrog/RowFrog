@@ -63,3 +63,20 @@ def test_station_lakes_are_not_club_lakes():
     assert all(s.id not in lakes for s in water_log.STATION_LAKES)
     ring = water_log.circle(11.19, 48.03, 350)
     assert len(ring) == 48 and abs(max(x for x, _ in ring) - 11.19) > 0.004
+
+
+def test_archive_goes_next_to_v1_in_the_same_bucket(monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location("publish_static_archive", Path(__file__).resolve().parents[2] / "scripts" / "publish_static.py")
+    ps = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ps)
+    monkeypatch.delenv("WATER_LOG_ARCHIVE", raising=False)
+    monkeypatch.setenv("PUBLISH_UPLOAD", "rclone copy /home/rowfrog/site/v1 r2:rowfrog-api/v1 --files-from-raw {files}")
+    assert ps.water_log_archive() == "r2:rowfrog-api/archive/water-log"
+    monkeypatch.setenv("WATER_LOG_ARCHIVE", "r2:other/log")
+    assert ps.water_log_archive() == "r2:other/log"
+    monkeypatch.delenv("WATER_LOG_ARCHIVE")
+    monkeypatch.delenv("PUBLISH_UPLOAD")
+    assert ps.water_log_archive() is None

@@ -618,6 +618,30 @@ def satellite_ice(state: State, lake_ids: list[str], now: datetime) -> None:
     api.prepared.satellite_ice.update(passes)
 
 
+def water_log_archive() -> str | None:
+    """Where the water log is copied once a day, off the Pi: WATER_LOG_ARCHIVE (an rclone
+    destination), else the bucket PUBLISH_UPLOAD sends /v1 to, under archive/water-log
+    (outside /v1, so api.rowfrog.com does not serve it). None: no copy."""
+    if os.environ.get("WATER_LOG_ARCHIVE"):
+        return os.environ["WATER_LOG_ARCHIVE"]
+    for word in shlex.split(os.environ.get("PUBLISH_UPLOAD", "")):
+        if word.endswith("/v1") and ":" in word:
+            return word[: -len("/v1")] + "/archive/water-log"
+    return None
+
+
+def archive_water_log() -> None:
+    """Copies the water log to the archive (rclone copy: adds and updates, never deletes there)."""
+    target = water_log_archive()
+    if not WATER_LOG or not target or not WATER_LOG.exists():
+        return
+    try:
+        result = subprocess.run(["rclone", "copy", str(WATER_LOG), target, "--checksum", "--stats", "0", "--log-level", "NOTICE"], timeout=300, check=False)
+        print(f"  water log copied to {target} (exit {result.returncode})")
+    except (OSError, subprocess.SubprocessError) as e:
+        print(f"  water log not copied: {e!r}")
+
+
 def log_station_water(state: State, now: datetime) -> None:
     """Appends the new hourly readings of the lake stations clubs read to the water log (water_log.py)."""
     if not WATER_LOG:
@@ -711,6 +735,7 @@ def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
                 print(f"  water log: {n} satellite rows")
             except OSError as e:  # the log must never stop a publish run
                 print(f"  water log not written: {e!r}")
+        archive_water_log()
         readings = lake_temperature_satellite.merge(readings, found, today, water_estimate.MAX_AGE_DAYS)
         # The two newest LSWT files are all that is used.
         files = {name: files[name] for name in sorted(files)[-2:]}
