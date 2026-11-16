@@ -770,7 +770,12 @@ test("the top tile's \"For small boats\" and weather word are 12 px, the app's c
   await page.goto(`${base}/app/#/club/${club.id}`);
   await page.locator(".now-title .boat-for").waitFor({ timeout: 20000 });
   await page.locator(".now-sky small").waitFor({ timeout: 20000 });
-  const sizes = await page.evaluate(() => [".now-title .boat-for", ".now-sky small"].map((s) => getComputedStyle(document.querySelector(s)).fontSize));
+  // Read in one go once both are there: the page can draw again after the catalog arrives
+  // (refreshSavedClubs), which empties it for a moment between the waits and the reading.
+  const sizes = await (await page.waitForFunction(() => {
+    const parts = [".now-title .boat-for", ".now-sky small"].map((s) => document.querySelector(s));
+    return parts.every(Boolean) && parts.map((el) => getComputedStyle(el).fontSize);
+  }, null, { timeout: 20000 })).jsonValue();
   assert.deepEqual(sizes, ["12px", "12px"]);
   assert.deepEqual(errors, []);
   await context.close();
