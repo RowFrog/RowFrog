@@ -64,7 +64,7 @@ import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from rowfrog import api, ice, lake_view, locations, outlines, sleet, water_estimate, water_stations, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, sleet, water_estimate, water_log, water_stations, weather_models
 from rowfrog.api import LOCAL
 from rowfrog.sources import dwd_radar, dwd_warnings, gkd, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
@@ -287,6 +287,8 @@ class State:
         self.models: dict[str, tuple[datetime, list]] = {}  # "<club>@<model>" -> loaded, weather
         # Satellite lake temperature: day looked, LSWT files read (name -> readings per lake), readings per lake.
         self.water_satellite: tuple[date | None, dict, dict[str, list]] = (None, {}, {})
+        # What the water temperature log (water_log.py) has written, so nothing is written twice.
+        self.water_logged: dict[str, str] = {}
         self.warn_cells: dict[str, tuple[datetime, int | None]] = {}  # club -> looked up, DWD warn cell (None outside Germany)
         # The ICON-D2 run the weather maps were last made from.
         self.maps_run: datetime | None = None
@@ -305,6 +307,7 @@ class State:
                 self.outlooks = saved.get("outlooks", {})
                 self.models = saved.get("models", {})
                 self.water_satellite = saved.get("water_satellite", (None, {}, {}))
+                self.water_logged = saved.get("water_logged", {})
                 self.warn_cells = saved.get("warn_cells", {})
                 self.maps_run = saved.get("maps_run")
                 self.model_runs = saved.get("model_runs", [])
@@ -327,6 +330,7 @@ class State:
             "outlooks": self.outlooks,
             "models": self.models,
             "water_satellite": self.water_satellite,
+            "water_logged": self.water_logged,
             "water": api.prepared.last_water,
             "levels": api.prepared.last_levels,
             "warn_cells": self.warn_cells,
@@ -614,6 +618,32 @@ def satellite_ice(state: State, lake_ids: list[str], now: datetime) -> None:
     api.prepared.satellite_ice.update(passes)
 
 
+def log_station_water(state: State, now: datetime) -> None:
+    """Appends the new hourly readings of the lake stations clubs read to the water log (water_log.py)."""
+    if not WATER_LOG:
+        return
+    clubs = locations.load().clubs
+    names: dict[str, str] = {}
+    lakes: dict[str, list[str]] = {}
+    for club_id, station in water_stations._load().items():
+        if station.kind != "lake" or club_id not in clubs:
+            continue
+        names[station.key] = station.name or ""
+        if clubs[club_id].lake_id not in lakes.setdefault(station.key, []):
+            lakes[station.key].append(clubs[club_id].lake_id)
+    for lake in locations.load().lakes.values():
+        if lake.gkd_water_temperature_station:
+            key = water_stations.Station("gkd", lake.gkd_water_temperature_station).key
+            if lake.id not in lakes.setdefault(key, []):
+                lakes[key].append(lake.id)
+    history = {key: saved[1] for key, saved in api.prepared.last_water.items() if key in lakes and saved and saved[1]}
+    try:
+        n = water_log.log_stations(WATER_LOG, history, names, lakes, state.water_logged, now)
+        print(f"  water log: {n} station rows")
+    except OSError as e:
+        print(f"  water log not written: {e!r}")
+
+
 def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
     """Looks once a day for satellite lake temperatures of the lakes without a GKD station and hands them to the API."""
     today = now.astimezone(LOCAL).date()
@@ -623,12 +653,21 @@ def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
         shores = {}
         for lake_id in lake_ids:
             lake = lakes.get(lake_id)
-            rings = outlines.load(lake_id) if lake and lake.kind == "lake" and not lake.gkd_water_temperature_station else None
+            # Lakes with their own station are looked at too: the app keeps the station's value
+            # (api.py uses the satellite only without one), and the log pairs the two.
+            rings = outlines.load(lake_id) if lake and lake.kind == "lake" else None
             if rings:
                 shores[lake_id] = rings[0]
         # Landsat scenes stay readable, so after the first look only the last days are searched.
         days = 4 if readings else lake_temperature_satellite.LANDSAT_DAYS
+        lake_temperature_satellite.landsat_looks.clear()
         found = lake_temperature_satellite.fetch(shores, today, files, days)
+        if WATER_LOG:
+            try:
+                n = water_log.log_satellite(WATER_LOG, found, lake_temperature_satellite.landsat_looks, state.water_logged, now)
+                print(f"  water log: {n} satellite rows")
+            except OSError as e:  # the log must never stop a publish run
+                print(f"  water log not written: {e!r}")
         readings = lake_temperature_satellite.merge(readings, found, today, water_estimate.MAX_AGE_DAYS)
         # The two newest LSWT files are all that is used.
         files = {name: files[name] for name in sorted(files)[-2:]}
@@ -1035,6 +1074,8 @@ class Uploader:
 
 
 UPLOADER: Uploader | None = None
+# Folder of the long-running water temperature log (water_log.py); set next to --state, else no log.
+WATER_LOG: Path | None = None
 
 
 def start_uploader(out: Path) -> Uploader | None:
@@ -1221,6 +1262,9 @@ def main() -> int:
     if args.state:
         # Lake grids are kept next to the state and built again only when an outline or the grid code changed.
         lake_view.GRID_CACHE_DIR = args.state.parent / "lake-grids"
+        # The long-running water temperature log (water_log.py) lives next to the state too.
+        global WATER_LOG
+        WATER_LOG = args.state.parent / "water-log"
     global UPLOADER
     UPLOADER = start_uploader(args.out)
     try:
@@ -1316,6 +1360,7 @@ def publish(args, now: datetime, state: "State") -> int:
     )
     for line in water_lines():
         print(" ", line)
+    log_station_water(state, now)
     state.save()
 
     weather_maps(state, args.out, every, now)

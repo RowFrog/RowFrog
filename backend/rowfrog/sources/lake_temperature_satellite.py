@@ -89,6 +89,22 @@ class Reading:
     platform: str | None = None
 
 
+@dataclass(frozen=True)
+class LandsatLook:
+    """One Landsat pass over a lake, usable or not: kept for the long-running log (water_log.py)."""
+
+    lake: str
+    time: datetime
+    platform: str | None
+    seen_share: float
+    clear_pixels: int
+    reading: Reading | None
+
+
+# Every Landsat pass fetch_landsat read since the list was last emptied (the publishing run empties it).
+landsat_looks: list[LandsatLook] = []
+
+
 # --- shapes ----------------------------------------------------------------------------------
 
 
@@ -291,9 +307,14 @@ def fetch_landsat(client: httpx.Client, shores: dict[str, list[tuple[float, floa
             continue
         try:
             requests_made += 2
-            for lake_id, (reading, _) in read_landsat(client, scene, here).items():
+            props = scene.get("properties", {})
+            for lake_id, (reading, share) in read_landsat(client, scene, here).items():
                 if reading:
                     readings.setdefault(lake_id, []).append(reading)
+                if "datetime" in props:
+                    when = datetime.fromisoformat(props["datetime"].replace("Z", "+00:00"))
+                    clear = reading.pixels if reading else 0
+                    landsat_looks.append(LandsatLook(lake_id, when, props.get("platform"), share, clear, reading))
         except Exception as e:  # noqa: BLE001 - one bad scene must not stop the rest
             log.warning("Landsat scene %s unreadable: %r", scene.get("id"), e)
     for found in readings.values():
