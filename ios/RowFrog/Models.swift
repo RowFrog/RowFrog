@@ -614,8 +614,18 @@ struct Warnings: Codable, Hashable {
     /// Whether the DWD lake area has storm lights on the shore (not every one
     /// has, e.g. the Alster); missing from older backends, which assumed so.
     var shoreLights: Bool? = nil
+    /// When the warnings were checked; earlier than the forecast when the last
+    /// check failed and the one before stands in (up to 3 h). Missing from older backends.
+    var checkedAt: Date? = nil
 
     var checked: Bool { status == "ok" }
+    /// When the warnings were checked, given the time the forecast file was made.
+    func checkedTime(forecastAt generatedAt: Date) -> Date { checkedAt ?? generatedAt }
+    /// True when the last check failed and an earlier one is shown: the card then says when that was.
+    func isEarlierCheck(forecastAt generatedAt: Date) -> Bool {
+        guard let checkedAt else { return false }
+        return generatedAt.timeIntervalSince(checkedAt) > 5 * 60
+    }
     /// False where the app reads no warning service for the place (Switzerland
     /// for now), so "no warning" must not be said.
     var localChecked: Bool { local?.checked ?? true }

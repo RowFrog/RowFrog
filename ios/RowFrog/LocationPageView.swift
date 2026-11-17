@@ -185,7 +185,9 @@ struct LocationPageView: View {
                                 .environment(\.cardTip, topTileCardTip(forecast))
                                 .environment(\.bubbleTip, isCurrentPage ? topTileBubble(forecast) : nil)
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
-                                WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
+                                WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town,
+                                             checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt),
+                                             earlierCheck: warnings.isEarlierCheck(forecastAt: forecast.generatedAt))
                                     .id("warnings")
                             }
                             let cards = AppSettings.shared.pageCards(for: club.id)
@@ -649,7 +651,7 @@ private struct NowCard: View {
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
         .sheet(isPresented: $showingWarnings) {
             if let warnings = forecast.warnings {
-                NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: forecast.generatedAt)
+                NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt))
             }
         }
         .detailCover(isPresented: $showingDaylight) {

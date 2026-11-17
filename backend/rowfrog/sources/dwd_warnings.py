@@ -205,11 +205,11 @@ RETRY_DELAYS_S = (2.0, 5.0)
 
 
 async def _get(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
-    """GET with a few quick retries on dropped connections, timeouts and server errors."""
+    """GET with a few quick retries on dropped connections, timeouts, "too many requests" and server errors."""
     for delay in (*RETRY_DELAYS_S, None):
         try:
             resp = await client.get(url, **kwargs)
-            if resp.status_code < 500 or delay is None:
+            if (resp.status_code < 500 and resp.status_code != 429) or delay is None:
                 resp.raise_for_status()
                 return resp
         except httpx.TransportError:
@@ -219,31 +219,45 @@ async def _get(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
     raise AssertionError("unreachable")
 
 
+async def _get_json(client: httpx.AsyncClient, url: str, **kwargs) -> dict:
+    """_get for GeoServer's JSON, asked again when the answer is not JSON: under load
+    GeoServer can answer 200 with an XML error report instead of features."""
+    for delay in (*RETRY_DELAYS_S, None):
+        resp = await _get(client, url, **kwargs)
+        try:
+            return resp.json()
+        except ValueError:
+            if delay is None:
+                raise
+        await asyncio.sleep(delay)
+    raise AssertionError("unreachable")
+
+
 async def fetch_lake_areas(client: httpx.AsyncClient) -> list[LakeArea]:
     # The polygons are detailed and DWD's server can take a minute; they rarely change and are cached.
-    resp = await _get(
+    data = await _get_json(
         client,
         WFS_URL,
         params=_query(typeName="dwd:Warngebiete_Binnenseen", srsName="EPSG:4326", propertyName="WARNCELLID,NAME,SHAPE"),
         timeout=120,
     )
-    return parse_lake_areas(resp.json())
+    return parse_lake_areas(data)
 
 
 async def fetch_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, Warning]]:
     """All active lake warnings in Germany; there are only ever a few."""
-    resp = await _get(
+    data = await _get_json(
         client,
         WFS_URL,
         params=_query(typeName="dwd:Warnungen_Binnenseen", propertyName=_PROPERTIES),
         timeout=30,
     )
-    return parse_warnings(resp.json(), "lake")
+    return parse_warnings(data, "lake")
 
 
 async def fetch_warn_cell(client: httpx.AsyncClient, lon: float, lat: float) -> int | None:
     """The municipality warn cell the point lies in; None outside Germany. Cells rarely change."""
-    resp = await _get(
+    data = await _get_json(
         client,
         WFS_URL,
         params=_query(
@@ -254,7 +268,7 @@ async def fetch_warn_cell(client: httpx.AsyncClient, lon: float, lat: float) -> 
         ),
         timeout=30,
     )
-    features = resp.json().get("features") or []
+    features = data.get("features") or []
     return int(features[0]["properties"]["WARNCELLID"]) if features else None
 
 
@@ -268,7 +282,7 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
     out: dict[int, list[Warning]] = {cell: [] for cell in ordered}
     for i in range(0, len(ordered), CELLS_PER_QUERY):
         chunk = ordered[i : i + CELLS_PER_QUERY]
-        resp = await _get(
+        data = await _get_json(
             client,
             WFS_URL,
             params=_query(
@@ -278,7 +292,7 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
             ),
             timeout=60,
         )
-        for cell, w in parse_warnings(resp.json(), "local"):
+        for cell, w in parse_warnings(data, "local"):
             out.setdefault(cell, []).append(w)
     return out
 
@@ -286,7 +300,7 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
 async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float) -> list[Warning]:
     """Weather warnings for the municipality the point lies in."""
     # GeoServer reads EPSG:4326 points in latitude-longitude order in WFS 2.0.
-    resp = await _get(
+    data = await _get_json(
         client,
         WFS_URL,
         params=_query(
@@ -296,7 +310,7 @@ async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float
         ),
         timeout=30,
     )
-    return [w for _, w in parse_warnings(resp.json(), "local")]
+    return [w for _, w in parse_warnings(data, "local")]
 
 
 _PROPERTIES = "AREADESC,IDENTIFIER,WARNCELLID,STATUS,MSGTYPE,EVENT,SEVERITY,HEADLINE,DESCRIPTION,INSTRUCTION,EFFECTIVE,ONSET,EXPIRES"

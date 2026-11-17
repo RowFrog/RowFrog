@@ -783,7 +783,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
     ${clubHeader(club, name, isHome, forecast, stale, failure, state.loading)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
-    ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
+    ${showWarnings ? warningsCard(warnings, club, warningsCheckedAt(warnings, forecast), isEarlierCheck(warnings, forecast)) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
     <div class="page-end">
       ${sourceLine(forecast)}
@@ -1456,7 +1456,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     openSheet({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part], legendBody(part));
   }));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
-    openSheet(t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
+    openSheet(t("Official warnings"), warningsBody(forecast.warnings, club, warningsCheckedAt(forecast.warnings, forecast), true));
   });
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
@@ -1777,9 +1777,20 @@ function laterWarningLine(headline) {
   return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}<span>${h(text)}</span></button></li>`;
 }
 
-function warningsCard(warnings, club, checkedAt) {
+/** When the warnings were checked: earlier than the forecast file when the last check failed and the
+ * one before stands in (up to 3 h, Warnings.checkedTime in the app). Older files lack `checkedAt`. */
+function warningsCheckedAt(warnings, forecast) {
+  return warnings?.checkedAt ?? forecast.generatedAt;
+}
+
+/** True when an earlier check is shown because the last one failed: the card then says when it was. */
+function isEarlierCheck(warnings, forecast) {
+  return !!warnings?.checkedAt && new Date(forecast.generatedAt) - new Date(warnings.checkedAt) > 5 * 60 * 1000;
+}
+
+function warningsCard(warnings, club, checkedAt, earlier = false) {
   const title = t("Official warnings");
-  return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false), { cls: "warnings" });
+  return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false, earlier), { cls: "warnings" });
 }
 
 /** False outside Germany, where DWD does not warn: then "no warning" must not be said. Older files lack `local`. */
@@ -1808,7 +1819,7 @@ function notCheckedNote(local) {
     ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("square-arrow-out-up-right")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
 }
 
-function warningsBody(warnings, club, checkedAt, guideOpen) {
+function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   if (warnings.status !== "ok") {
     return `<p class="orange">${icon("wifi-off")} ${h(warningsIsDWD(warnings)
       ? t("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
@@ -1845,7 +1856,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
   const later = other.filter((w) => !warningActive(w)).sort((a, b) => new Date(a.onset ?? 0) - new Date(b.onset ?? 0));
   const label = (text) => `<p class="warn-group">${h(text)}</p>`;
   return `${lake.map(warningRow).join("")}${guide}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
-    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(coverage)}</p>`;
+    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
 }
 
 const SEVERITY = { extreme: "var(--extreme)", severe: "var(--red)", moderate: "var(--orange)" };

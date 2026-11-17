@@ -219,6 +219,7 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
         "items": [],
         "local": {"source": "dwd", "service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
         "shoreLights": True,
+        "checkedAt": "2026-10-18T06:00:00+00:00",
     }
     assert "dwd:Warnungen_Binnenseen" in seen and "dwd:Warnungen_Gemeinden" in seen
 
@@ -232,6 +233,53 @@ def test_forecast_reports_unavailable_warnings(monkeypatch):
     _reset()
     assert body["warnings"]["status"] == "unavailable"
     assert body["hours"], "the forecast still comes through"
+
+
+def test_failed_check_shows_the_last_good_one(monkeypatch):
+    """One failed DWD answer keeps the warnings of the last check, with its time, instead of blanking the card
+    (owner's screenshot, MRC 1880, 17 Nov 2026: "could not be loaded" while a gust warning was out)."""
+    _fake_weather(monkeypatch)
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
+    checked = datetime(2026, 10, 18, 5, tzinfo=timezone.utc)
+    gusts = {"event": "WINDBÖEN", "expires": "2026-10-18T09:00:00+00:00"}
+    ended = {"event": "FROST", "expires": "2026-10-18T05:30:00+00:00"}
+    block = {"status": "ok", "lakeArea": "Starnberger See", "items": [gusts, ended], "local": {}}
+    api.prepared.last_warnings["mrc-1880"] = (checked, block, [])
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(503)))
+    _reset()
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    assert body["warnings"]["status"] == "ok"
+    assert body["warnings"]["checkedAt"] == "2026-10-18T05:00:00+00:00"
+    assert [i["event"] for i in body["warnings"]["items"]] == ["WINDBÖEN"], "the warning that ended is left out"
+
+
+def test_last_good_check_is_not_kept_for_ever(monkeypatch):
+    _fake_weather(monkeypatch)
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
+    old = datetime(2026, 10, 18, 2, tzinfo=timezone.utc)  # four hours before the test's "now"
+    api.prepared.last_warnings["mrc-1880"] = (old, {"status": "ok", "lakeArea": None, "items": [], "local": {}}, [])
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(503)))
+    _reset()
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    assert body["warnings"]["status"] == "unavailable"
+
+
+def test_geoserver_error_report_is_asked_again(monkeypatch):
+    """GeoServer can answer 200 with an XML error report; that is asked again, not taken as a failure."""
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
+    answers = iter([
+        httpx.Response(200, text="<ows:ExceptionReport>busy</ows:ExceptionReport>"),
+        httpx.Response(429),
+        httpx.Response(200, json={"features": []}),
+    ])
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: next(answers))) as client:
+            return await dwd_warnings.fetch_local_warnings(client, 11.35, 47.99)
+
+    assert asyncio.run(go()) == []
 
 
 ENGLISH_CAP = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
