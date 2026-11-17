@@ -612,8 +612,12 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
             lake = [w for cell, w in await _all_lake_warnings(client) if cell == area.warncell_id]
         local, own_english = await _local_warnings(client, club)
     except (httpx.HTTPError, ValueError, KeyError) as e:
-        logging.getLogger(__name__).warning("Warnings unavailable for %s: %r", club.id, e)
-        result = ({"status": "unavailable", "lakeArea": None, "items": [], "local": _local_service(club)}, [])
+        kept = _kept_warnings(club.id, now)
+        logging.getLogger(__name__).warning(
+            "Warnings unavailable for %s: %r%s", club.id, e,
+            f" (showing the check from {kept[0]['checkedAt']})" if kept else "",
+        )
+        result = kept or ({"status": "unavailable", "lakeArea": None, "items": [], "local": _local_service(club)}, [])
         _warnings_cache[club.id] = (time.monotonic() - WARNINGS_CACHE_SECONDS + 60, result)  # retry in a minute
         return result
     english = await _english_texts(client) if lake or any(w.source == "dwd" for w in local) else {}
@@ -637,9 +641,35 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     if area is not None:
         # Only some of DWD's lake areas have storm lights on the shore; the app explains them only there.
         block["shoreLights"] = dwd_warnings.has_shore_lights(area.warncell_id)
+    block["checkedAt"] = now.replace(microsecond=0).isoformat()
     result = (block, current)
     _warnings_cache[club.id] = (time.monotonic(), result)
+    prepared.last_warnings[club.id] = (now, block, current)
     return result
+
+
+# How long a club's last good warnings check stands in when DWD (or GeoSphere,
+# MeteoAlarm) fails. Before, one failed answer turned the card into "Warnings
+# could not be loaded" while a storm gust warning was out for the same town
+# (owner's screenshot, MRC 1880, 17 Nov 2026 14:38 CET); the card now shows the
+# warnings from that check, with its time, and drops those that have ended.
+KEPT_WARNINGS_MAX_AGE = timedelta(hours=3)
+
+
+def _kept_warnings(club_id: str, now: datetime) -> tuple[dict, list] | None:
+    """The club's last good warnings block, with the warnings ended since left out; None when there is
+    none or it is older than KEPT_WARNINGS_MAX_AGE."""
+    kept = prepared.last_warnings.get(club_id)
+    if kept is None or now - kept[0] > KEPT_WARNINGS_MAX_AGE:
+        return None
+    checked, block, current = kept
+
+    def ended(expires: str | None) -> bool:
+        return expires is not None and datetime.fromisoformat(expires) <= now
+
+    items = [i for i in block["items"] if not ended(i.get("expires"))]
+    still = [w for w in current if w.expires is None or w.expires > now]
+    return {**block, "items": items, "checkedAt": checked.replace(microsecond=0).isoformat()}, still
 
 
 def _water_station_json(

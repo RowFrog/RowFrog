@@ -13,11 +13,11 @@ def fixed_clock(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_saved_water():
-    """A water reading or lake level kept by one test must not stand in for another's."""
-    for kept in (api.prepared.last_water, api.prepared.last_levels, api._water_cache, api._gkd_rejected_until, api._failed_at):
+    """A water reading, lake level or warnings check kept by one test must not stand in for another's."""
+    for kept in (api.prepared.last_water, api.prepared.last_levels, api.prepared.last_warnings, api._water_cache, api._gkd_rejected_until, api._failed_at):
         kept.clear()
     yield
-    for kept in (api.prepared.last_water, api.prepared.last_levels, api._water_cache, api._gkd_rejected_until, api._failed_at):
+    for kept in (api.prepared.last_water, api.prepared.last_levels, api.prepared.last_warnings, api._water_cache, api._gkd_rejected_until, api._failed_at):
         kept.clear()
 
 

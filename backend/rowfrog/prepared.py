@@ -28,6 +28,9 @@ class Prepared:
     outlook: dict[str, list | None] = field(default_factory=dict)
     # Local DWD warnings per club; a missing club asks DWD itself.
     local_warnings: dict[str, list] = field(default_factory=dict)
+    # The last good warnings check per club: (checked at, block for the app, warnings in force),
+    # kept between runs so one failed DWD answer does not blank the card (api._kept_warnings).
+    last_warnings: dict[str, tuple] = field(default_factory=dict)
     # Forecast points per lake where it differs from lake_view.MAX_SAMPLES (lakes people look at).
     lake_samples: dict[str, int] = field(default_factory=dict)
     # Satellite lake ice passes per lake (sources.lake_ice_satellite).
