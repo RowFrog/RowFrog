@@ -328,7 +328,12 @@ the club list is kept on the phone for a day. Each club's last forecast is kept
 too: after a fresh start, or without internet, it shows at once with
 "Updating…", and stays with "Could not update: …" when the download fails
 (the app gives up after 15 s without data, the website after 20 s; the
-website does the same on its club pages and list, `docs/decisions/0044`). With "Save mobile data" on
+website does the same on its club pages and list, `docs/decisions/0044`).
+A restart draws that last page, lake view and satellite picture included, in
+its first frame; a first start shows grey stand-in cards with a sweeping light
+until the forecast comes. The website draws its kept forecast before the page
+and the same stand-in cards; its lake view and satellite picture still load
+after it (`docs/decisions/0046`). With "Save mobile data" on
 (while on mobile data) or in iOS Low Data Mode, satellite pictures load only
 when tapped, the radar map steps in half hours and the radar (rain tile, top tile and
 radar card) updates every 15 minutes.
