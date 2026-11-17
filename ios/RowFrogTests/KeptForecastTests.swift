@@ -74,6 +74,35 @@ final class KeptForecastTests: XCTestCase {
         XCTAssertNil(kept)
     }
 
+    /// Cold start (decision 0046): the kept forecast is there before the first
+    /// frame, marked as updating, and the page's first load still downloads.
+    func testColdStartShowsTheKeptForecastBeforeTheFirstLoad() async throws {
+        try keep(club: "mrc-1880", hourFromNow: 1800, keptAgo: 600)
+        let forecasts = ForecastStore(api: api())
+        forecasts.primeKept("mrc-1880")
+        XCTAssertEqual(forecasts.forecast("mrc-1880")?.clubId, "mrc-1880")
+        XCTAssertEqual(forecasts.status("mrc-1880"), .updating)
+        // The first load is not skipped although a forecast shows: offline, it ends with the reason.
+        await forecasts.load("mrc-1880")
+        XCTAssertEqual(forecasts.status("mrc-1880"), .updateFailed(.offline, outOfDate: false))
+    }
+
+    func testColdStartWithNothingKeptLeavesTheStandInCards() {
+        let forecasts = ForecastStore(api: api())
+        forecasts.primeKept("mrc-1880")
+        XCTAssertNil(forecasts.forecast("mrc-1880"))
+        XCTAssertTrue(forecasts.loading.isEmpty)
+    }
+
+    func testAnyKeptFileReadsStraightAway() throws {
+        let url = base.appending(path: "countries/index")
+        KeptFiles(folder: folder).keep(Data(#"[{"code": "de"}]"#.utf8), etag: "", for: url)
+        let kept: [[String: String]]? = api().keptNow("countries/index")
+        XCTAssertEqual(kept?.first?["code"], "de")
+        let missing: [[String: String]]? = api().keptNow("countries/at/lakes")
+        XCTAssertNil(missing)
+    }
+
     func testDownloadsGiveUpWithinFifteenSecondsOfSilence() {
         XCTAssertEqual(APIClient.session.configuration.timeoutIntervalForRequest, 15)
         XCTAssertEqual(APIClient.session.configuration.timeoutIntervalForResource, 60)

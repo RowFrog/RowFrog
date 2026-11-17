@@ -70,6 +70,21 @@ h1.large { font-size: 34px; font-weight: 700; margin: 4px 0 12px; }
 .card-title.opens .i:last-child { width: 12px; height: 12px; stroke-width: 3; }
 .info { color: var(--accent); font-size: 18px; line-height: 1; }
 .card.loading { text-align: center; padding: 40px 14px; font-size: 20px; font-weight: 600; }
+/* Stand-in cards while the first forecast loads with nothing kept (LoadingCards and LoadingSweep
+   in the app, decision 0046): shapes in place of values, with a soft band of light running over them. */
+.shimmer .sh { display: block; background: color-mix(in srgb, var(--sub) 22%, transparent); border-radius: 6px; position: relative; overflow: hidden; }
+.shimmer .sh::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 10%, transparent), transparent); animation: sweep 1.4s ease-in-out infinite; }
+.shimmer .sh-row { display: flex; align-items: center; gap: 12px; }
+.shimmer .sh-light { width: 52px; height: 52px; border-radius: 50%; flex: none; }
+.shimmer .sh-lines { display: grid; gap: 8px; flex: 1; }
+.shimmer .sh-line { height: 18px; width: min(170px, 80%); }
+.shimmer .sh-line.short { height: 12px; width: min(110px, 55%); }
+.shimmer .sh-value { width: 58px; height: 30px; margin-top: 6px; }
+.shimmer .sh-block { height: 60px; border-radius: 10px; }
+.loading-line .spin { display: inline-flex; animation: spin 1s linear infinite; }
+@keyframes sweep { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .shimmer .sh::after, .loading-line .spin { animation: none; } }
 
 /* Club page header. */
 .club-head { text-align: center; margin: 14px 0 10px; }

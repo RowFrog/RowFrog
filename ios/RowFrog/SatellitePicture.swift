@@ -149,8 +149,27 @@ final class SatellitePictureStore {
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ lakeID: String) async {
-        guard states[lakeID]?.value == nil, !missing(lakeID) else { return }
+        // A list kept from the last run (primeKept) is shown, but still asked for again.
+        let primed = self.primed.remove(lakeID) != nil
+        guard primed || states[lakeID]?.value == nil, !missing(lakeID) else { return }
         await fetch(lakeID)
+    }
+
+    /// Lakes whose kept list a cold start put up; their first `load` still asks the server.
+    @ObservationIgnored private var primed: Set<String> = []
+
+    /// Cold start (ColdStart.prime, decision 0046): the lake's list of passes
+    /// kept from the last run, and the picture the card opens with from the
+    /// cache folder, so the card is filled in the first frame.
+    func primeKept(_ lakeID: String, clubID: String?) {
+        guard states[lakeID] == nil, let picture: SatellitePicture = api.keptNow("lakes/\(lakeID)/satellite"),
+              picture.latest != nil || picture.clearest != nil else { return }
+        states[lakeID] = .loaded(picture)
+        primed.insert(lakeID)
+        if let shot = picture.shot(picture.startKind(clubID: clubID)), let url = url(lakeID, file: shot.image, date: shot.date),
+           let data = try? Data(contentsOf: Self.cacheFile(for: url)), let image = UIImage(data: data) {
+            images[url] = image
+        }
     }
 
     /// Pull to refresh: asks again for the lake's list of passes. Only the pictures

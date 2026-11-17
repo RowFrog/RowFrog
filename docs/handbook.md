@@ -207,6 +207,13 @@ Management.
 - App downloads give up after 15 s without a byte and 60 s in all (`APIClient.session`); website downloads after 20 s.
 - To try it: load a club, quit the app, switch on flight mode, open the app again.
 
+## Cold start (decision 0046)
+
+- With data kept from the last visit, the first frame already shows the home base's page: club list, forecast ("Updating…" in the header), lake view, satellite picture and background picture are read from the kept files before it is drawn (`ColdStart.prime`). The launch screen is iOS's grouped background colour (`LaunchBackground` in Assets.xcassets), the colour of a page without a picture.
+- With nothing kept, the stand-in cards show with a sweeping light (`LoadingCards`, website `.shimmer`) and "Loading the forecast…" in the header.
+- To see the stand-in cards: `-RWStayLoading YES` in the app, `?stayLoading` in the website's address (`/app/?stayLoading#/club/mrc-1880`). Both show nothing kept and never finish loading.
+- To try a cold start: open a club, swipe the app away in the app switcher, open it again.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot

@@ -35,7 +35,7 @@ import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
-import { layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
+import { CARDS, layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures, backgrounds, choiceTitle } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, paceTips, bubbleTip } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
@@ -679,12 +679,20 @@ async function renderClub(id) {
   const name = club ? club.shortName || club.name : id;
   setTitle(name);
   const isHome = store.clubs[0]?.id === id;
+  // Nothing loaded in this visit: the forecast kept from the last one is read before anything
+  // is drawn, so the page opens complete with "Updating…" while the new one loads, as in the
+  // app (ForecastStore.primeKept, decisions 0044 and 0046). No stand-in cards flash first.
+  if (!isOwn(id) && !forecasts.get(id)?.value && !stayLoading()) {
+    const old = await keptForecast(id);
+    if (shown !== clubRenders) return;
+    if (old && !forecasts.get(id)?.value) forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
+  }
   const side = sideShown();
   root.innerHTML = `${testing()}<div class="split">
       ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
-        ${clubHeader(club, name, isHome, null)}
-        <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
+        ${clubHeader(club, name, isHome, null, false, null, true)}
+        ${loadingCards(id)}
       </main>
     </div>${bottomBar(id)}`;
   if (side) wireSideList(id);
@@ -697,21 +705,35 @@ async function renderClub(id) {
     const mine = shown;
     drawClubPage(id, club, saved, name, isHome, () => mine === clubRenders);
   };
+  // Screenshots (?stayLoading): the stand-in cards of a first visit stay.
+  if (stayLoading()) return;
   const pending = loadForecast(id, true).catch(() => {});
-  // Nothing loaded in this visit: the forecast kept from the last one shows at once with
-  // "Updating…" while the new one loads, as in the app (ForecastStore.showKept, decision 0044).
-  if (!isOwn(id) && !forecasts.get(id)?.value) {
-    const old = await keptForecast(id);
-    if (old && shown === clubRenders && forecasts.get(id)?.loading && !forecasts.get(id)?.value) {
-      forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
-      draw();
-    }
-  }
+  // The kept forecast is drawn in the same task as the frame above, so the browser never paints the stand-ins.
+  if (forecasts.get(id)?.value) draw();
   await pending;
   if (shown !== clubRenders) return;
   // Drawn again with what came (or the kept one with the reason); the first drawing's radar stops.
   if (forecasts.get(id)?.value && root.querySelector("main.club .card.now")) shown = ++clubRenders;
   draw();
+}
+
+/** `?stayLoading` in the address: nothing kept is shown and the forecast never loads (screenshots of a first visit). */
+const stayLoading = () => new URLSearchParams(location.search).has("stayLoading");
+
+/**
+ * While the first forecast loads with nothing kept (a first visit, or a club never opened): the
+ * page's cards in their places with a light sweeping over stand-in shapes, as LoadingCards in the
+ * app (decision 0046). No dashes; the header's update line says "Loading the forecast…".
+ */
+function loadingCards(id) {
+  const value = (condition, title) => `<div><small class="label">${conditionIcon(condition)} ${h(t(title))}</small><span class="sh sh-value"></span></div>`;
+  const cards = visibleCards(layoutFor(id)).filter((c) => c !== "conditions" && CARDS[c])
+    .map((c) => `<section class="card"><div class="card-title">${icon(CARDS[c].icon)}<span>${h(t(CARDS[c].title))}</span></div><div class="sh sh-block"></div></section>`);
+  return `<div class="loading shimmer" role="status" aria-label="${h(t("Loading the forecast…"))}">
+    <section class="card now"><div class="sh-row"><span class="sh sh-light"></span><span class="sh-lines"><span class="sh sh-line"></span><span class="sh sh-line short"></span></span></div>
+      <hr><div class="now-grid">${value("temperature", "Air")}${value("waterTemperature", "Water")}${value("wind", "Wind")}</div></section>
+    ${cards.join("")}
+  </div>`;
 }
 
 /** Draws a club page from its load state; `alive` is false once another page or drawing took over. */
@@ -720,8 +742,9 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   const raw = state?.value ?? null;
   const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
   if (!raw) {
-    root.querySelector(".loading").innerHTML = `<p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
-      <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
+    root.querySelector(".club-head .loading-line")?.remove();
+    root.querySelector(".loading").outerHTML = `<section class="card loading"><p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+      <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button></section>`;
     root.querySelector("#retry").addEventListener("click", () => renderClub(id));
     return;
   }
@@ -1397,7 +1420,8 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null,
 
 /** The header's forecast lines, one state at a time (forecastStatus, as ClubPageHeader in the app). */
 function forecastLines(club, forecast, status) {
-  if (!forecast) return "";
+  // Nothing to show yet: the line says what the stand-in cards wait for (decision 0046).
+  if (!forecast) return status.name === "loading" ? `<p class="sub small loading-line"><span class="spin">${icon("loader-circle")}</span> ${h(t("Loading the forecast…"))}</p>` : "";
   const outOfDate = status.name === "outOfDate" || status.name === "outOfDateAndUpdateFailed";
   const old = outOfDate ? `<p class="orange small">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
   switch (status.name) {
