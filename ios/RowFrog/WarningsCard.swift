@@ -10,6 +10,8 @@ struct WarningsCard: View {
     let lakeName: String?
     let town: String?
     let checkedAt: Date
+    /// True when DWD did not answer the last check and an earlier one is shown: its time is then given.
+    var earlierCheck = false
     /// Opens the shore lights guide from the start, where the card is shown to explain them.
     var guideOpen = false
     /// The moment "now" and "later" are told apart; the screenshots can fix it.
@@ -49,7 +51,7 @@ struct WarningsCard: View {
                 ForEach(now) { WarningRow(warning: $0) }
                 if !later.isEmpty { SectionLabel(text: tr("Later")) }
                 ForEach(later) { WarningRow(warning: $0) }
-                Text(coverage)
+                Text(earlierCheck ? coverage + " " + tr("Checked %@.", Format.time(checkedAt)) : coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

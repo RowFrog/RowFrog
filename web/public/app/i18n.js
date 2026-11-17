@@ -47,6 +47,8 @@ export async function setLanguage(choice) {
     }
   }
   document.documentElement.lang = language;
+  // The installed website's Home Screen menu (manifest shortcuts, quickopen.js) in the page's language.
+  document.querySelector('link[rel="manifest"]')?.setAttribute("href", language === "de" ? "manifest.de.webmanifest" : "manifest.webmanifest");
 }
 
 export function lang() {

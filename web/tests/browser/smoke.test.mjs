@@ -815,3 +815,72 @@ test("a browser without the iPhone's text size setting keeps the text at 100 % (
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("a cold start with a kept forecast never shows the stand-in cards; a first visit shows them without dashes (decision 0046)", async () => {
+  const { page, errors, context } = await open(visitor());
+  // Notes every time stand-in cards are put on the page, before any paint.
+  await page.addInitScript(() => {
+    globalThis.RF_STANDINS = 0;
+    new MutationObserver((changes) => {
+      for (const change of changes) {
+        for (const node of change.addedNodes) {
+          if (node.nodeType === 1 && (node.matches(".shimmer") || node.querySelector(".shimmer"))) globalThis.RF_STANDINS++;
+        }
+      }
+    }).observe(document, { childList: true, subtree: true });
+  });
+  // First visit, forecast held back: stand-in cards with a light sweep, no "–" values, and the line in the header.
+  await page.goto(`${base}/app/?stayLoading#/club/${club.id}`);
+  await page.locator(".loading.shimmer").waitFor({ timeout: 20000 });
+  assert.equal(await page.locator(".club-head .loading-line").count(), 1);
+  assert.equal(await page.locator(".loading.shimmer .sh-value").count(), 3);
+  assert.doesNotMatch(await page.locator(".loading.shimmer").innerText(), /–/);
+  // A normal visit keeps the forecast in the browser.
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  await page.locator(".card.now").waitFor({ timeout: 20000 });
+  await page.waitForFunction(async () => (await (await caches.open("rf-forecasts")).keys()).length > 0, null, { timeout: 10000 });
+  // The next start, its download held: the kept forecast is on the page from the start, never the stand-ins.
+  let release;
+  const held = new Promise((resolve) => (release = resolve));
+  await context.route((url) => url.pathname.endsWith(`/clubs/${club.id}/forecast`), async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.reload();
+  await page.locator(".club-head .updating").waitFor({ timeout: 20000 });
+  assert.equal(await page.evaluate(() => globalThis.RF_STANDINS), 0, "no stand-in cards before the kept forecast");
+  release();
+  await page.locator(".club-head #updated-line").waitFor({ timeout: 20000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("the Home Screen menu's links open the home base, its lake view and its radar, and the menu speaks German (decision 0048)", async () => {
+  // Each link as a fresh start from the Home Screen.
+  const start = async (hash) => {
+    const opened = await open(visitor());
+    await opened.page.goto(`${base}/app/${hash}`);
+    return opened;
+  };
+  const radar = await start("#/home/radar");
+  await radar.page.locator(".radar-full").waitFor();
+  assert.equal(await radar.page.evaluate(() => location.hash), "#/club/mrc-1880");
+  assert.deepEqual(radar.errors, []);
+  await radar.context.close();
+  const lake = await start("#/home/lake");
+  await lake.page.waitForFunction((id) => location.hash === `#/lake/${encodeURIComponent(id)}/mrc-1880`, club.lakeId);
+  assert.deepEqual(lake.errors, []);
+  await lake.context.close();
+  const last = await start("#/last");
+  await last.page.waitForFunction(() => location.hash === "#/club/mrc-1880");
+  assert.equal(await last.page.locator('link[rel="manifest"]').getAttribute("href"), "manifest.webmanifest");
+  assert.deepEqual(last.errors, []);
+  await last.context.close();
+  // A browser in German installs the German menu.
+  const { page, errors, context } = await open({ ...visitor(), "rf.language": "auto" }, undefined, "de-DE");
+  await page.goto(`${base}/app/`);
+  await page.waitForFunction(() => document.documentElement.lang === "de");
+  assert.equal(await page.locator('link[rel="manifest"]').getAttribute("href"), "manifest.de.webmanifest");
+  assert.deepEqual(errors, []);
+  await context.close();
+});

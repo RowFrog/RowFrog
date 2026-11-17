@@ -30,6 +30,11 @@ struct RootView: View {
     @State private var sideListHidden = UserDefaults.standard.bool(forKey: DefaultsKey.sideListHidden)
     /// An iPad held upright: the list slid in over the page from the sidebar button.
     @State private var showingSideOverlay = false
+    /// The lake view or radar a Home Screen menu item opens (QuickActions).
+    @State private var quickOpen: QuickOpen?
+    /// A rowfrog:// link that came before the clubs were loaded; opened once they are.
+    @State private var pendingLink: URL?
+    @State private var linksReady = false
 
     init(api: APIClient) {
         self.api = api
@@ -37,7 +42,10 @@ struct RootView: View {
         store.countryLoader = { try await api.lakes(country: $0) }
         _locations = State(initialValue: store)
         // Own places get their forecast on the phone; the store knows where they are.
-        _forecasts = State(initialValue: ForecastStore(api: api) { [weak store] id in store?.ownPlace(id) })
+        let forecasts = ForecastStore(api: api) { [weak store] id in store?.ownPlace(id) }
+        _forecasts = State(initialValue: forecasts)
+        // What the last visit showed, read before the first frame (decision 0046).
+        ColdStart.prime(locations: store, forecasts: forecasts, api: api)
     }
 
     var body: some View {
@@ -164,6 +172,7 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .background {
                 WidgetBridge.publish(locations)
+                QuickActions.publish(locations)
                 wasInBackground = true
             } else if phase == .active, wasInBackground {
                 wasInBackground = false
@@ -178,13 +187,23 @@ struct RootView: View {
         .onChange(of: AppSettings.shared.temperatureUnit) { WidgetBridge.publish(locations) }
         .onChange(of: AppSettings.shared.windUnit) { WidgetBridge.publish(locations) }
         // A tap on the widget opens its club.
-        .onOpenURL { url in
-            // A GPX, TCX or FIT file shared from another app.
-            if url.isFileURL { return openRowFile(url) }
-            guard url.scheme == "rowfrog", url.host() == "club", let id = url.pathComponents.last,
-                  locations.saved.contains(where: { $0.id == id }) else { return }
-            showingList = false
-            selection = id
+        .onOpenURL { open($0) }
+        // The Home Screen menu (QuickActions): a tap on a cold start waits in the inbox.
+        .onAppear { if let url = QuickActionInbox.shared.take() { open(url) } }
+        .onChange(of: QuickActionInbox.shared.pending) { if let url = QuickActionInbox.shared.take() { open(url) } }
+        .onChange(of: selection) { QuickActions.noteShown(selection, in: locations) }
+        .fullScreenCover(item: $quickOpen) { item in
+            Group {
+                switch item {
+                case .lake(let lakeID, let clubID):
+                    QuickLakeScreen(lakeID: lakeID, clubID: clubID)
+                case .radar(let club):
+                    RadarMapScreen(point: club.launchPoint, clubID: club.id,
+                                   reference: RadarStore.shared.radar(at: club.launchPoint)?.reference, step: RadarWindow.step)
+                        .diagnosisNamed("radar map")
+                }
+            }
+            .environment(\.locale, AppSettings.shared.locale)
         }
         .modifier(SharedRowNote(note: $rowNote, catalogCount: locations.catalog.count, catalogLoaded: importSharedRow))
     }
@@ -195,6 +214,42 @@ struct RootView: View {
         let ids = locations.saved.map(\.id)
         let first = showingList || !ids.contains(selection) ? ids : [selection]
         await forecasts.refreshOnReturn(first: first, then: ids)
+    }
+
+    /// A rowfrog:// link from the widget (club/<id>) or the Home Screen menu (also
+    /// lake/<id>, radar/<id> and add), or a GPX, TCX or FIT file shared from another app.
+    private func open(_ url: URL) {
+        if url.isFileURL { return openRowFile(url) }
+        guard url.scheme == "rowfrog" else { return }
+        // On a cold start the clubs load first; loadCatalog would show the home base over the link.
+        guard linksReady else { pendingLink = url; return }
+        if showingSafety || showingTour { return }
+        if url.host() == "add" {
+            showingSettings = false
+            showingList = true
+            return
+        }
+        guard let id = url.pathComponents.last, let club = locations.saved.first(where: { $0.id == id }) else { return }
+        showingList = false
+        showingSettings = false
+        selection = id
+        switch url.host() {
+        case "lake":
+            if let lake = locations.lake(of: club), lake.hasOutline != false { quickOpen = .lake(lakeID: lake.id, clubID: id) }
+        case "radar":
+            quickOpen = .radar(club)
+        default:
+            quickOpen = nil
+        }
+    }
+
+    /// The clubs are loaded (or could not load): a link that waited opens now.
+    private func openPendingLink() {
+        linksReady = true
+        if let url = pendingLink {
+            pendingLink = nil
+            open(url)
+        }
     }
 
     private func openRowFile(_ url: URL) {
@@ -329,7 +384,9 @@ struct RootView: View {
                 locations.setCountries(countries)
                 // Screenshot hook `-RWOpenClub` may name a club abroad: then every country loads.
                 let all = UserDefaults.standard.string(forKey: DefaultsKey.openClub) != nil
-                for code in all ? countries.map(\.code) : locations.countriesToLoad(near: KnownLocation.coordinate) {
+                // Countries a cold start showed from the kept files come again, as the others.
+                let primed = locations.takePrimedCountries()
+                for code in all ? countries.map(\.code) : primed + locations.countriesToLoad(near: KnownLocation.coordinate) {
                     locations.addCountry(code, lakes: try await api.lakes(country: code))
                 }
             } else {
@@ -338,8 +395,10 @@ struct RootView: View {
             locations.catalogFailed = false
             applyLaunchArguments()
             WidgetBridge.publish(locations)
+            openPendingLink()
         } catch {
             locations.catalogFailed = true
+            openPendingLink()
         }
     }
 

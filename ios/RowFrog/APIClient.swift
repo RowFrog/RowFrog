@@ -94,11 +94,23 @@ struct APIClient {
     /// started without internet, the app said "No forecast" although it had
     /// one from half an hour before (owner's screenshot, 16 Nov 2026).
     func keptForecast(clubID: String, model: String? = nil, at now: Date = .now) async -> (forecast: ClubForecast, at: Date)? {
+        keptForecastNow(clubID: clubID, model: model, at: now)
+    }
+
+    /// The same, read straight away: a cold start (ColdStart.prime) shows it in
+    /// the very first frame, instead of stand-in cards until a read finishes.
+    func keptForecastNow(clubID: String, model: String? = nil, at now: Date = .now) -> (forecast: ClubForecast, at: Date)? {
         let path = model.map { "clubs/\(clubID)/models/\($0)/forecast" } ?? "clubs/\(clubID)/forecast"
         guard let kept = cache?.copy(of: baseURL.appending(path: path)),
               let forecast = try? Self.decoder.decode(ClubForecast.self, from: kept.data),
               let last = forecast.hours.map(\.time).max(), last > now else { return nil }
         return (forecast.withSampleNearby(), now.addingTimeInterval(-kept.age))
+    }
+
+    /// Any file kept from its last download, read straight away; nil = none or unreadable.
+    func keptNow<T: Decodable>(_ path: String) -> T? {
+        guard let kept = cache?.copy(of: baseURL.appending(path: path)) else { return nil }
+        return try? Self.decoder.decode(T.self, from: kept.data)
     }
 
 #if !WIDGET_EXTENSION

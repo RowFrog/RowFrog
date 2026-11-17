@@ -197,3 +197,11 @@ Widgets: pick a layout with fewer values or all six, and marks in the light's do
 
 # Shown while pulling down to refresh: the website has no Refresh button and loads again on return to the tab (owner, 15 Nov 2026)
 Updating…
+
+# Home Screen menu: the website's menu is the manifest's fixed list, so it names no club, has no
+# Add a club item (no club saved opens the list) and its lake view says why it failed in its own words;
+# its fixed names and lines are in web/public/app/manifest*.webmanifest, which this check doesn't read
+Around %@
+Last opened
+Search for a rowing club or lake
+The lake view could not load. Try again later.

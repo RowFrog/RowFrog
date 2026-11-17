@@ -338,6 +338,9 @@ jobs:
           shoot_pages 05-wuerzburg-river light -RWOpenClub akademischer-ruderclub-wuerzburg
           shoot_pages 06-list-with-river-club light -RWShowList YES
           shoot_pages 07-home-dark dark
+          # A first start's stand-in cards, while the forecast loads (decision 0046).
+          shoot 474-first-start-loading light -RWStayLoading YES
+          shoot 475-first-start-loading-german-dark dark -RWStayLoading YES -RWLanguage de
           shoot_pages 09-icons light -RWIconGallery YES
           shoot_pages 39-conditions-proposal light -RWConditionsPreview YES
           # The Current conditions card and the larger view behind each tile.

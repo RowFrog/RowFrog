@@ -35,14 +35,16 @@ import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
-import { layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
+import { CARDS, layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures, backgrounds, choiceTitle } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, paceTips, bubbleTip } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
   radarAt, radarStatus, followRadar, rainLines, skyNow, radarAhead, radarGraphic, radarMark, radarTitleMark, radarCard, radarCardBody, wireRadarCard,
+  openRadarMap,
 } from "./radar.js";
+import { quickClub, quickLink, noteShown, lastShown } from "./quickopen.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -673,18 +675,28 @@ let clubRenders = 0;
 async function renderClub(id) {
   let shown = ++clubRenders;
   setPageClub(id);
+  noteShown(id, store.clubs.map((c) => c.id));
+  if (quickPart?.id !== id) quickPart = null;
   let club = store.clubs.find((c) => c.id === id);
   if (!club?.launchPoint) club = (await findClub(id)) ?? club;
   const saved = store.clubs.some((c) => c.id === id);
   const name = club ? club.shortName || club.name : id;
   setTitle(name);
   const isHome = store.clubs[0]?.id === id;
+  // Nothing loaded in this visit: the forecast kept from the last one is read before anything
+  // is drawn, so the page opens complete with "Updating…" while the new one loads, as in the
+  // app (ForecastStore.primeKept, decisions 0044 and 0046). No stand-in cards flash first.
+  if (!isOwn(id) && !forecasts.get(id)?.value && !stayLoading()) {
+    const old = await keptForecast(id);
+    if (shown !== clubRenders) return;
+    if (old && !forecasts.get(id)?.value) forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
+  }
   const side = sideShown();
   root.innerHTML = `${testing()}<div class="split">
       ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
-        ${clubHeader(club, name, isHome, null)}
-        <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
+        ${clubHeader(club, name, isHome, null, false, null, true)}
+        ${loadingCards(id)}
       </main>
     </div>${bottomBar(id)}`;
   if (side) wireSideList(id);
@@ -697,21 +709,48 @@ async function renderClub(id) {
     const mine = shown;
     drawClubPage(id, club, saved, name, isHome, () => mine === clubRenders);
   };
+  // Screenshots (?stayLoading): the stand-in cards of a first visit stay.
+  if (stayLoading()) return;
   const pending = loadForecast(id, true).catch(() => {});
-  // Nothing loaded in this visit: the forecast kept from the last one shows at once with
-  // "Updating…" while the new one loads, as in the app (ForecastStore.showKept, decision 0044).
-  if (!isOwn(id) && !forecasts.get(id)?.value) {
-    const old = await keptForecast(id);
-    if (old && shown === clubRenders && forecasts.get(id)?.loading && !forecasts.get(id)?.value) {
-      forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
-      draw();
-    }
-  }
+  // The kept forecast is drawn in the same task as the frame above, so the browser never paints the stand-ins.
+  if (forecasts.get(id)?.value) draw();
   await pending;
   if (shown !== clubRenders) return;
   // Drawn again with what came (or the kept one with the reason); the first drawing's radar stops.
   if (forecasts.get(id)?.value && root.querySelector("main.club .card.now")) shown = ++clubRenders;
   draw();
+}
+
+/** The lake view or radar a Home Screen menu item asked for: { id, part }, opened once the club's page is drawn. */
+let quickPart = null;
+/** Whether the start's check of the saved clubs is through: it may draw the page again, which closes the radar. */
+let quickReady = false;
+
+/** A Home Screen menu link (manifest shortcuts, quickopen.js): the club's page, then its lake view or radar over it. */
+function openQuick({ which, part }) {
+  const id = quickClub(which, store.clubs.map((c) => c.id), lastShown());
+  if (!id) return location.replace("#/list");
+  quickPart = part ? { id, part } : null;
+  location.replace(`#/club/${encodeURIComponent(id)}`);
+}
+
+/** `?stayLoading` in the address: nothing kept is shown and the forecast never loads (screenshots of a first visit). */
+const stayLoading = () => new URLSearchParams(location.search).has("stayLoading");
+
+/**
+ * While the first forecast loads with nothing kept (a first visit, or a club never opened): the
+ * page's cards in their places with a light sweeping over stand-in shapes, as LoadingCards in the
+ * app (decision 0046). No dashes; the header's update line says "Loading the forecast…".
+ */
+function loadingCards(id) {
+  const value = (condition, title) => `<div><small class="label">${conditionIcon(condition)} ${h(t(title))}</small><span class="sh sh-value"></span></div>`;
+  const cards = visibleCards(layoutFor(id)).filter((c) => c !== "conditions" && CARDS[c])
+    .map((c) => `<section class="card"><div class="card-title">${icon(CARDS[c].icon)}<span>${h(t(CARDS[c].title))}</span></div><div class="sh sh-block"></div></section>`);
+  return `<div class="loading shimmer" role="status" aria-label="${h(t("Loading the forecast…"))}">
+    <section class="card now"><div class="sh-row"><span class="sh sh-light"></span><span class="sh-lines"><span class="sh sh-line"></span><span class="sh sh-line short"></span></span></div>
+      <hr><div class="now-grid">${value("temperature", "Air")}${value("waterTemperature", "Water")}${value("wind", "Wind")}</div></section>
+    ${cards.join("")}
+  </div>`;
 }
 
 /** Draws a club page from its load state; `alive` is false once another page or drawing took over. */
@@ -720,8 +759,9 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   const raw = state?.value ?? null;
   const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
   if (!raw) {
-    root.querySelector(".loading").innerHTML = `<p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
-      <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
+    root.querySelector(".club-head .loading-line")?.remove();
+    root.querySelector(".loading").outerHTML = `<section class="card loading"><p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+      <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button></section>`;
     root.querySelector("#retry").addEventListener("click", () => renderClub(id));
     return;
   }
@@ -760,7 +800,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
     ${clubHeader(club, name, isHome, forecast, stale, failure, state.loading)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
-    ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
+    ${showWarnings ? warningsCard(warnings, club, warningsCheckedAt(warnings, forecast), isEarlierCheck(warnings, forecast)) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
     <div class="page-end">
       ${sourceLine(forecast)}
@@ -781,6 +821,13 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   followRadar(club?.launchPoint, () => alive() && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
+  // A Home Screen menu item for the lake view or the radar opens it over the page, once (openQuick).
+  if (quickReady && quickPart?.id === id) {
+    const { part } = quickPart;
+    quickPart = null;
+    if (part === "lake" && forecast.lakeId) location.hash = `#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}`;
+    else if (part === "radar" && club?.launchPoint) openRadarMap(club.launchPoint, radarAt(club.launchPoint)?.reference, markIcon(id));
+  }
   const lakeBox = root.querySelector("#lake-view");
   if (lakeBox) {
     fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(() => {
@@ -1256,7 +1303,10 @@ export function updateCyclesBody(forecast, loaded) {
     <strong>${h(t(title))}</strong><small>${h(t(source))}</small><small class="sub">${h(t(fetched))}</small></span></li>`).join("");
   return `<p>${h(run ? t("This forecast: model run %@ UTC (started %@), ready at %@.", runHour(run.started), time(run.started), time(run.available))
       : t("This forecast was built at %@.", time(forecast.generatedAt)))}</p>
-    <p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    ${isEarlierCheck(forecast.warnings, forecast)
+      ? `<p>${h(t("Water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    <p>${h(t("Warnings checked at %@: the last check after that did not get through.", time(forecast.warnings.checkedAt)))}</p>`
+      : `<p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>`}
     ${loaded ? `<p>${h(t("Loaded on this device at %@.", time(loaded)))}</p>` : ""}
     <p class="small sub">${h(t("The server renews the clubs you use every 30 minutes; your browser loads them when you open or come back to this page, or tap Refresh."))}</p>
     <h3>${h(t("How often values are renewed"))}</h3>
@@ -1397,7 +1447,8 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null,
 
 /** The header's forecast lines, one state at a time (forecastStatus, as ClubPageHeader in the app). */
 function forecastLines(club, forecast, status) {
-  if (!forecast) return "";
+  // Nothing to show yet: the line says what the stand-in cards wait for (decision 0046).
+  if (!forecast) return status.name === "loading" ? `<p class="sub small loading-line"><span class="spin">${icon("loader-circle")}</span> ${h(t("Loading the forecast…"))}</p>` : "";
   const outOfDate = status.name === "outOfDate" || status.name === "outOfDateAndUpdateFailed";
   const old = outOfDate ? `<p class="orange small">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
   switch (status.name) {
@@ -1432,7 +1483,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     openSheet({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part], legendBody(part));
   }));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
-    openSheet(t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
+    openSheet(t("Official warnings"), warningsBody(forecast.warnings, club, warningsCheckedAt(forecast.warnings, forecast), true));
   });
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
@@ -1753,9 +1804,20 @@ function laterWarningLine(headline) {
   return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}<span>${h(text)}</span></button></li>`;
 }
 
-function warningsCard(warnings, club, checkedAt) {
+/** When the warnings were checked: earlier than the forecast file when the last check failed and the
+ * one before stands in (up to 3 h, Warnings.checkedTime in the app). Older files lack `checkedAt`. */
+function warningsCheckedAt(warnings, forecast) {
+  return warnings?.checkedAt ?? forecast.generatedAt;
+}
+
+/** True when an earlier check is shown because the last one failed: the card then says when it was. */
+function isEarlierCheck(warnings, forecast) {
+  return !!warnings?.checkedAt && new Date(forecast.generatedAt) - new Date(warnings.checkedAt) > 5 * 60 * 1000;
+}
+
+function warningsCard(warnings, club, checkedAt, earlier = false) {
   const title = t("Official warnings");
-  return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false), { cls: "warnings" });
+  return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false, earlier), { cls: "warnings" });
 }
 
 /** False outside Germany, where DWD does not warn: then "no warning" must not be said. Older files lack `local`. */
@@ -1784,7 +1846,7 @@ function notCheckedNote(local) {
     ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("square-arrow-out-up-right")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
 }
 
-function warningsBody(warnings, club, checkedAt, guideOpen) {
+function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   if (warnings.status !== "ok") {
     return `<p class="orange">${icon("wifi-off")} ${h(warningsIsDWD(warnings)
       ? t("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
@@ -1821,7 +1883,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
   const later = other.filter((w) => !warningActive(w)).sort((a, b) => new Date(a.onset ?? 0) - new Date(b.onset ?? 0));
   const label = (text) => `<p class="warn-group">${h(text)}</p>`;
   return `${lake.map(warningRow).join("")}${guide}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
-    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(coverage)}</p>`;
+    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
 }
 
 const SEVERITY = { extreme: "var(--extreme)", severe: "var(--red)", moderate: "var(--orange)" };
@@ -3027,6 +3089,8 @@ function route(scroll = true) {
     });
   }
   const hash = location.hash.replace(/^#/, "");
+  const quick = quickLink(hash);
+  if (quick) return openQuick(quick);
   pagePicture(hash);
   keepUnplacedBoats();
   // The club whose boats count: the club page's, its value pages' and its lake map's.
@@ -3112,4 +3176,9 @@ await setLanguage(savedLanguage());
 followTextSize();
 route();
 // Saved clubs that moved to another water or were renamed: show them as they are now.
-refreshSavedClubs().then((changed) => changed && route());
+// A Home Screen menu item's lake view or radar opens after that (openQuick).
+refreshSavedClubs().catch(() => false).then((changed) => {
+  quickReady = true;
+  if (changed) route();
+  else if (quickPart) route(false);
+});

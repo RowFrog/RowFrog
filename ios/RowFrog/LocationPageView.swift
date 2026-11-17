@@ -185,7 +185,9 @@ struct LocationPageView: View {
                                 .environment(\.cardTip, topTileCardTip(forecast))
                                 .environment(\.bubbleTip, isCurrentPage ? topTileBubble(forecast) : nil)
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
-                                WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
+                                WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town,
+                                             checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt),
+                                             earlierCheck: warnings.isEarlierCheck(forecastAt: forecast.generatedAt))
                                     .id("warnings")
                             }
                             let cards = AppSettings.shared.pageCards(for: club.id)
@@ -649,7 +651,7 @@ private struct NowCard: View {
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
         .sheet(isPresented: $showingWarnings) {
             if let warnings = forecast.warnings {
-                NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: forecast.generatedAt)
+                NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt))
             }
         }
         .detailCover(isPresented: $showingDaylight) {
@@ -1591,8 +1593,12 @@ struct SunLabelStyle: LabelStyle {
     }
 }
 
-/// While the first forecast loads: the page's cards in their places, values
-/// as dashes and the cards dimmed, so the page is there at once and fills in.
+/// While the first forecast loads, with nothing kept to show (the first start,
+/// or a club never opened): the page's cards in their places with a light
+/// sweeping over stand-in shapes, so the page is there at once and says it is
+/// coming. No dashes: "–°" read like a value that is missing (owner's screen
+/// recording, 16 Nov 2026; decision 0046). The header's update line says
+/// "Loading the forecast…". With Reduce Motion the shapes stand still.
 private struct LoadingCards: View {
     let cards: [PageCard]
     @Environment(\.surface) private var surface
@@ -1602,19 +1608,19 @@ private struct LoadingCards: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 12) {
                     Circle().fill(.quaternary).frame(width: 52, height: 52)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(tr("Loading the forecast…")).font(.title3.weight(.semibold))
-                        ProgressView().controlSize(.small)
+                    VStack(alignment: .leading, spacing: 8) {
+                        RoundedRectangle(cornerRadius: 5).fill(.quaternary).frame(width: 170, height: 18)
+                        RoundedRectangle(cornerRadius: 4).fill(.quaternary).frame(width: 110, height: 12)
                     }
                     Spacer()
                 }
                 Divider()
                 HStack(alignment: .top) {
-                    value(tr("Air"), Condition.temperature.symbol, "–°")
+                    value(tr("Air"), Condition.temperature.symbol)
                     Spacer()
-                    value(tr("Water"), Condition.waterTemperature.symbol, "–°")
+                    value(tr("Water"), Condition.waterTemperature.symbol)
                     Spacer()
-                    value(tr("Wind"), Condition.wind.symbol, "–")
+                    value(tr("Wind"), Condition.wind.symbol)
                 }
             }
             .padding()
@@ -1631,14 +1637,45 @@ private struct LoadingCards: View {
                 .cardBackground(surface)
             }
         }
+        .modifier(LoadingSweep())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(tr("Loading the forecast…"))
     }
 
-    private func value(_ title: String, _ symbol: String, _ dash: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+    private func value(_ title: String, _ symbol: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
             Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            Text(dash).valueFont(size: 40).foregroundStyle(.secondary)
+            RoundedRectangle(cornerRadius: 6).fill(.quaternary).frame(width: 58, height: 30)
+        }
+    }
+}
+
+/// A soft band of light that runs over the stand-in cards every 1.4 seconds;
+/// nothing moves with Reduce Motion. The website's .shimmer does the same.
+struct LoadingSweep: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var start = Date.now
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            content.overlay {
+                GeometryReader { geometry in
+                    TimelineView(.animation) { timeline in
+                        let phase = timeline.date.timeIntervalSince(start).truncatingRemainder(dividingBy: 1.4) / 1.4
+                        let width = geometry.size.width
+                        // The text colour, faint: a lighter band in dark mode, a darker one in light mode.
+                        LinearGradient(colors: [.clear, .primary.opacity(0.08), .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: width * 0.6)
+                            .offset(x: -width * 0.6 + phase * width * 1.6)
+                    }
+                }
+                .allowsHitTesting(false)
+                // Only where there is a card, so the light never crosses the picture between them.
+                .mask(content)
+            }
         }
     }
 }

@@ -37,6 +37,17 @@ struct ClubPageHeader: View {
             if !club.launchPointVerified {
                 notConfirmedLine
             }
+            if forecasts.forecasts[club.id] == nil, forecasts.status(club.id) == .loading {
+                // Nothing kept to show (first start, or a club never opened): the
+                // update line says what the stand-in cards below wait for (decision 0046).
+                Label {
+                    Text(tr("Loading the forecast…"))
+                } icon: {
+                    ProgressView().controlSize(.mini)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
             if let forecast = forecasts.forecasts[club.id] {
                 let updated = forecast.generatedAt
                 // One state at a time, decided in ForecastStatus (shared with the website).
