@@ -570,8 +570,10 @@ test("value pages keep the chart and the map at the same height: 40 px between t
   assert.ok(Math.max(...seen) - Math.min(...seen) <= 1, `the chart starts at the same height on every page: ${seen}`);
   // The waves page's map is the lake's, and opens the lake view on its waves.
   await page.goto(`${base}/app/#/club/${club.id}/value/waves`);
+  // Shaped as the weather map's card (owner's pick B, 17 Nov 2026): the chain button, play, slider and repeat.
   await page.locator("#map-card canvas.wm-lake").waitFor({ timeout: 20000 });
-  assert.match(await page.locator("#map-card a").getAttribute("href"), /layer=waves/);
+  assert.equal(await page.locator("#map-card #chain").count(), 1);
+  assert.equal(await page.locator("#map-card #slider").count(), 1);
   await page.locator("#map-card canvas").click();
   await page.waitForFunction(() => document.querySelector('.lake-layers [data-layer="waves"]')?.classList.contains("on"), null, { timeout: 20000 });
   assert.deepEqual(errors, []);

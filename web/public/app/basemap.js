@@ -17,7 +17,7 @@ export function siteConfig() {
   return config;
 }
 
-const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+export const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_CREDIT = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const MAPTILER_CREDIT = '<a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener">© MapTiler</a> ' + OSM_CREDIT;
 
