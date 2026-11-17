@@ -282,7 +282,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         for (const p of l.points) {
           if (p.y <= 0 || covered.some(([a, b]) => p.x >= a && p.x <= b)) continue;
           // drawOffset: a rain bar stands for the hour from its time on (decision 0043), drawn in its middle (ChartLine.drawOffset).
-          parts.push(`<rect x="${px(p.x + (l.drawOffset ?? 0)) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
+          parts.push(`<rect x="${px(p.x + (l.drawOffset ?? 0)) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity="${0.7 * (l.fade ?? 1)}"/>`);
         }
       } else if (l.kind === "area" && l.points.length) {
         // A soft area down to the axis (the cloud chart's "All"), as the app's AreaMark.
@@ -299,6 +299,13 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
       parts.push(`<line x1="${px(lo)}" x2="${px(hi)}" y1="${y}" y2="${y}" stroke="${limit.colour}" stroke-dasharray="4 3"/>`);
     }
     parts.push(`<line class="now" x1="${px(0)}" x2="${px(0)}" y1="${top}" y2="${bottom}"/>`);
+    // Where the radar ends and the forecast takes over, as in the rain tile (ConditionDetail.handover).
+    if (detail.handover != null) {
+      const x = px(detail.handover);
+      parts.push(`<line class="handover" x1="${x}" x2="${x}" y1="${top}" y2="${bottom}"/>`,
+        `<text class="handover" x="${x - 4}" y="${top + 11}" text-anchor="end">${h(t("Radar"))}</text>`,
+        `<text class="handover" x="${x + 4}" y="${top + 11}">${h(t("Forecast"))}</text>`);
+    }
     if (!detail.history) {
       for (const l of lines.filter((x) => (x.kind ?? "line") === "line")) {
         const p = l.points.reduce((a, b) => (Math.abs(b.x) < Math.abs(a.x) ? b : a), l.points[0]);

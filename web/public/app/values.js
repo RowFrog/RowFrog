@@ -373,6 +373,7 @@ const BUILDERS = {
     let big = "";
     const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", drawOffset: 0.5, points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
     let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");
+    let handover = null;
     // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
     const ahead = radarAhead(d);
     if (ahead) {
@@ -390,6 +391,8 @@ const BUILDERS = {
     }
     if (d.radar?.steps.length) {
       lines[0].name = t("Forecast");
+      // Paler after the radar, as in the rain tile's small bars (app: ChartLine.fade).
+      lines[0].fade = 0.6;
       // First in the legend, as it comes first on the chart. It hides the forecast hours whose middle
       // (where their bar stands) lies under the radar.
       lines.unshift({
@@ -398,10 +401,12 @@ const BUILDERS = {
         covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar)) - 0.5],
       });
       source += ` ${t(RADAR_CREDIT)}`;
+      // Half a quarter hour after the last radar step, so the line stands just past its bar.
+      handover = d.x(radarEnd(d.radar)) + 0.125;
     }
     const highest = Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0), d.radar ? peak(d.radar) : 0);
     return base({
-      value, note, big,
+      value, note, big, handover,
       unit: unitSymbol("rain"), lines,
       limits: [{ value: inUnit("rain", 4), colour: COLOURS.orange, label: t("Heavy rain") }],
       limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),

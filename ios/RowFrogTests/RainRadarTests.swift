@@ -149,6 +149,26 @@ final class RainRadarTests: XCTestCase {
         XCTAssertEqual(long.next?.text, tr("Until about %@", Format.time(rain[4].time)))
     }
 
+    func testTheRainChartMarksTheRadarsEndAndPalesTheForecastAfterIt() {
+        var rows = hours(code: 3, mm: [0, 0.4, 0, 0.8, 0])
+        rows[1].weatherCode = 61
+        let forecast = ClubForecast(
+            clubId: "mrc-1880", lakeId: "starnberger-see", generatedAt: rows[0].time, waterTemperature: nil,
+            attribution: [], daylight: nil, hours: rows
+        )
+        let r = radar([0.2, 0.4, 0, 0, 0, 0, 0, 0, 0])
+        let d = ConditionData(forecast: forecast, now: rows[0], radar: r)
+        let detail = ConditionDetail(.precipitation, d)
+        // Half a quarter hour past the last radar step, as in the rain tile.
+        XCTAssertEqual(detail.handover!, d.x(r.end) + 0.125, accuracy: 1e-9)
+        XCTAssertEqual(detail.lines.first { $0.name == tr("Forecast") }?.fade, 0.6)
+        XCTAssertEqual(detail.lines.first { $0.name == tr("Radar") }?.fade, 1)
+        // Without the radar: no line, bars as usual.
+        let plain = ConditionDetail(.precipitation, ConditionData(forecast: forecast, now: rows[0]))
+        XCTAssertNil(plain.handover)
+        XCTAssertEqual(plain.lines.first?.fade, 1)
+    }
+
     @MainActor
     func testAFailedRadarReadIsTriedAgainSoonThenAtTheUsualPace() {
         XCTAssertEqual(RadarStore.retryDelay(after: 1), 30)

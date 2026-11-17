@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ahead, rainOutlook, rainLines, skyNow, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers, radarTitleMark, radarStatus } from "../public/app/radar.js";
-import { conditionData } from "../public/app/values.js";
+import { conditionData, conditionDetail } from "../public/app/values.js";
 import { time } from "../public/app/shared.js";
 
 const MIN = 60000;
@@ -128,4 +128,17 @@ test("the rain tile's radar symbol: plain, faint while read, struck through when
   assert.match(radarTitleMark("missing"), /class="radar-mark head missing"/);
   assert.equal(radarStatus(null), null);
   assert.equal(radarStatus({ lat: 47.95, lon: 11.35 }), null, "never asked");
+});
+
+test("the rain chart marks where the radar ends and pales the forecast after it, as the rain tile does", () => {
+  const forecast = { hours: [hour(0), hour(1, 0.4, 61), hour(2), hour(3, 0.8, 61), hour(4)] };
+  const d = conditionData(forecast, forecast.hours[0], radar([0.2, 0.4, 0, 0, 0, 0, 0, 0, 0]));
+  const detail = conditionDetail("precipitation", d);
+  assert.ok(Math.abs(detail.handover - d.x(now + 127.5 * MIN)) < 1e-9);
+  assert.equal(detail.lines.find((l) => l.name === "Forecast").fade, 0.6);
+  assert.equal(detail.lines.find((l) => l.name === "Radar").fade, undefined);
+  // Without radar: no line, bars as usual.
+  const plain = conditionDetail("precipitation", conditionData(forecast, forecast.hours[0]));
+  assert.equal(plain.handover, null);
+  assert.equal(plain.lines[0].fade, undefined);
 });

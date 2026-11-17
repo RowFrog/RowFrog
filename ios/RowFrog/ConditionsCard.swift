@@ -369,6 +369,9 @@ struct ChartLine: Identifiable {
     /// stands for the hour from its time on (decision 0043), so it is drawn in
     /// the middle of that hour; scrubbing and the values still read the point's x.
     var drawOffset: Double = 0
+    /// Bars only: how strong they are drawn, 1 = as usual. The forecast's rain
+    /// bars after the radar are paler, as in the rain tile's small bars.
+    var fade: Double = 1
     var id: String { name }
 }
 
@@ -416,6 +419,9 @@ struct ConditionDetail {
     var twoColumnFacts = false
     var rowing: String
     var source: String
+    /// Where the radar ends and the forecast takes over (hours from now): a grey
+    /// line with "Radar" and "Forecast" beside it, as in the rain tile.
+    var handover: Double? = nil
 }
 
 extension View {
@@ -868,6 +874,17 @@ private struct ConditionChart: View {
         let badgeTop = plot.maxY - 17
         let joined = time.linked && mapX != nil
         ZStack(alignment: .topLeading) {
+            if let h = detail.handover, let px = onScreen(h) {
+                Rectangle().fill(Color.secondary.opacity(0.6))
+                    .frame(width: 1.5, height: max(plot.maxY - plot.minY, 0))
+                    .offset(x: px - 0.75, y: plot.minY)
+                Text(tr("Radar")).font(.caption2).foregroundStyle(.secondary)
+                    .frame(width: 90, alignment: .trailing)
+                    .offset(x: px - 94, y: plot.minY + 2)
+                Text(tr("Forecast")).font(.caption2).foregroundStyle(.secondary)
+                    .fixedSize()
+                    .offset(x: px + 4, y: plot.minY + 2)
+            }
             if let x = markerX, let px = onScreen(x) {
                 Rectangle().fill(Color.blue)
                     .frame(width: 1.5, height: max((joined ? badgeTop : plot.maxY) - plot.minY, 0))
@@ -1193,7 +1210,7 @@ private struct ConditionChart: View {
                 .interpolationMethod(.monotone)
         case .bars:
             BarMark(x: .value("Hour", p.x + line.drawOffset), y: .value("Value", p.y), width: .fixed(line.barWidth))
-                .foregroundStyle(line.color.opacity(0.7))
+                .foregroundStyle(line.color.opacity(0.7 * line.fade))
         case .area:
             AreaMark(x: .value("Hour", p.x), y: .value("Value", p.y), series: .value("Series", line.name))
                 .foregroundStyle(line.color.opacity(0.55))
@@ -1735,6 +1752,7 @@ extension ConditionDetail {
             : (d.forecastRain.map { $0.from <= d.moment ? tr("Expected this hour") : tr("Expected from %@", Format.dayTime($0.from)) } ?? tr("Dry next 24 h"))
         var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) }, drawOffset: 0.5)]
         var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
+        var handover: Double?
         // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
         if let ahead = d.radarAhead, let outlook = d.rainOutlook {
             value = ahead.rainingNow ? Format.rain(ahead.steps.first?.mmPerHour) : (d.traceNow ?? tr("Dry"))
@@ -1747,12 +1765,14 @@ extension ConditionDetail {
         }
         if let radar = d.radar, let first = radar.steps.first {
             let points = radar.steps.map { ChartPoint(x: d.x($0.time), y: r.convert($0.mmPerHour)) }
-            lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points, drawOffset: 0.5)
+            lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points, drawOffset: 0.5, fade: 0.6)
             // First in the legend, as it comes first on the chart. It hides the forecast hours whose
             // middle (where their bar stands) lies under the radar.
             lines.insert(ChartLine(name: tr("Radar"), color: .indigo, kind: .bars, points: points, barWidth: 2.5,
                                    covers: (d.x(first.time) - 0.5)...(d.x(radar.end) - 0.5)), at: 0)
             source += " " + tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0")
+            // Half a quarter hour after the last radar step, so the line stands just past its bar.
+            handover = d.x(radar.end) + 0.125
         }
         let highest = max(d.timeline.compactMap(\.precipitationMm).max() ?? 0, d.radar?.peak ?? 0)
         return ConditionDetail(
@@ -1769,7 +1789,8 @@ extension ConditionDetail {
                            amber: tr("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
                            later: tr("Heavy rain or hail from %@: plan to be back before then."),
                            calm: tr("No heavy rain or hail in the next 24 hours.")),
-            source: source
+            source: source,
+            handover: handover
         )
     }
 
