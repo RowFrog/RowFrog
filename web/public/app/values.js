@@ -3,7 +3,7 @@
 
 import { t, tk, num, lang } from "./i18n.js";
 import {
-  time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
+  time, dayLabel, dayTime, duration, timeLeft, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
   pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
   currentLimits, boatInSentence, selectedBoat, iceDetail, iceSatelliteSummary, windDial, pressureGauge, sunPath,
 } from "./shared.js";
@@ -596,7 +596,7 @@ const BUILDERS = {
     let note = "";
     if (sun?.up) {
       value = t("Sunset %@", time(sun.sunset));
-      note = t("Sun is up. Rowing advised for %@ until sunset.", duration(moment, sun.sunset));
+      note = t("Sun is up. Rowing advised for %@ until sunset.", timeLeft(moment, sun.sunset));
     } else if (sun) {
       value = t("Sunrise %@", time(sun.sunrise));
       note = t("Sun is down. Rowing is advised again from sunrise at %@.", time(sun.sunrise));

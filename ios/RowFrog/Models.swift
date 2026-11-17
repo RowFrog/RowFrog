@@ -852,8 +852,7 @@ struct ClubForecast: Codable, Hashable {
         guard DaylightRule.reasonNames.contains(reason.condition), let days = daylight, !days.isEmpty else { return reason.explanation }
         if reason.condition == "sunset_soon" {
             guard let set = days.map(\.sunset).sorted().first(where: { $0 > now }) else { return reason.explanation }
-            let minutes = max(1, Int((set.timeIntervalSince(now) / 60).rounded(.up)))
-            return tr("Sunset at %@: %@ min of daylight left.", Format.time(set), String(minutes))
+            return tr("Sunset at %@: %@ min of daylight left.", Format.time(set), String(Format.minutesLeft(from: now, to: set)))
         }
         let parts = DaylightRule.parts(from: hour.time, days: days)
         if parts.count > 1 {

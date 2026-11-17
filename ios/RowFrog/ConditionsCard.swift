@@ -2030,7 +2030,7 @@ extension ConditionDetail {
         switch state {
         case let .up(_, sunset)?:
             value = tr("Sunset %@", Format.time(sunset))
-            note = tr("Sun is up. Rowing advised for %@ until sunset.", Format.duration(from: moment, to: sunset))
+            note = tr("Sun is up. Rowing advised for %@ until sunset.", Format.timeLeft(from: moment, to: sunset))
         case let .down(sunrise, _)?:
             value = tr("Sunrise %@", Format.time(sunrise))
             note = tr("Sun is down. Rowing is advised again from sunrise at %@.", Format.time(sunrise))

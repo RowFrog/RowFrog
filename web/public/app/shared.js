@@ -596,6 +596,23 @@ export function duration(from, to) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
 }
 
+/**
+ * Minutes left until `to` (sunset), counted the way the reader sees them: the clock minute
+ * shown for `to` minus the clock minute now, so "16:36" at 16:31 is 5 min whatever the seconds.
+ * At least 1 while `to` is still ahead. Every "until sunset" count (warning line, sun line,
+ * daylight sheet) uses this, as the app does (Format.minutesLeft).
+ */
+export function minutesLeft(from, to) {
+  if (to <= from) return 0;
+  return Math.max(1, Math.floor(to / 60000) - Math.floor(from / 60000));
+}
+
+/** minutesLeft written as "5 min" or "1 h 4 min". */
+export function timeLeft(from, to) {
+  const minutes = minutesLeft(from, to);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+}
+
 export const degrees = (c, digits = 0) => (c == null ? "–" : `${num(inUnit("temperature", c), digits)}°`);
 export const temperature = (c, digits = 0) => (c == null ? "–" : `${num(inUnit("temperature", c), digits)} ${unitSymbol("temperature")}`);
 export const windUnit = () => unitSymbol("wind");
@@ -684,7 +701,7 @@ export function hourExplanation(forecast, reason, hour, now = new Date()) {
   if (DAYLIGHT_REASONS.includes(reason.condition) && days.length) {
     if (reason.condition === "sunset_soon") {
       const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > now.getTime());
-      if (set != null) return t("Sunset at %@: %@ min of daylight left.", time(new Date(set)), String(Math.max(1, Math.ceil((set - now.getTime()) / 60e3))));
+      if (set != null) return t("Sunset at %@: %@ min of daylight left.", time(new Date(set)), String(minutesLeft(now, set)));
     } else {
       const start = Date.parse(hour.time);
       const parts = daylightParts(start, days);
