@@ -1002,6 +1002,11 @@ enum German {
         "No clubs yet": "Noch keine Vereine",
         "Choose your home base and the other places you row.": "Wähle deinen Heimatverein und die anderen Orte, an denen du ruderst.",
         "Add a club": "Verein hinzufügen",
+        // Home Screen menu (QuickActions)
+        "Search for a rowing club or lake": "Ruderverein oder See suchen",
+        "Around %@": "Rund um %@",
+        "Last opened": "Zuletzt geöffnet",
+        "The lake view could not load. Try again later.": "Die Seeansicht konnte nicht laden. Versuche es später noch einmal.",
         "To change it, open the list, swipe a club to the right and tap Home base.": "Zum Ändern die Liste öffnen, einen Verein nach rechts wischen und auf Heimatverein tippen.",
         "The \"Why\" line names what sets the light.": "Die Zeile „Warum“ nennt, was die Ampel bestimmt.",
         "Rowing is only advised while the sun is up.": "Rudern wird nur zwischen Sonnenaufgang und Sonnenuntergang empfohlen.",

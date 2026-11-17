@@ -215,6 +215,12 @@ Management.
 - To see the stand-in cards: `-RWStayLoading YES` in the app, `?stayLoading` in the website's address (`/app/?stayLoading#/club/mrc-1880`). Both show nothing kept and never finish loading.
 - To try a cold start: open a club, swipe the app away in the app switcher, open it again.
 
+## Home Screen menu (decision 0048)
+
+- Touch and hold the Row Frog icon: home base, lake view, rain radar and the club shown last besides the home base (`QuickActions`). iOS takes the list when the app goes to the background, so a new home base shows in the menu after leaving the app once.
+- The items open `rowfrog://club/<id>`, `rowfrog://lake/<id>`, `rowfrog://radar/<id>` and `rowfrog://add`; in the Simulator: `xcrun simctl openurl booted rowfrog://radar/mrc-1880`.
+- Website: `#/home`, `#/home/lake`, `#/home/radar` and `#/last` (manifest shortcuts, shown by Chrome and Edge for an installed site; `rf.lastOpened` in the browser's storage).
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot

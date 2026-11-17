@@ -1,0 +1,21 @@
+{
+  "name": "Row Frog",
+  "short_name": "Row Frog",
+  "description": "Ruderwetter für deinen See",
+  "lang": "de",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#0a84ff",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Heimatverein", "description": "Die Seite deines Heimatvereins", "url": "/app/#/home" },
+    { "name": "Seeansicht", "description": "Der See deines Heimatvereins", "url": "/app/#/home/lake" },
+    { "name": "Regenradar", "description": "Rund um deinen Heimatverein", "url": "/app/#/home/radar" },
+    { "name": "Zuletzt geöffnet", "description": "Der Verein, den du zuletzt geöffnet hast", "url": "/app/#/last" }
+  ]
+}

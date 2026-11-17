@@ -42,7 +42,9 @@ import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
   radarAt, radarStatus, followRadar, rainLines, skyNow, radarAhead, radarGraphic, radarMark, radarTitleMark, radarCard, radarCardBody, wireRadarCard,
+  openRadarMap,
 } from "./radar.js";
+import { quickClub, quickLink, noteShown, lastShown } from "./quickopen.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -673,6 +675,8 @@ let clubRenders = 0;
 async function renderClub(id) {
   let shown = ++clubRenders;
   setPageClub(id);
+  noteShown(id, store.clubs.map((c) => c.id));
+  if (quickPart?.id !== id) quickPart = null;
   let club = store.clubs.find((c) => c.id === id);
   if (!club?.launchPoint) club = (await findClub(id)) ?? club;
   const saved = store.clubs.some((c) => c.id === id);
@@ -715,6 +719,19 @@ async function renderClub(id) {
   // Drawn again with what came (or the kept one with the reason); the first drawing's radar stops.
   if (forecasts.get(id)?.value && root.querySelector("main.club .card.now")) shown = ++clubRenders;
   draw();
+}
+
+/** The lake view or radar a Home Screen menu item asked for: { id, part }, opened once the club's page is drawn. */
+let quickPart = null;
+/** Whether the start's check of the saved clubs is through: it may draw the page again, which closes the radar. */
+let quickReady = false;
+
+/** A Home Screen menu link (manifest shortcuts, quickopen.js): the club's page, then its lake view or radar over it. */
+function openQuick({ which, part }) {
+  const id = quickClub(which, store.clubs.map((c) => c.id), lastShown());
+  if (!id) return location.replace("#/list");
+  quickPart = part ? { id, part } : null;
+  location.replace(`#/club/${encodeURIComponent(id)}`);
 }
 
 /** `?stayLoading` in the address: nothing kept is shown and the forecast never loads (screenshots of a first visit). */
@@ -804,6 +821,13 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   followRadar(club?.launchPoint, () => alive() && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
+  // A Home Screen menu item for the lake view or the radar opens it over the page, once (openQuick).
+  if (quickReady && quickPart?.id === id) {
+    const { part } = quickPart;
+    quickPart = null;
+    if (part === "lake" && forecast.lakeId) location.hash = `#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}`;
+    else if (part === "radar" && club?.launchPoint) openRadarMap(club.launchPoint, radarAt(club.launchPoint)?.reference, markIcon(id));
+  }
   const lakeBox = root.querySelector("#lake-view");
   if (lakeBox) {
     fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(() => {
@@ -3051,6 +3075,8 @@ function route(scroll = true) {
     });
   }
   const hash = location.hash.replace(/^#/, "");
+  const quick = quickLink(hash);
+  if (quick) return openQuick(quick);
   pagePicture(hash);
   keepUnplacedBoats();
   // The club whose boats count: the club page's, its value pages' and its lake map's.
@@ -3136,4 +3162,9 @@ await setLanguage(savedLanguage());
 followTextSize();
 route();
 // Saved clubs that moved to another water or were renamed: show them as they are now.
-refreshSavedClubs().then((changed) => changed && route());
+// A Home Screen menu item's lake view or radar opens after that (openQuick).
+refreshSavedClubs().catch(() => false).then((changed) => {
+  quickReady = true;
+  if (changed) route();
+  else if (quickPart) route(false);
+});
