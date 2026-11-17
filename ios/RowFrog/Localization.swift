@@ -1034,6 +1034,8 @@ enum German {
         "Appearance: background pictures, also your own photos, and the app icon.": "Erscheinungsbild: Hintergrundbilder, auch deine eigenen Fotos, und das App-Symbol.",
         "Settings › Help shows this tour again.": "Einstellungen › Hilfe zeigt diese Tour noch einmal.",
         "Skip": "Überspringen",
+        "Tour": "Tour",
+        "Page %@ of %@": "Seite %@ von %@",
         "Next": "Weiter",
         "Let's row": "Los geht's",
         "Help": "Hilfe",
