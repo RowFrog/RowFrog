@@ -55,7 +55,6 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rowfrog.RowFrog
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Row Frog
         # iPhone and iPad; on the iPad the wide layouts (side list, two columns) take over.
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -78,6 +77,11 @@ targets:
       properties:
         # Backend address, set per build configuration above.
         RWAPIBaseURL: $(RW_API_BASE_URL)
+        # The launch screen in the colour of a page without a picture (iOS's grouped
+        # background, light and dark), so a cold start no longer flashes white before
+        # the page (decision 0046). A user's picture is read before the first frame.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
         # The published files, in every build: only the publishing job makes the
         # satellite pictures, so the backend on the Mac has none.
         RWPublishedBaseURL: https://api.rowfrog.com/v1

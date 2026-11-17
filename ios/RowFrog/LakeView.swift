@@ -498,6 +498,16 @@ final class LakeViewStore {
 
     nonisolated init(api: APIClient) { self.api = api }
 
+    /// Cold start (ColdStart.prime, decision 0046): the lake view kept from the
+    /// last download shows in the first frame; `load` asks for a new one once
+    /// the kept one is half an hour old. One older than a day is left out.
+    func primeKept(_ lakeID: String) {
+        guard states[lakeID] == nil, UserDefaults.standard.string(forKey: DefaultsKey.lakeWide) == nil,
+              let view: LakeView = api.keptNow("lakes/\(lakeID)/view"),
+              view.generatedAt > .now.addingTimeInterval(-24 * 3600) else { return }
+        states[lakeID] = .loaded(view)
+    }
+
     func load(_ lakeID: String, force: Bool = false) async {
         if !force, let view = states[lakeID]?.value, view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
         states[lakeID] = .started(from: states[lakeID])

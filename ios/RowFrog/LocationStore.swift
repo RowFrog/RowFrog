@@ -208,6 +208,32 @@ final class LocationStore {
         apply(otherLakes + lakes)
     }
 
+    /// Countries a cold start read from the kept files; `loadCatalog` asks for them again.
+    private(set) var primedCountries: [String] = []
+
+    /// Cold start (ColdStart.prime, decision 0046): the countries and clubs kept
+    /// from the last download, read straight away, so the saved clubs' pages are
+    /// there in the first frame instead of a spinner until the catalog is read.
+    func primeCatalog(_ api: APIClient) {
+        guard catalog.isEmpty else { return }
+        if let list: [Country] = api.keptNow("countries/index"), !list.isEmpty {
+            setCountries(list)
+            for code in countriesToLoad(near: nil) {
+                guard let lakes: [Lake] = api.keptNow("countries/\(code)/lakes") else { continue }
+                addCountry(code, lakes: lakes)
+                primedCountries.append(code)
+            }
+        } else if let lakes: [Lake] = api.keptNow("lakes/index") {
+            setCatalog(lakes)
+        }
+    }
+
+    /// The primed countries, once: the catalog load renews them with the others.
+    func takePrimedCountries() -> [String] {
+        defer { primedCountries = [] }
+        return primedCountries
+    }
+
     /// Every club at once, from an older backend without country files.
     func setCatalog(_ lakes: [Lake]) {
         loadedCountries = Set(lakes.flatMap { $0.clubs.map(\.countryCode) })
@@ -321,7 +347,13 @@ final class ForecastStore {
     }
 
     func load(_ clubID: String, force: Bool = false) async {
-        if !force, states[clubID]?.forecast != nil { return }
+        // A kept forecast shown at a cold start still gets its download.
+        let primed = self.primed.remove(clubID) != nil
+        if !force, !primed, states[clubID]?.forecast != nil { return }
+        if UserDefaults.standard.bool(forKey: DefaultsKey.stayLoading) {
+            states[clubID] = .loading(lastFailure: nil)
+            return
+        }
         defer { applyTestOutcome(clubID) }
         states[clubID] = ForecastLoad.started(from: states[clubID])
         await showKept(clubID)
@@ -371,6 +403,25 @@ final class ForecastStore {
         guard let kept, states[clubID]?.forecast == nil else { return }
         applied[clubID] = nil
         states[clubID] = .shown(kept.forecast, loadedAt: kept.at, updating: true, failure: states[clubID]?.failure)
+    }
+
+    /// Clubs whose kept forecast a cold start put up before the first frame;
+    /// their first `load` still downloads.
+    @ObservationIgnored private var primed: Set<String> = []
+
+    /// Cold start (ColdStart.prime, decision 0046): the forecast kept from the
+    /// last download is read straight away and shown, with "Updating…", in the
+    /// very first frame. Before, the page drew stand-in cards first and showed
+    /// the kept forecast a moment later (owner's screen recording, 16 Nov 2026).
+    func primeKept(_ clubID: String) {
+        guard states[clubID] == nil, !clubID.hasPrefix(OwnPlace.idPrefix) else { return }
+        let model = AppSettings.shared.pickedModel(for: clubID)
+        var kept = api.keptForecastNow(clubID: clubID, model: model)
+        if kept == nil, model != nil { kept = api.keptForecastNow(clubID: clubID) }
+        guard let kept else { return }
+        applied[clubID] = nil
+        states[clubID] = .shown(kept.forecast, loadedAt: kept.at, updating: true, failure: nil)
+        primed.insert(clubID)
     }
 
     /// Screenshots and UI tests: `-RWForecastFailure refused` (any RefreshFailure

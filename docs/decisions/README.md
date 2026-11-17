@@ -62,3 +62,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 39 | 2026-11-15 | [One update time, the model run by its name, "Now" for the running hour](0039-times-on-the-club-page.md) |
 | 44 | 2026-11-16 | [Without internet the last forecast shows, and downloads give up sooner](0044-last-forecast-without-internet.md) |
 | 45 | 2026-11-17 | [The rain chart marks where the radar hands over to the forecast](0045-radar-handover-in-rain-chart.md) |
+| 46 | 2026-11-17 | [A cold start shows the last page at once; a first start shows sweeping stand-in cards](0046-cold-start-shows-the-last-page.md) |

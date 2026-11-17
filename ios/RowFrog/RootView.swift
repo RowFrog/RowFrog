@@ -37,7 +37,10 @@ struct RootView: View {
         store.countryLoader = { try await api.lakes(country: $0) }
         _locations = State(initialValue: store)
         // Own places get their forecast on the phone; the store knows where they are.
-        _forecasts = State(initialValue: ForecastStore(api: api) { [weak store] id in store?.ownPlace(id) })
+        let forecasts = ForecastStore(api: api) { [weak store] id in store?.ownPlace(id) }
+        _forecasts = State(initialValue: forecasts)
+        // What the last visit showed, read before the first frame (decision 0046).
+        ColdStart.prime(locations: store, forecasts: forecasts, api: api)
     }
 
     var body: some View {
@@ -329,7 +332,9 @@ struct RootView: View {
                 locations.setCountries(countries)
                 // Screenshot hook `-RWOpenClub` may name a club abroad: then every country loads.
                 let all = UserDefaults.standard.string(forKey: DefaultsKey.openClub) != nil
-                for code in all ? countries.map(\.code) : locations.countriesToLoad(near: KnownLocation.coordinate) {
+                // Countries a cold start showed from the kept files come again, as the others.
+                let primed = locations.takePrimedCountries()
+                for code in all ? countries.map(\.code) : primed + locations.countriesToLoad(near: KnownLocation.coordinate) {
                     locations.addCountry(code, lakes: try await api.lakes(country: code))
                 }
             } else {

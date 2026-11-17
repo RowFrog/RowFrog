@@ -187,4 +187,7 @@ enum DefaultsKey {
     static let settingsSearch = "RWSettingsSearch"
     /// Open the New boat sheet (with the limits page).
     static let newBoat = "RWNewBoat"
+    /// `-RWStayLoading YES`: nothing kept is shown at start and forecasts never
+    /// finish loading, so screenshots show the stand-in cards of a first start.
+    static let stayLoading = "RWStayLoading"
 }
