@@ -207,6 +207,31 @@ test("each warning links to the service that issued it", async () => {
   await context.close();
 });
 
+test("the warnings card follows the clock while the page stays open", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  // At 08:00 the lake warning (until 11:00) stands and the frost warning (from 14:00) is under "Later".
+  await page.waitForFunction(() => document.querySelectorAll(".card.warnings .warning").length === 2
+    && [...document.querySelectorAll(".card.warnings .warn-group")].some((p) => p.textContent === "Later"), null, { timeout: 20000 });
+  // The page draws again once the forecast has loaded; a mark on it then shows that the tick redraws the card only.
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => { document.querySelector("#arrange").dataset.kept = "1"; });
+  // Past 14:00 the lake warning has ended and the frost warning is now: one warning, no "Later".
+  // The clock is set on without firing the page's other timers; then the minute tick runs.
+  await page.clock.setSystemTime(new Date(new Date(forecast.generatedAt).getTime() + 6 * 3600e3));
+  await page.clock.runFor(61000);
+  try {
+    await page.waitForFunction(() => document.querySelectorAll(".card.warnings .warning").length === 1
+      && !document.querySelector(".card.warnings .warn-group"), null, { timeout: 10000 });
+  } catch (e) {
+    throw new Error(`${e.message}\nThe card shows: ${await page.locator(".card.warnings").innerText()}`);
+  }
+  assert.match(await page.locator(".card.warnings .warning").innerText(), /FROST/);
+  assert.equal(await page.evaluate(() => document.querySelector("#arrange")?.dataset.kept), "1", "only the warnings card is drawn again");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("each night of the 48 hours is one line that opens on a tap", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);

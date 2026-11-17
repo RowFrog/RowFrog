@@ -828,6 +828,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   followRadar(club?.launchPoint, () => alive() && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
+  if (showWarnings) followWarningsClock(() => warningsCard(forecast.warnings, club, warningsCheckedAt(warnings, forecast), isEarlierCheck(warnings, forecast)), alive);
   // A Home Screen menu item for the lake view or the radar opens it over the page, once (openQuick).
   if (quickReady && quickPart?.id === id) {
     const { part } = quickPart;
@@ -1820,6 +1821,34 @@ function warningsCheckedAt(warnings, forecast) {
 /** True when an earlier check is shown because the last one failed: the card then says when it was. */
 function isEarlierCheck(warnings, forecast) {
   return !!warnings?.checkedAt && new Date(forecast.generatedAt) - new Date(warnings.checkedAt) > 5 * 60 * 1000;
+}
+
+let warningsTick = null;
+
+/**
+ * The warnings card drawn again on every minute while the page stays open, so ended warnings
+ * drop out and "Now"/"Later" follow the clock (WarningsCard's TimelineView(.everyMinute)).
+ * An open shore lights guide stays open; the card is only replaced when its text changes.
+ */
+function followWarningsClock(render, alive) {
+  clearTimeout(warningsTick);
+  let last = render();
+  const tick = () => {
+    const box = root.querySelector("main.club .card.warnings");
+    if (!alive() || !box) return void (warningsTick = null);
+    const html = render();
+    if (html !== last) {
+      last = html;
+      const open = box.querySelector("details.shore")?.open;
+      const next = document.createRange().createContextualFragment(html).firstElementChild;
+      const shore = next.querySelector("details.shore");
+      if (shore && open != null) shore.open = open;
+      box.replaceWith(next);
+      balanceCards();
+    }
+    warningsTick = setTimeout(tick, 60000 - (Date.now() % 60000) + 50);
+  };
+  warningsTick = setTimeout(tick, 60000 - (Date.now() % 60000) + 50);
 }
 
 function warningsCard(warnings, club, checkedAt, earlier = false) {
