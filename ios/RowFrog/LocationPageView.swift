@@ -595,7 +595,7 @@ private struct NowCard: View {
                         ForEach(hour.reasons, id: \.self) { reason in
                             // Without a station the water is estimated, and the advice says so.
                             Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
-                                  ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour), systemImage: reason.symbol)
+                                  ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour, now: at ?? .now), systemImage: reason.symbol)
                                 .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
                         }
                     }
@@ -968,7 +968,7 @@ private struct NowCard: View {
                     switch sun {
                     case let .up(sunrise, sunset):
                         SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
-                        let left = Format.duration(from: at ?? .now, to: sunset)
+                        let left = Format.timeLeft(from: at ?? .now, to: sunset)
                         DaylightText(
                             line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(sunTime(sunset))"),
                             rest: Text(tr("%@ left", left))

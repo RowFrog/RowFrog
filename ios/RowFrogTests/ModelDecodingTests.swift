@@ -56,6 +56,34 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }
 
+    /// The warning line ("Sunset at 16:36: 6 min of daylight left") rounded up and the sun
+    /// line ("Rowing until 16:36 · 5 min left") down, on a sunset with seconds. Both now
+    /// count clock minutes (owner, 17 Nov 2026); the website's twin is sunsetminutes.test.mjs.
+    func testMinutesLeftCountsClockMinutes() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-11-16T15:00:00+00:00", "attribution": [],
+         "daylight": [{"date": "2026-11-16", "sunrise": "2026-11-16T06:23:00+00:00", "sunset": "2026-11-16T15:36:40+00:00"}],
+         "hours": [{"time": "2026-11-16T15:00:00+00:00", "light": "green", "reasons": []}]}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        let iso = ISO8601DateFormatter()
+        let sunset = iso.date(from: "2026-11-16T15:36:40Z")!
+        func at(_ time: String) -> Date { iso.date(from: "2026-11-16T\(time)Z")! }
+        XCTAssertEqual(Format.minutesLeft(from: at("15:31:00"), to: sunset), 5)
+        XCTAssertEqual(Format.minutesLeft(from: at("15:31:59"), to: sunset), 5)
+        XCTAssertEqual(Format.minutesLeft(from: at("14:55:30"), to: sunset), 41)
+        XCTAssertEqual(Format.minutesLeft(from: at("15:36:10"), to: sunset), 1)
+        XCTAssertEqual(Format.minutesLeft(from: sunset.addingTimeInterval(1), to: sunset), 0)
+        XCTAssertEqual(Format.timeLeft(from: at("14:32:10"), to: sunset), "1 h 4 min")
+        let hour = try XCTUnwrap(forecast.hours.first)
+        for time in ["15:31:00", "15:31:59", "14:55:30", "15:00:01", "15:36:10"] {
+            let now = at(time)
+            let warning = forecast.explanation(Reason(condition: "sunset_soon", light: .amber), in: hour, now: now)
+            let number = try XCTUnwrap(warning.firstMatch(of: /(\d+) min/)?.1, warning)
+            XCTAssertEqual("\(number) min", Format.timeLeft(from: now, to: sunset), "at \(time): \(warning)")
+        }
+    }
+
     func testOlderForecastShowsTheHourNowAndIsOutOfDate() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T08:00:00+00:00", "attribution": [],

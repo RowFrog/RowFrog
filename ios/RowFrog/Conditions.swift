@@ -205,4 +205,21 @@ enum Format {
         return minutes >= 60 ? "\(minutes / 60) h \(minutes % 60) min" : "\(minutes) min"
     }
 
+    /// Minutes left until `end` (sunset), counted the way the reader sees them: the
+    /// clock minute shown for `end` minus the clock minute now, so "16:36" at 16:31
+    /// is 5 min whatever the seconds. At least 1 while `end` is still ahead. Every
+    /// "until sunset" count (warning line, sun line, daylight sheet) uses this, and
+    /// the website's minutesLeft in shared.js does the same.
+    static func minutesLeft(from start: Date, to end: Date) -> Int {
+        guard end > start else { return 0 }
+        let minute = { (date: Date) in Int((date.timeIntervalSince1970 / 60).rounded(.down)) }
+        return max(1, minute(end) - minute(start))
+    }
+
+    /// `minutesLeft` written as "5 min" or "1 h 4 min".
+    static func timeLeft(from start: Date, to end: Date) -> String {
+        let minutes = minutesLeft(from: start, to: end)
+        return minutes >= 60 ? "\(minutes / 60) h \(minutes % 60) min" : "\(minutes) min"
+    }
+
 }
