@@ -538,6 +538,13 @@ function warningEvent(w) {
 }
 
 /** In force at `now`: begun (or no start given) and not yet expired (DWDWarning.isActive). */
+/** The warnings without those that have ended by `now` (Warnings.current in the app): the file can be
+ * half an hour old, or 3 h with an earlier check. An ended gust warning stood under "Later" (17 Nov 2026). */
+function currentWarnings(warnings, now = new Date()) {
+  if (!warnings?.items) return warnings;
+  return { ...warnings, items: warnings.items.filter((w) => !w.expires || new Date(w.expires) > now) };
+}
+
 function warningActive(w, now = new Date()) {
   return (!w.onset || new Date(w.onset) <= now) && (!w.expires || now < new Date(w.expires));
 }
@@ -769,7 +776,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
   const now = new Date();
   const stale = isStale(forecast, now);
   const hour = nowHour(forecast, now);
-  const warnings = forecast.warnings;
+  const warnings = currentWarnings(forecast.warnings, now);
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // Where the tips sit (owner's placement rules, 12 Nov 2026; TipPlacement.swift): a tip about a card
   // inside it under its title or first line, a tip about one control as a bubble on it. paceTips then
@@ -1638,7 +1645,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       ${steadier ? `<li class="tint">${icon("rower")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
-      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
+      ${!at && warnings?.status === "ok" && localChecked(warnings) && !currentWarnings(warnings).items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
         <span class="checked"><span class="sub">· ${h(t("checked"))}</span> <span class="tint">${icon("info")}</span></span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
@@ -1847,6 +1854,7 @@ function notCheckedNote(local) {
 }
 
 function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
+  warnings = currentWarnings(warnings);
   if (warnings.status !== "ok") {
     return `<p class="orange">${icon("wifi-off")} ${h(warningsIsDWD(warnings)
       ? t("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")

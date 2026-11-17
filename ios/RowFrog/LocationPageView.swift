@@ -184,7 +184,7 @@ struct LocationPageView: View {
                                 // Its tips: inside the tile under its first line, or a bubble on its values.
                                 .environment(\.cardTip, topTileCardTip(forecast))
                                 .environment(\.bubbleTip, isCurrentPage ? topTileBubble(forecast) : nil)
-                            if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
+                            if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.current(at: .now).items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town,
                                              checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt),
                                              earlierCheck: warnings.isEarlierCheck(forecastAt: forecast.generatedAt))
@@ -915,7 +915,7 @@ private struct NowCard: View {
     /// only shows while a warning is issued or DWD could not be checked.
     @ViewBuilder
     private var warningsLine: some View {
-        if let warnings = forecast.warnings, warnings.checked, warnings.localChecked, warnings.items.isEmpty {
+        if let warnings = forecast.warnings, warnings.checked, warnings.localChecked, warnings.current(at: .now).items.isEmpty {
             Button { showingWarnings = true } label: {
                 HStack(spacing: 6) {
                     Label(tr("No official warning"), systemImage: "checkmark.shield.fill")

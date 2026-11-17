@@ -607,7 +607,7 @@ struct Warnings: Codable, Hashable {
     let status: String
     /// DWD's lake warning area for this launch point, nil when the water is not covered.
     let lakeArea: String?
-    let items: [DWDWarning]
+    var items: [DWDWarning]
     /// Whose weather warnings count for the place and whether they were checked;
     /// missing from older backends, which checked DWD for every club.
     var local: LocalWarnings? = nil
