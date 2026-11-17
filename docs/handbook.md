@@ -92,7 +92,8 @@ the next two hours and the forecast after that.
    comes next: "Dry from 14:15", "Heavier from 14:30" (radar) or "Until about
    17:00" (forecast, no symbol), in the tile and the top tile alike.
 2. Tap the tile: the chart starts with thin purple radar bars for two hours,
-   then the blue forecast hours; the legend turns either off. The map card
+   then a grey line labelled "Radar | Forecast" and the paler blue forecast
+   hours (decision 0045); the legend turns either off. The map card
    says "Radar 12:45" and shows the radar picture; a tap opens the radar map.
    Slide the chart past two hours: the big number, the chart and the map
    turn to the forecast, and the map's header to "Forecast <hour>".
