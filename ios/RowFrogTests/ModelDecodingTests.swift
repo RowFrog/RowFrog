@@ -220,6 +220,26 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD storm warning")
     }
 
+    func testEndedWarningsDropOutAndActiveOnesAreNow() throws {
+        // Owner's screenshot, 17 Nov 2026 17:02 CET: storm gusts 15:18-17:00 CET still stood under "Later".
+        func item(_ event: String, _ onset: String, _ expires: String) -> String {
+            #"{"kind": "local", "area": "Stadt Starnberg", "event": "\#(event)", "severity": "moderate", "headline": "Warnung", "#
+                + #""description": "", "instruction": null, "onset": "\#(onset)", "expires": "\#(expires)", "sample": false}"#
+        }
+        let json = #"{"status": "ok", "lakeArea": null, "checkedAt": "2026-11-17T15:33:31+00:00", "items": ["#
+            + item("STURMBÖEN", "2026-11-17T14:18:00+00:00", "2026-11-17T16:00:00+00:00") + ", "
+            + item("WINDBÖEN", "2026-11-17T11:00:00+00:00", "2026-11-17T19:00:00+00:00") + ", "
+            + item("STURMBÖEN", "2026-11-17T23:00:00+00:00", "2026-11-18T09:00:00+00:00") + "]}"
+        let warnings = try APIClient.decoder.decode(Warnings.self, from: Data(json.utf8))
+        let at1630 = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-11-17T15:30:00Z"))
+        let at1702 = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-11-17T16:02:00Z"))
+        XCTAssertEqual(warnings.current(at: at1630).items.filter { $0.isActive(at: at1630) }.count, 2, "both gust warnings are in force")
+        let later = warnings.current(at: at1702).items
+        XCTAssertEqual(later.count, 2, "the warning that ended at 17:00 is gone")
+        XCTAssertEqual(later.filter { $0.isActive(at: at1702) }.map(\.event), ["WINDBÖEN"])
+        XCTAssertNotNil(warnings.checkedAt)
+    }
+
     func testWarningsOutsideGermanyAreNotChecked() throws {
         let json = """
         {"status": "ok", "lakeArea": null, "items": [],

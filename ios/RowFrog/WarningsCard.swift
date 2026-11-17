@@ -14,11 +14,23 @@ struct WarningsCard: View {
     var earlierCheck = false
     /// Opens the shore lights guide from the start, where the card is shown to explain them.
     var guideOpen = false
-    /// The moment "now" and "later" are told apart; the screenshots can fix it.
-    var checkedNow: Date = .now
+    /// The moment "now" and "later" are told apart; nil follows the clock, minute by
+    /// minute, and the screenshots can fix it.
+    var checkedNow: Date? = nil
 
     var body: some View {
-        Card(title: tr("Official warnings"), symbol: "exclamationmark.triangle") {
+        // Grouped again every minute, and warnings that have ended left out: a gust
+        // warning until 17:00 still stood under "Later" at 17:02, because the card
+        // took "now" once, when it was drawn, and kept every warning the file had
+        // (owner's screenshot, 17 Nov 2026).
+        TimelineView(.everyMinute) { context in
+            card(now: checkedNow ?? context.date)
+        }
+    }
+
+    private func card(now checkedNow: Date) -> some View {
+        let warnings = self.warnings.current(at: checkedNow)
+        return Card(title: tr("Official warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
                 Label(warnings.isDWD
                       ? tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
@@ -324,6 +336,9 @@ extension DWDWarning {
         }
     }
 
+    /// Over at `date`: its end has passed.
+    func hasEnded(at date: Date) -> Bool { expires.map { $0 <= date } ?? false }
+
     /// In force at `date`: begun (or no start given) and not yet expired.
     func isActive(at date: Date) -> Bool {
         (onset ?? .distantPast) <= date && date < (expires ?? .distantFuture)
@@ -373,6 +388,14 @@ enum WarningUrgency {
 }
 
 extension Warnings {
+    /// The same warnings without those that have ended by `date`: the file can be up
+    /// to half an hour old (or 3 h with an earlier check), the clock moves on.
+    func current(at date: Date) -> Warnings {
+        var copy = self
+        copy.items = items.filter { !$0.hasEnded(at: date) }
+        return copy
+    }
+
     /// Counting warnings starting within this many hours already show amber in the list.
     static let soonHours: Double = 3
 
