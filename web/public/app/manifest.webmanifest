@@ -2,6 +2,7 @@
   "name": "Row Frog",
   "short_name": "Row Frog",
   "description": "Rowing weather for your lake",
+  "lang": "en",
   "start_url": "/app/",
   "scope": "/app/",
   "display": "standalone",
@@ -10,5 +11,11 @@
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Home base", "description": "Your home base's page", "url": "/app/#/home" },
+    { "name": "Lake view", "description": "Your home base's lake", "url": "/app/#/home/lake" },
+    { "name": "Rain radar", "description": "Around your home base", "url": "/app/#/home/radar" },
+    { "name": "Last opened", "description": "The club you opened last", "url": "/app/#/last" }
   ]
 }

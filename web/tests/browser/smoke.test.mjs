@@ -852,3 +852,33 @@ test("a cold start with a kept forecast never shows the stand-in cards; a first 
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("the Home Screen menu's links open the home base, its lake view and its radar, and the menu speaks German (decision 0048)", async () => {
+  // Each link as a fresh start from the Home Screen.
+  const start = async (hash) => {
+    const opened = await open(visitor());
+    await opened.page.goto(`${base}/app/${hash}`);
+    return opened;
+  };
+  const radar = await start("#/home/radar");
+  await radar.page.locator(".radar-full").waitFor();
+  assert.equal(await radar.page.evaluate(() => location.hash), "#/club/mrc-1880");
+  assert.deepEqual(radar.errors, []);
+  await radar.context.close();
+  const lake = await start("#/home/lake");
+  await lake.page.waitForFunction((id) => location.hash === `#/lake/${encodeURIComponent(id)}/mrc-1880`, club.lakeId);
+  assert.deepEqual(lake.errors, []);
+  await lake.context.close();
+  const last = await start("#/last");
+  await last.page.waitForFunction(() => location.hash === "#/club/mrc-1880");
+  assert.equal(await last.page.locator('link[rel="manifest"]').getAttribute("href"), "manifest.webmanifest");
+  assert.deepEqual(last.errors, []);
+  await last.context.close();
+  // A browser in German installs the German menu.
+  const { page, errors, context } = await open({ ...visitor(), "rf.language": "auto" }, undefined, "de-DE");
+  await page.goto(`${base}/app/`);
+  await page.waitForFunction(() => document.documentElement.lang === "de");
+  assert.equal(await page.locator('link[rel="manifest"]').getAttribute("href"), "manifest.de.webmanifest");
+  assert.deepEqual(errors, []);
+  await context.close();
+});

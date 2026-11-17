@@ -31,10 +31,19 @@ struct RowFrogApp: App {
     }
 }
 
-/// Lets the app turn sideways only while landscape is on in the settings (iPhone only).
+/// Lets the app turn sideways only while landscape is on in the settings (iPhone only),
+/// and names the scene delegate for the Home Screen menu.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         Orientation.allowed
+    }
+
+    /// The Home Screen menu's taps come through the scene delegate (QuickActions).
+    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession,
+                     options: UIScene.ConnectionOptions) -> UISceneConfiguration {
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = QuickActionSceneDelegate.self
+        return configuration
     }
 }
 

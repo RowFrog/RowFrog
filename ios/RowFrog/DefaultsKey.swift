@@ -13,6 +13,8 @@ enum DefaultsKey {
     static let radarLoop = "RWRadarLoop"
     /// The home base's club id.
     static let homeClub = "RWHomeClub"
+    /// The club shown last other than the home base, for the Home Screen menu (QuickActions).
+    static let lastOpenedClub = "RWLastOpenedClub"
     /// The club search lists a country's clubs by town instead of by name.
     static let countryListByTown = "RWCountryListByTown"
     /// Satellite pictures under the map in Add a place.
