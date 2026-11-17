@@ -166,8 +166,12 @@ final class SatellitePictureStore {
               picture.latest != nil || picture.clearest != nil else { return }
         states[lakeID] = .loaded(picture)
         primed.insert(lakeID)
-        if let shot = picture.shot(picture.startKind(clubID: clubID)), let url = url(lakeID, file: shot.image, date: shot.date),
-           let data = try? Data(contentsOf: Self.cacheFile(for: url)), let image = UIImage(data: data) {
+        // The card's picture, and the one a satellite background shows (backgroundImage), which
+        // otherwise would wait for a read now that the list is there.
+        let shots = [picture.shot(picture.startKind(clubID: clubID)), picture.clearest ?? picture.mostlyClear ?? picture.latest]
+        for case let shot? in shots {
+            guard let url = url(lakeID, file: shot.image, date: shot.date), images[url] == nil,
+                  let data = try? Data(contentsOf: Self.cacheFile(for: url)), let image = UIImage(data: data) else { continue }
             images[url] = image
         }
     }

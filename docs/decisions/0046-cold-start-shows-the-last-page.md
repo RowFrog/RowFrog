@@ -10,6 +10,8 @@
 - **Nothing kept (first start, a club never opened):** the stand-in cards stay, with a soft band of light sweeping over shapes instead of "–°" dashes, and "Loading the forecast…" moves into the header's update line. With Reduce Motion (app) or `prefers-reduced-motion` (website) the shapes stand still.
 - **Launch screen:** iOS's grouped background colour, light and dark (`LaunchBackground`), the colour of a page without a picture (the default). The owner picked a lake-blue launch screen; on checking, pages have no picture unless one is chosen, so blue would have flashed before a white or black page. With a picture chosen, the picture is now in the first frame instead of fading in.
 
+- **App switcher:** the last three full-size background pictures (and their blurred copies) are held beside the picture cache, which iOS may empty when the app goes to the background. The owner's iPad app switcher showed the plain background behind frosted cards (17 Nov 2026).
+
 ## Why
 
 The owner's screen recording (16 Nov 2026, build 885) showed empty cards and "Vorhersage wird geladen …" for a moment after every cold start. On main after #492 the order was still: white launch screen, a spinner while the club list was read, stand-in cards, then the kept forecast, with the lake view and satellite picture last (checked in the code, not measured on a phone).
