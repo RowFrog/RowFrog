@@ -177,7 +177,9 @@ Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
 which cover rivers and canals too. While one is issued it gets its own card
 under the top tile, with the warnings grouped under "Now" and "Later";
 otherwise the top tile's status line says there is none and when it was
-checked, or that DWD could not be reached. A warning that starts later or
+checked, or that DWD could not be reached. When a check fails, the last good
+one stands in for up to 3 hours, without the warnings that have ended since,
+and the card says when it was checked; the website does the same. A warning that starts later or
 only informs gets one line in the top tile that opens the card, and in the
 club list it shows grey with an info sign and its start time; only warnings
 that count for the light now or within 3 hours show amber there.
@@ -420,6 +422,12 @@ the club's name (no internet, server could not be reached, server refused
 the download, no forecast for this club yet); when the forecast is also out of
 date, both lines show. A tap explains whose side it is on and offers "Try
 again". The website does the same.
+
+**Home Screen menu.** Touching and holding the Row Frog icon offers the home
+base, its lake view, its rain radar and the club opened last besides it
+(`docs/decisions/0048`). The menu shows no weather, since iOS keeps it until
+the app runs again. The website offers the same four as shortcuts of the
+installed site in Chrome and Edge.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
 then the values in the top tile's order, each with its symbol. Each home-screen
