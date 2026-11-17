@@ -142,10 +142,14 @@ final class TapTests: XCTestCase {
         let window = app.windows.firstMatch
         for orientation in [UIDeviceOrientation.landscapeLeft, .portrait, .landscapeRight, .portrait] {
             XCUIDevice.shared.orientation = orientation
-            // The turn animates; Next is then in the window, whole.
-            let inside = NSPredicate { _, _ in window.frame.contains(next.frame) && next.isHittable }
-            XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: inside, evaluatedWith: nil)], timeout: 10), .completed,
-                           "Next not in sight after turning to \(orientation.rawValue); the app shows:\n\(app.debugDescription)")
+            // The turn animates; Next is then in the window, whole. (Frames only: isHittable is
+            // unreliable just after a turn, with the keyboard's own window still around.)
+            var inside = false
+            for _ in 0..<20 where !inside {
+                inside = next.waitForExistence(timeout: 2) && window.frame.contains(next.frame)
+                if !inside { _ = XCTWaiter.wait(for: [XCTestExpectation(description: "turning")], timeout: 0.5) }
+            }
+            XCTAssertTrue(inside, "Next not in sight after turning to \(orientation.rawValue): \(next.frame) in \(window.frame); the app shows:\n\(app.debugDescription)")
             XCTAssertTrue(next.isEnabled, "The home base picked was lost on turning")
             XCTAssertEqual(search.value as? String, "MRC 1880", "The search was lost on turning")
         }
