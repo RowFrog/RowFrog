@@ -20,7 +20,9 @@ struct UpdateCyclesButton: View {
                 .cardBackground(surface, cornerRadius: 18)
         }
         .sheet(isPresented: $showing) {
-            UpdateCyclesSheet(run: forecast.weatherRun, checked: forecast.generatedAt, loaded: loaded)
+            UpdateCyclesSheet(run: forecast.weatherRun, checked: forecast.generatedAt,
+                              warningsChecked: forecast.warnings.flatMap { $0.isEarlierCheck(forecastAt: forecast.generatedAt) ? $0.checkedAt : nil },
+                              loaded: loaded)
         }
         // Screenshot hook: `-RWOpenUpdates YES` opens the sheet on the page in front.
         .task {
@@ -39,6 +41,9 @@ struct UpdateCyclesSheet: View {
     let run: WeatherRun?
     /// When the server last built this club's file (warnings, water, gauges).
     let checked: Date
+    /// When the warnings were checked, where DWD failed on the last check and an
+    /// earlier one is shown (up to 3 h, #516); nil when they were checked with the rest.
+    var warningsChecked: Date? = nil
     /// When this phone loaded the file, when known.
     var loaded: Date? = nil
     @Environment(\.dismiss) private var dismiss
@@ -98,7 +103,12 @@ struct UpdateCyclesSheet: View {
                     } else {
                         Text(tr("This forecast was built at %@.", Format.time(checked)))
                     }
-                    Text(tr("Warnings, water and gauges checked at %@.", Format.time(checked)))
+                    if let warningsChecked {
+                        Text(tr("Water and gauges checked at %@.", Format.time(checked)))
+                        Text(tr("Warnings checked at %@: the last check after that did not get through.", Format.time(warningsChecked)))
+                    } else {
+                        Text(tr("Warnings, water and gauges checked at %@.", Format.time(checked)))
+                    }
                     if let loaded {
                         Text(tr("Loaded on this device at %@.", Format.time(loaded)))
                     }

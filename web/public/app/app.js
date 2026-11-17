@@ -1303,7 +1303,10 @@ export function updateCyclesBody(forecast, loaded) {
     <strong>${h(t(title))}</strong><small>${h(t(source))}</small><small class="sub">${h(t(fetched))}</small></span></li>`).join("");
   return `<p>${h(run ? t("This forecast: model run %@ UTC (started %@), ready at %@.", runHour(run.started), time(run.started), time(run.available))
       : t("This forecast was built at %@.", time(forecast.generatedAt)))}</p>
-    <p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    ${isEarlierCheck(forecast.warnings, forecast)
+      ? `<p>${h(t("Water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    <p>${h(t("Warnings checked at %@: the last check after that did not get through.", time(forecast.warnings.checkedAt)))}</p>`
+      : `<p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>`}
     ${loaded ? `<p>${h(t("Loaded on this device at %@.", time(loaded)))}</p>` : ""}
     <p class="small sub">${h(t("The server renews the clubs you use every 30 minutes; your browser loads them when you open or come back to this page, or tap Refresh."))}</p>
     <h3>${h(t("How often values are renewed"))}</h3>
