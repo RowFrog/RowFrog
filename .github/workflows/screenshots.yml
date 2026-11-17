@@ -67,11 +67,58 @@ jobs:
       - id: pick
         run: python3 scripts/newest_xcode_runner.py | tee -a "$GITHUB_OUTPUT"
 
+  open-meteo-tape:
+    # GitHub's Mac runners could not connect to Open-Meteo from 16 Nov 2026
+    # (connect timeouts, see PR #501). This Linux job asks the backend for the
+    # screens' clubs and lakes and records every Open-Meteo answer; the Mac job
+    # plays them back, and asks live only what is not on the tape.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -c backend/requirements-publish.txt -e backend
+      - name: Record Open-Meteo's answers
+        run: |
+          # The same samples as the Mac job, so both ask Open-Meteo the same questions.
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee \
+            RW_OPEN_METEO_TAPE="$RUNNER_TEMP/tape" RW_OPEN_METEO_TAPE_MODE=record \
+            nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          curl -sS --retry 10 --retry-connrefused --retry-delay 2 -o /dev/null http://localhost:8000/lakes
+          # The clubs the screens open or keep as home, and the confirmed clubs of the lists.
+          clubs=$( (grep -oE -- '-RW(OpenClub|HomeClub) [a-z0-9-]+' .github/workflows/screenshots.yml | awk '{print $2}';
+                    python3 -c 'import json; print("\n".join(c["id"] for c in json.load(open("data/locations.json"))["clubs"]))') | sort -u)
+          lakes="aussenalster regattastrecke-oberschleissheim"
+          for club in $clubs; do
+            lake=$(curl -sS -f -m 200 --retry 2 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
+              | python3 -c 'import json, sys; print(json.load(sys.stdin)["lakeId"])') || { echo "::warning::$club not recorded"; continue; }
+            lakes="$lakes $lake"
+          done
+          for lake in $(printf '%s\n' $lakes | sort -u); do
+            curl -sS -f -m 200 --retry 2 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/lakes/$lake/view" \
+              || echo "::warning::lake view $lake not recorded"
+          done
+          echo "$(ls "$RUNNER_TEMP/tape" | wc -l) answers recorded"
+          grep -iE "warning|error" uvicorn.log | tail -20 || true
+      - uses: actions/upload-artifact@v7
+        with:
+          name: open-meteo-tape
+          path: ${{ runner.temp }}/tape
+          retention-days: 1
+
   screenshots:
-    needs: newest-xcode
+    needs: [newest-xcode, open-meteo-tape]
+    # Also without a tape: the Mac then asks Open-Meteo live, as before.
+    if: ${{ !cancelled() && needs.newest-xcode.result == 'success' }}
     runs-on: ${{ inputs.runner || needs.newest-xcode.outputs.runner }}
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          name: open-meteo-tape
+          path: ${{ runner.temp }}/tape
       - name: Get the earlier screenshots
         # The newest "screenshots" download of this branch, else main's, so a run with `only` keeps the other screens.
         env:
@@ -94,6 +141,8 @@ jobs:
       - run: pip install -c backend/requirements-publish.txt -e backend pillow
       - name: Start the backend with live data
         run: |
+          # Open-Meteo's answers as recorded on Linux (job open-meteo-tape), where there are any.
+          [ -n "$(ls "$RUNNER_TEMP/tape" 2>/dev/null)" ] && export RW_OPEN_METEO_TAPE="$RUNNER_TEMP/tape" && echo "Playing back $(ls "$RUNNER_TEMP/tape" | wc -l) Open-Meteo answers"
           (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out

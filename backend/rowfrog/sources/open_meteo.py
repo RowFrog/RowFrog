@@ -13,11 +13,15 @@ Data: Deutscher Wetterdienst via Open-Meteo, CC BY 4.0.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import math
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 import httpx
 
@@ -278,7 +282,33 @@ _failed_in_row = 0
 _down_until = 0.0
 
 
+def _tape_file(url: str, params: dict[str, str]) -> Path | None:
+    """Where an answer is kept on the tape, or None without one.
+
+    GitHub's Mac runners could not connect to Open-Meteo from 16 Nov 2026, so the
+    App screenshots run records the answers on a Linux runner
+    (RW_OPEN_METEO_TAPE=<folder>, RW_OPEN_METEO_TAPE_MODE=record) and its Mac job
+    plays them back (mode replay, the default). A call not on the tape goes out live."""
+    folder = os.environ.get("RW_OPEN_METEO_TAPE")
+    if not folder:
+        return None
+    key = json.dumps([url, sorted(params.items())])
+    return Path(folder) / (hashlib.sha256(key.encode()).hexdigest()[:32] + ".json")
+
+
 async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> dict:
+    tape = _tape_file(url, params)
+    recording = os.environ.get("RW_OPEN_METEO_TAPE_MODE") == "record"
+    if tape and not recording and tape.exists():
+        return json.loads(tape.read_text())
+    answer = await _get_live(client, url, params)
+    if tape and recording:
+        tape.parent.mkdir(parents=True, exist_ok=True)
+        tape.write_text(json.dumps(answer))
+    return answer
+
+
+async def _get_live(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> dict:
     global calls_counted, _failed_in_row, _down_until
     if time.monotonic() < _down_until:
         raise httpx.ConnectError("Open-Meteo did not answer the last calls; not asked again yet")
