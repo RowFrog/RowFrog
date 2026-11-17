@@ -319,6 +319,8 @@ struct TutorialView: View {
     @State private var pages: [TourPage]
     @State private var page: TourPage
     @State private var here = DeviceLocation()
+    /// Each club choice's search, kept here so it stays when the device turns.
+    @State private var searches: [TourPage: String] = [:]
     // The location question is a system alert. When it closes, the paged view can
     // jump back to its first page while `page` still says otherwise, so the pager
     // is rebuilt on the current page once the answer is in.
@@ -384,7 +386,8 @@ struct TutorialView: View {
                     ForEach(pages) { page in
                         Group {
                             if page.isChoice {
-                                ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload)
+                                ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload,
+                                           search: Binding(get: { searches[page] ?? "" }, set: { searches[page] = $0 }))
                             } else {
                                 TourPageView(page: page)
                             }

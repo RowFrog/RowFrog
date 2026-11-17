@@ -9,7 +9,8 @@ struct ClubChoicePage: View {
     let locations: LocationStore
     let near: Coordinate?
     let reload: () async -> Void
-    @State private var search = ""
+    /// Kept by the tour, not the page: the paged view can build its pages again when the device turns.
+    @Binding var search: String
     @Environment(\.tourColumns) private var columns
     @Environment(\.horizontalSizeClass) private var sizeClass
 
