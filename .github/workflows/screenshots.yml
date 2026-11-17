@@ -557,6 +557,12 @@ jobs:
           for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
+          # The tour on its side (owner's pick A + C, 17 Nov 2026): the head with the dots and Next left,
+          # the list or the page's content right. Upright, the pages above show Next without scrolling.
+          for page in 0 1 2 4; do
+            GUIDE=1 shoot "247-tour-landscape-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page -RWLandscape YES
+            GUIDE=1 shoot "248-tour-landscape-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de -RWLandscape YES
+          done
           # The river page, only there with a river or canal club in the list (page 11).
           GUIDE=1 shoot 245-tour-river light -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)'
           GUIDE=1 shoot 246-tour-river-german-dark dark -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)' -RWLanguage de

@@ -1212,12 +1212,22 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .tip-close { flex: none; margin-left: auto; color: var(--sub); padding: 2px; }
 .tip-close svg { width: 16px; height: 16px; }
 /* The tour (TutorialView) */
-.tour { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; max-width: 560px; margin: 0 auto; }
-.tour .tour-page { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 8px; }
+/* The tour fills the window and never scrolls as a whole (owner's pick A + C, 17 Nov 2026, TutorialView):
+   the head, then the part that scrolls, then the dots and Next, always in sight. On a club choice the
+   head with its search stays and only the list scrolls. Wider than tall (iPad landscape, a computer,
+   a phone on its side), the head with the dots and Next goes left and the rest right, full height;
+   turning the device or resizing the window switches between the two at once. */
+.page.tour { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto; overflow: hidden; background: var(--bg);
+  padding: 0 max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+.tour > .nav { flex: none; padding: 10px 0; padding-top: max(10px, env(safe-area-inset-top)); background: none; backdrop-filter: none; -webkit-backdrop-filter: none; min-height: 52px; }
+.tour .tour-page { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+.tour .tour-head { flex: none; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; padding-top: 8px; }
+.tour .tour-body { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0 8px; }
 .tour .tour-icon { color: var(--tint); }
 .tour .tour-icon svg { width: 64px; height: 64px; }
 .tour h1 { margin: 4px 0 0; font-size: 28px; }
-.tour .tour-page > .sub { margin: 0; }
+.tour .tour-head > .sub { margin: 0; }
+.tour .tour-bottom { flex: none; display: flex; flex-direction: column; }
 .tour-points { list-style: none; margin: 8px 0 0; padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; width: 100%; }
 .tour-points li { display: flex; gap: 12px; align-items: flex-start; }
 .tour-points li > svg { flex: none; width: 24px; height: 24px; color: var(--tint); }
@@ -1234,15 +1244,40 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .tour-language .segmented { width: 100%; margin: 0; background: var(--fill); }
 .tour-language-title { font-size: 15px; }
 /* The dots on their own capsule, as the app's page index with an always-on background. */
-.tour-dots { display: flex; justify-content: center; gap: 8px; width: fit-content; margin: 20px auto 12px; padding: 8px 12px; border-radius: 999px; }
+.tour-dots { display: flex; justify-content: center; gap: 8px; width: fit-content; margin: 12px auto; padding: 8px 12px; border-radius: 999px; }
 .tour-dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; background: var(--fill); }
 .tour-dots button.on { background: var(--text); }
-.tour #next { margin-bottom: 16px; }
+.tour #next { margin-bottom: 8px; }
 /* The club choice on a first visit (ClubChoicePage): search, then the clubs; Next waits for a home base. */
-.tour .tour-choice { align-items: stretch; text-align: left; }
-.tour .tour-choice > .tour-icon, .tour .tour-choice > h1, .tour .tour-choice > .sub { align-self: center; text-align: center; }
-.tour .tour-choice .tour-icon svg { width: 40px; height: 40px; }
-.tour .tour-choice h1 { font-size: 24px; }
+.tour-choice .tour-page { overflow: hidden; }
+.tour-choice .tour-head { gap: 8px; }
+.tour-choice .tour-head .tour-search { align-self: stretch; margin-top: 4px; }
+.tour-choice .tour-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; align-items: stretch; padding-top: 4px; }
+.tour-choice .tour-icon svg { width: 40px; height: 40px; }
+.tour-choice h1 { font-size: 24px; }
+/* Searching on a phone: the icon and the intro step aside while the search has text, so the list keeps
+   room above the keyboard. Text, not focus: a tap on a club that blurs the search must not move the list. */
+@media (max-width: 600px) {
+  .tour-choice:has(#tour-search:not(:placeholder-shown)) .tour-icon, .tour-choice:has(#tour-search:not(:placeholder-shown)) .tour-head > .sub { display: none; }
+}
+/* Wider than tall: side by side. Both columns together stay narrow enough for comfortable lines. */
+@media (min-aspect-ratio: 1/1) and (min-width: 560px) {
+  .page.tour { max-width: 1040px; display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 560px); grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "nav nav" "head body" "bottom body"; justify-content: center; column-gap: clamp(20px, 4vw, 48px); }
+  .tour > .nav { grid-area: nav; }
+  .tour .tour-page { display: contents; }
+  .tour .tour-head { grid-area: head; align-items: flex-start; text-align: left; justify-content: center; min-height: 0; overflow-y: auto; }
+  .tour .tour-body { grid-area: body; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-top: 0; }
+  .tour .tour-bottom { grid-area: bottom; }
+  .tour-choice .tour-head .tour-search { align-self: stretch; }
+  /* A club choice starts at the top, level with its list; the other pages sit in the middle. */
+  .tour-choice .tour-head { justify-content: flex-start; padding-top: 12px; }
+}
+@media (min-aspect-ratio: 1/1) and (min-width: 560px) and (max-height: 500px) {
+  .tour .tour-icon svg { width: 32px; height: 32px; }
+  .tour h1 { font-size: 22px; }
+  .tour .tour-head { gap: 6px; padding-top: 0; }
+}
 .tour-clubs .results { margin-top: 0; }
 .tour-clubs h3.section { margin: 14px 4px 6px; }
 .tour-clubs .add.home { color: var(--accent); }

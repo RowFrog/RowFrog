@@ -137,6 +137,33 @@ test("the tour from Help skips the club choice once there is a home base", async
   await context.close();
 });
 
+test("the tour fits the window: Next always in sight, side by side when wider than tall, live on resize (A + C)", async () => {
+  const { page, errors, context } = await open({ "rf.language": "en", "rf.safety": { version: 1, at: forecast.generatedAt } }, { width: 375, height: 667 });
+  await page.goto(`${base}/app/`);
+  await page.locator(".tour #next").click();
+  await page.locator(".tour-choice").waitFor();
+  await page.locator("#tour-search").fill("Starn");
+  const look = () => page.evaluate(() => ({
+    scrolls: document.scrollingElement.scrollHeight > innerHeight + 1,
+    next: document.querySelector(".tour #next").getBoundingClientRect().bottom <= innerHeight,
+    side: getComputedStyle(document.querySelector(".page.tour")).display === "grid",
+    query: document.querySelector("#tour-search").value,
+  }));
+  // Phones and iPads both ways, a computer window, a wide low one; turned and resized while open.
+  for (const [width, height, side] of [[375, 667, false], [667, 375, true], [820, 1180, false], [1180, 820, true], [1400, 600, true], [700, 900, false], [375, 667, false]]) {
+    await page.setViewportSize({ width, height });
+    assert.deepEqual(await look(), { scrolls: false, next: true, side, query: "Starn" }, `${width}×${height}`);
+  }
+  // An info page with more than fits: its middle scrolls, the page and Next stay.
+  await page.locator(".tour-dots [data-page]").nth(4).click();
+  await page.setViewportSize({ width: 375, height: 560 });
+  const info = await look();
+  assert.equal(info.scrolls, false);
+  assert.equal(info.next, true);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the club page shows the sample forecast and every tile opens its value page", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);

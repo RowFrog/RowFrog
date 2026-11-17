@@ -348,71 +348,86 @@ struct TutorialView: View {
         let index = pages.firstIndex(of: page) ?? 0
         let isLast = index == pages.count - 1
         let needsHome = locations.homeID == nil
-        VStack(spacing: 12) {
-            HStack {
-                Spacer()
-                // Skipping still asks for a home base first.
-                Button(tr("Skip")) {
-                    if needsHome { withAnimation { page = .homeBase } } else { finish() }
+        let go = { (target: Int) in withAnimation { page = pages[max(0, min(pages.count - 1, target))] } }
+        // Upright, Next and the dots sit under the pages; wider than tall, under the left column
+        // (TourLayout.swift). Turning the device switches at once and keeps the page.
+        GeometryReader { proxy in
+            let columns = TourColumns(size: proxy.size)
+            let bottom = VStack(spacing: 12) {
+                TourDots(count: pages.count, index: index, go: go)
+                Button {
+                    if isLast { finish() } else { go(index + 1) }
+                } label: {
+                    Text(isLast ? tr("Let's row") : tr("Next"))
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
                 }
-                .opacity(isLast || page.isChoice ? 0 : 1)
-                .disabled(isLast || page.isChoice)
-                .accessibilityIdentifier("tour-skip")
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(page == .homeBase && needsHome)
+                .accessibilityIdentifier("tour-next")
             }
-            .padding(.horizontal)
-            TabView(selection: $page) {
-                ForEach(pages) { page in
-                    Group {
-                        if page.isChoice {
-                            ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload)
-                        } else {
-                            TourPageView(page: page)
-                        }
-                    }
-                    .tag(page)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .always))
-            .id(pagerID)
-            .onChange(of: scenePhase) { old, new in
-                if new == .active, old != .active, here.askedForPermission {
-                    here.askedForPermission = false
-                    pagerID += 1
-                }
-            }
-            // On an iPad the app can stay active under the location question.
-            .onChange(of: here.answers) { pagerID += 1 }
-            .task(id: page) {
-                // Ask for the location when choosing the home base, for clubs nearby.
-                if page == .homeBase { here.request() }
-            }
-            .onChange(of: page) {
-                TourProgress.page = page
-                // The river page says what the tip would: no tip later for a river club picked now.
-                if page == .river { RiverCurrentTip().invalidate(reason: .actionPerformed) }
-                // No swiping past the home base choice without one.
-                if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
-                    withAnimation { page = .homeBase }
-                }
-            }
-            Button {
-                if isLast {
-                    finish()
-                } else {
-                    withAnimation { page = pages[index + 1] }
-                }
-            } label: {
-                Text(isLast ? tr("Let's row") : tr("Next"))
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(page == .homeBase && needsHome)
-            .accessibilityIdentifier("tour-next")
-            .padding(.horizontal)
             .padding(.bottom, 8)
+            VStack(spacing: 12) {
+                HStack {
+                    Spacer()
+                    // Skipping still asks for a home base first.
+                    Button(tr("Skip")) {
+                        if needsHome { withAnimation { page = .homeBase } } else { finish() }
+                    }
+                    .opacity(isLast || page.isChoice ? 0 : 1)
+                    .disabled(isLast || page.isChoice)
+                    .accessibilityIdentifier("tour-skip")
+                }
+                .padding(.horizontal)
+                TabView(selection: $page) {
+                    ForEach(pages) { page in
+                        Group {
+                            if page.isChoice {
+                                ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload)
+                            } else {
+                                TourPageView(page: page)
+                            }
+                        }
+                        .tag(page)
+                    }
+                }
+                // Its own dots (TourDots), so on a wide screen they can sit under the left column.
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .id(pagerID)
+                .onChange(of: scenePhase) { old, new in
+                    if new == .active, old != .active, here.askedForPermission {
+                        here.askedForPermission = false
+                        pagerID += 1
+                    }
+                }
+                // On an iPad the app can stay active under the location question.
+                .onChange(of: here.answers) { pagerID += 1 }
+                .task(id: page) {
+                    // Ask for the location when choosing the home base, for clubs nearby.
+                    if page == .homeBase { here.request() }
+                }
+                .onChange(of: page) {
+                    TourProgress.page = page
+                    // The river page says what the tip would: no tip later for a river club picked now.
+                    if page == .river { RiverCurrentTip().invalidate(reason: .actionPerformed) }
+                    // No swiping past the home base choice without one.
+                    if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
+                        withAnimation { page = .homeBase }
+                    }
+                }
+                if columns == nil {
+                    bottom.padding(.horizontal)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if let columns {
+                    bottom
+                        .frame(width: columns.left)
+                        .offset(x: -(columns.gap + columns.right) / 2)
+                }
+            }
+            .environment(\.tourColumns, columns)
         }
         .padding(.top, 8)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -420,188 +435,76 @@ struct TutorialView: View {
     }
 }
 
-/// Picking the home base, or adding more clubs: suggestions first, then any
-/// club in the catalog by search.
-private struct ClubChoicePage: View {
-    let page: TourPage
-    let locations: LocationStore
-    let near: Coordinate?
-    let reload: () async -> Void
-    @State private var search = ""
-
-    var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 6) {
-                Image(systemName: page.symbol)
-                    .font(.system(size: 36))
-                    .foregroundStyle(page.tint)
-                    .accessibilityHidden(true)
-                Text(page.title).font(.title2.bold())
-                Text(page.intro)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .multilineTextAlignment(.center)
-            .padding(.horizontal)
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(tr("Club, lake or town"), text: $search)
-                    .autocorrectionDisabled()
-                    .accessibilityIdentifier("tour-search-\(page.rawValue)")
-                if !search.isEmpty {
-                    Button { search = "" } label: {
-                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                    }
-                    .accessibilityLabel(tr("Cancel"))
-                }
-            }
-            .padding(10)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal)
-            List {
-                if locations.catalog.isEmpty {
-                    if locations.catalogFailed {
-                        ContentUnavailableView {
-                            Label(tr("No connection"), systemImage: "wifi.slash")
-                        } description: {
-                            Text(tr("Could not load the rowing locations."))
-                        } actions: {
-                            Button(tr("Try again")) { Task { await reload() } }
-                        }
-                    } else {
-                        ProgressView().frame(maxWidth: .infinity)
-                    }
-                } else if search.isEmpty {
-                    if page == .moreClubs, !locations.saved.isEmpty {
-                        Section(tr("In your list")) {
-                            ForEach(locations.saved) { row($0) }
-                        }
-                    }
-                    let suggestions = locations.suggestions(near: near).filter { page == .homeBase || !locations.isSaved($0) }
-                    Section {
-                        ForEach(suggestions) { row($0) }
-                    } header: {
-                        if !suggestions.isEmpty { Text(near == nil ? tr("Suggestions") : tr("Near you")) }
-                    } footer: {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(tr("Search by club, lake or town to find any club in Germany, Austria or Switzerland."))
-                            Text(tr("Clubs nobody has opened for a while update less often at first. After you add one, it is up to date within about 30 minutes."))
-                        }
-                    }
-                } else {
-                    let results = locations.search(search)
-                    if results.isEmpty {
-                        ContentUnavailableView.search(text: search)
-                    }
-                    ForEach(results.prefix(50)) { row($0) }
-                }
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .scrollDismissesKeyboard(.immediately)
-            // Room for the page dots.
-            .padding(.bottom, 36)
-        }
-        .padding(.top, 8)
-        // Again once the location is in, so the pick is one of the clubs shown.
-        .task(id: near == nil) { await autoPickHome() }
-    }
-
-    /// Screenshot hook: `-RWTourAutoHome YES` picks the first suggestion as home
-    /// base once the clubs are in, as a tap on it would.
-    private func autoPickHome() async {
-        guard page == .homeBase, UserDefaults.standard.bool(forKey: DefaultsKey.tourAutoHome) else { return }
-        for _ in 0..<60 {
-            if let first = locations.suggestions(near: near).first {
-                try? await Task.sleep(for: .seconds(2))
-                locations.replaceHome(with: first)
-                return
-            }
-            try? await Task.sleep(for: .milliseconds(500))
-        }
-    }
-
-    private func row(_ club: Club) -> some View {
-        let isHome = club.id == locations.homeID
-        let saved = locations.isSaved(club)
-        return Button {
-            if page == .homeBase {
-                locations.replaceHome(with: club)
-            } else if !saved {
-                locations.add(club)
-            } else if !isHome {
-                locations.remove(club)
-            }
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(club.name).foregroundStyle(Color.primary)
-                    Text([locations.lake(of: club)?.name, club.town].compactMap { $0 }.joined(separator: " · "))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Group {
-                    if isHome {
-                        Image(systemName: "house.fill").foregroundStyle(.blue)
-                            .accessibilityLabel(tr("Home base"))
-                    } else if page == .homeBase {
-                        Image(systemName: "circle").foregroundStyle(.secondary)
-                    } else if saved {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                            .accessibilityLabel(tr("In your list"))
-                    } else {
-                        Image(systemName: "plus.circle.fill").foregroundStyle(Color.accentColor)
-                            .accessibilityLabel(tr("Add %@", club.displayName))
-                    }
-                }
-                .font(.title3)
-            }
-        }
-        .accessibilityIdentifier("tour-club-\(club.id)")
-    }
-}
-
 private struct TourPageView: View {
     let page: TourPage
+    @Environment(\.tourColumns) private var columns
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Image(systemName: page.symbol)
-                    .font(.system(size: 60))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(page.tint)
-                    .frame(height: 76)
-                    .accessibilityHidden(true)
-                VStack(spacing: 8) {
-                    Text(page.title)
-                        .font(.title.bold())
-                    Text(page.intro)
-                        .foregroundStyle(.secondary)
+        if let columns {
+            // Wide: the head in the middle of the left column, the content right at full height.
+            HStack(alignment: .top, spacing: columns.gap) {
+                TourSideColumn(columns: columns, alignment: .leading) {
+                    head(leading: true, short: columns.short)
                 }
-                .multilineTextAlignment(.center)
-                extra
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(page.points, id: \.text) { point in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: point.symbol)
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(page.tint)
-                                .frame(width: 28)
-                                .accessibilityHidden(true)
-                            Text(point.text)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
+                ScrollView {
+                    content
+                        .padding(.vertical, 8)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .frame(width: columns.right)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            // Upright: the whole page scrolls between Skip and the dots with Next.
+            ScrollView {
+                VStack(spacing: 20) {
+                    head(leading: false, short: false)
+                    content
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
+                .padding(.bottom, 16)
+            }
+        }
+    }
+
+    private func head(leading: Bool, short: Bool) -> some View {
+        VStack(alignment: leading ? .leading : .center, spacing: short ? 10 : 20) {
+            Image(systemName: page.symbol)
+                .font(.system(size: short ? 36 : 60))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(page.tint)
+                .frame(height: short ? 44 : 76)
+                .accessibilityHidden(true)
+            VStack(alignment: leading ? .leading : .center, spacing: 8) {
+                Text(page.title)
+                    .font(short ? .title2.bold() : .title.bold())
+                Text(page.intro)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(leading ? .leading : .center)
+        }
+        .frame(maxWidth: .infinity, alignment: leading ? .leading : .center)
+    }
+
+    private var content: some View {
+        VStack(spacing: 20) {
+            extra
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(page.points, id: \.text) { point in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: point.symbol)
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(page.tint)
+                            .frame(width: 28)
+                            .accessibilityHidden(true)
+                        Text(point.text)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding()
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
             }
-            .padding(.horizontal)
-            .padding(.top, 16)
-            // Room for the page dots.
-            .padding(.bottom, 48)
+            .padding()
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
         }
     }
 

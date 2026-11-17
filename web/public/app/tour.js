@@ -241,21 +241,31 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
     setTitle(t(page.title));
     // The river page says what the river current tip would (RiverCurrentTip), so that tip stays away.
     if (page.id === "river") save("rf.tipsClosed", [...new Set([...closed(), "riverCurrent"])]);
+    // The search belongs to the page's head: it stays put while the list scrolls (owner's pick A + C, 17 Nov 2026).
+    const search = page.choice
+      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>`
+      : "";
     const body = page.choice
-      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>
-          <div id="tour-clubs" class="tour-clubs"></div>`
+      ? `<div id="tour-clubs" class="tour-clubs"></div>`
       : `${extra(page, languagePicker)}
           <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>`;
-    root.innerHTML = `<main class="page tour">
+    // A screen that fills the window: the head, the part that scrolls, then the dots and Next, always in sight.
+    // Wider than tall, the head with Next goes left and the rest right (style.css, .tour).
+    root.innerHTML = `<main class="page tour${page.choice ? " tour-choice" : ""}" style="--tint: var(--${page.tint === "mint" ? "teal" : page.tint})">
         <header class="nav"><span class="spacer"></span>${last || page.choice ? "" : `<button class="link" id="skip">${h(t("Skip"))}</button>`}</header>
-        <div class="tour-page${page.choice ? " tour-choice" : ""}" style="--tint: var(--${page.tint === "mint" ? "teal" : page.tint})">
-          <span class="tour-icon">${icon(page.icon)}</span>
-          <h1>${h(t(page.title))}</h1>
-          <p class="sub">${h(t(page.intro))}</p>
-          ${body}
+        <div class="tour-page">
+          <div class="tour-head">
+            <span class="tour-icon">${icon(page.icon)}</span>
+            <h1>${h(t(page.title))}</h1>
+            <p class="sub">${h(t(page.intro))}</p>
+            ${search}
+          </div>
+          <div class="tour-body">${body}</div>
         </div>
-        <nav class="tour-dots glass" aria-label="${h(t("Tour"))}">${list.map((x, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${i + 1}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
-        <button class="primary wide" id="next">${h(last ? t("Let's row") : t("Next"))}</button>
+        <div class="tour-bottom">
+          <nav class="tour-dots glass" aria-label="${h(t("Tour"))}">${list.map((x, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${h(t("Page %@ of %@", i + 1, list.length))}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
+          <button class="primary wide" id="next">${h(last ? t("Let's row") : t("Next"))}</button>
+        </div>
       </main>`;
     // Skipping still asks for a home base first.
     root.querySelector("#skip")?.addEventListener("click", () => (needsHome() ? go(list.findIndex((x) => x.id === "homeBase")) : finish()));
@@ -282,8 +292,10 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
         const club = lake?.clubs.find((c) => c.id === button.dataset.club);
         if (!club) return;
         pickClub(id, club, lake);
-        // The river page and the dots follow the clubs picked; the search stays as it was.
+        // The river page and the dots follow the clubs picked; the search and the list's scroll stay as they were.
+        const scrolled = box.scrollTop;
         draw();
+        root.querySelector("#tour-clubs").scrollTop = scrolled;
       });
       drawList();
       if (id === "homeBase") askLocation();

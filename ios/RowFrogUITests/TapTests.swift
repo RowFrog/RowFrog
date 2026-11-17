@@ -119,6 +119,38 @@ final class TapTests: XCTestCase {
                       "The home base's page did not show; the app shows:\n\(app.debugDescription)")
     }
 
+    /// The tour fits the screen both ways (owner's pick A + C, 17 Nov 2026): Next stays in sight, and
+    /// turning the device keeps the page, the search and the club picked.
+    func testTourKeepsItsPageAndNextWhenTurned() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-RWFreshStart", "YES", "-RWSafetyAccepted", "YES", "-RWNoTips", "YES",
+            "-RWAPIBaseURL", "https://api.rowfrog.com/v1",
+            "-RWLanguage", "en", "-RWTutorialPage", "1",
+        ]
+        app.launch()
+        defer { XCUIDevice.shared.orientation = .portrait }
+        answerLocationQuestion()
+        let next = app.buttons["tour-next"]
+        let search = app.textFields["tour-search-1"]
+        XCTAssertTrue(search.waitForExistence(timeout: 30), "No home base search; the app shows:\n\(app.debugDescription)")
+        search.tap()
+        search.typeText("MRC 1880")
+        let club = app.buttons["tour-club-mrc-1880"]
+        XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
+        club.tap()
+        let window = app.windows.firstMatch
+        for orientation in [UIDeviceOrientation.landscapeLeft, .portrait, .landscapeRight, .portrait] {
+            XCUIDevice.shared.orientation = orientation
+            // The turn animates; Next is then in the window, whole.
+            let inside = NSPredicate { _, _ in window.frame.contains(next.frame) && next.isHittable }
+            XCTAssertEqual(XCTWaiter.wait(for: [expectation(for: inside, evaluatedWith: nil)], timeout: 10), .completed,
+                           "Next not in sight after turning to \(orientation.rawValue); the app shows:\n\(app.debugDescription)")
+            XCTAssertTrue(next.isEnabled, "The home base picked was lost on turning")
+            XCTAssertEqual(search.value as? String, "MRC 1880", "The search was lost on turning")
+        }
+    }
+
     /// The settings and the club list open from a club page and close again.
     func testSettingsAndClubListOpenFromTheClubPage() {
         let app = launchClubPage()
