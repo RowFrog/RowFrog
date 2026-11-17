@@ -135,6 +135,11 @@ final class TapTests: XCTestCase {
         let search = app.textFields["tour-search-1"]
         XCTAssertTrue(search.waitForExistence(timeout: 30), "No home base search; the app shows:\n\(app.debugDescription)")
         search.tap()
+        // The location question can come late and take the keyboard away (newest Xcode, 17 Nov 2026).
+        if !app.keyboards.firstMatch.waitForExistence(timeout: 5) {
+            answerLocationQuestion()
+            search.tap()
+        }
         search.typeText("MRC 1880")
         let club = app.buttons["tour-club-mrc-1880"]
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
