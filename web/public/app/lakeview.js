@@ -287,11 +287,12 @@ const worldLat = (y) => (Math.atan(Math.sinh(Math.PI * (1 - y / 128))) * 180) / 
  * around it, widened to the canvas's shape, in Web Mercator, so the lake lands where the map tiles have its
  * shore. `pt` gives a place's canvas pixel, `place` a pixel's place.
  */
-export function miniFrame(edges, w, hgt, pad = 8) {
+export function miniFrame(edges, w, hgt, pad = 8, bottom = pad) {
   const x0 = worldX(edges.west), x1 = worldX(edges.east), y0 = worldY(edges.north), y1 = worldY(edges.south);
-  const scale = Math.min(Math.max(w - 2 * pad, 1) / Math.max(x1 - x0, 1e-9), Math.max(hgt - 2 * pad, 1) / Math.max(y1 - y0, 1e-9));
+  const scale = Math.min(Math.max(w - 2 * pad, 1) / Math.max(x1 - x0, 1e-9), Math.max(hgt - pad - bottom, 1) / Math.max(y1 - y0, 1e-9));
   const left = (x0 + x1) / 2 - w / 2 / scale;
-  const top = (y0 + y1) / 2 - hgt / 2 / scale;
+  // The lake centred in the room left above the bottom strip.
+  const top = (y0 + y1) / 2 - (pad + (hgt - pad - bottom) / 2) / scale;
   return {
     scale, left, top, w, h: hgt,
     pt: (lon, lat) => [(worldX(lon) - left) * scale, (worldY(lat) - top) * scale],
@@ -374,6 +375,26 @@ export async function miniBase(canvas, f) {
   return credit;
 }
 
+/** Line height of the map credit on a small lake map. */
+const CREDIT_LINE = 11;
+const CREDIT_FONT = "9px system-ui, sans-serif";
+
+/** The credit's lines: one, or on a narrow map one per source rather than past the edge. */
+function creditLines(ctx, credit, w) {
+  if (!credit) return [];
+  ctx.save();
+  ctx.font = CREDIT_FONT;
+  const wide = ctx.measureText(credit).width > w - 12;
+  ctx.restore();
+  return wide ? credit.split(/ (?=©)/) : [credit];
+}
+
+/** The credit a small lake map will print: the one its street map gave, or before that the likely one. */
+function expectedCredit(canvas) {
+  if (canvas.dataset.credit !== undefined) return canvas.dataset.credit;
+  return darkMode() ? "© MapTiler © OpenStreetMap" : "© OpenStreetMap";
+}
+
 /** Screen pixels between the arrows on land on a small lake map: closer than on the big map (LakeMiniMap.landSpacing). */
 const MINI_LAND_SPACING = 40;
 /** The lakes whose land wind was asked for, so a small map asks once. */
@@ -422,7 +443,8 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   const ctx = canvas.getContext("2d");
   ctx.scale(ratio, ratio);
   const e = gridEdges(view.grid);
-  const f = miniFrame(e, w, hgt);
+  // The credit at the bottom gets a strip of its own, so it never lies over the lake (owner, 18 Nov 2026).
+  const f = miniFrame(e, w, hgt, 8, 8 + creditLines(ctx, expectedCredit(canvas), w).length * CREDIT_LINE);
   const pt = f.pt;
   miniBase(canvas, f).then((credit) => {
     if (canvas.dataset.credit === credit) return;
@@ -508,14 +530,13 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   const own = view.clubs.find((c) => c.id === clubId);
   if (own) drawClubMark(ctx, ...pt(own.launchPoint.lon, own.launchPoint.lat), clubId);
   if (canvas.dataset.credit) {
-    ctx.font = "9px system-ui, sans-serif";
+    ctx.font = CREDIT_FONT;
     ctx.lineWidth = 3;
     ctx.strokeStyle = darkMode() ? "rgba(0, 0, 0, .7)" : "rgba(255, 255, 255, .85)";
     ctx.fillStyle = darkMode() ? "#ddd" : "#333";
-    // On a narrow tile the credit goes on two lines rather than past the edge.
-    const parts = ctx.measureText(canvas.dataset.credit).width > w - 12 ? canvas.dataset.credit.split(/ (?=©)/) : [canvas.dataset.credit];
+    const parts = creditLines(ctx, canvas.dataset.credit, w);
     parts.forEach((line, i) => {
-      const y = hgt - 6 - (parts.length - 1 - i) * 11;
+      const y = hgt - 6 - (parts.length - 1 - i) * CREDIT_LINE;
       ctx.strokeText(line, 6, y, w - 12);
       ctx.fillText(line, 6, y, w - 12);
     });
