@@ -299,10 +299,26 @@ export function miniFrame(edges, w, hgt, pad = 8) {
   };
 }
 
+/** Loads one map tile as the big maps do: with CORS and the page's origin as referrer (the page itself sends no
+ * referrer), which OpenStreetMap asks for and MapTiler checks the key against. Resolves to null when it fails. */
+function loadTile(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.referrerPolicy = "strict-origin";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
 /**
- * The street map under a small lake map, as background pictures of its canvas (the app's still picture of
+ * The street map under a small lake map, as the background picture of its canvas (the app's still picture of
  * Apple's map): MapTiler's dark street map in dark mode, else OpenStreetMap, as under the lake view (baseMap).
- * Without a MapTiler key, dark mode keeps the plain plate. Resolves to the credit to print, or "".
+ * The tiles are loaded as pictures and put together on a canvas of their own, since CSS background pictures
+ * go out without origin or referrer and the tile servers turn them away (MapTiler sent its "Invalid key"
+ * picture, 18 Nov 2026). Without a MapTiler key, dark mode keeps the plain plate. Resolves to the credit to
+ * print, or "".
  */
 export async function miniBase(canvas, f) {
   const { maptilerKey } = await siteConfig();
@@ -310,30 +326,52 @@ export async function miniBase(canvas, f) {
   const dark = darkMode();
   if (!canvas.isConnected || (dark && !maptilerKey) || !(f.scale > 0)) {
     style.backgroundImage = "";
+    canvas.baseKey = "";
     return "";
   }
   const ratio = window.devicePixelRatio || 1;
   const tile = dark ? 512 : 256;
   const url = dark ? darkStreetUrl(maptilerKey).replace("{r}", ratio > 1 ? "@2x" : "") : OSM;
+  const credit = dark ? "© MapTiler © OpenStreetMap" : "© OpenStreetMap";
   // The zoom whose tiles are at least as sharp as the screen (MapTiler's @2x tiles are sharp already).
   const z = Math.max(0, Math.min(18, Math.ceil(Math.log2((256 * f.scale * (dark ? 1 : ratio)) / tile))));
+  const key = `${url}|${z}|${f.w}x${f.h}|${f.left.toFixed(4)},${f.top.toFixed(4)}|${ratio}`;
+  if (canvas.baseKey === key) return credit;
+  canvas.baseKey = key;
   const n = 2 ** z;
   const span = 256 / n;
-  const size = span * f.scale + 0.5;
-  const images = [];
-  const places = [];
+  const size = span * f.scale;
+  const wanted = [];
   for (let ty = Math.floor(f.top / span); ty * span < f.top + f.h / f.scale; ty++) {
     if (ty < 0 || ty >= n) continue;
     for (let tx = Math.floor(f.left / span); tx * span < f.left + f.w / f.scale; tx++) {
-      images.push(`url("${url.replace("{z}", z).replace("{x}", ((tx % n) + n) % n).replace("{y}", ty)}")`);
-      places.push(`${((tx * span - f.left) * f.scale).toFixed(1)}px ${((ty * span - f.top) * f.scale).toFixed(1)}px`);
+      const src = url.replace("{z}", z).replace("{x}", ((tx % n) + n) % n).replace("{y}", ty);
+      wanted.push({ src, x: (tx * span - f.left) * f.scale, y: (ty * span - f.top) * f.scale });
     }
   }
-  style.backgroundImage = images.join(", ");
-  style.backgroundPosition = places.join(", ");
-  style.backgroundSize = images.map(() => `${size.toFixed(1)}px ${size.toFixed(1)}px`).join(", ");
+  const tiles = await Promise.all(wanted.map((want) => loadTile(want.src)));
+  if (canvas.baseKey !== key) return credit;
+  if (!tiles.some(Boolean)) {
+    style.backgroundImage = "";
+    canvas.baseKey = "";
+    return "";
+  }
+  const plate = document.createElement("canvas");
+  plate.width = Math.round(f.w * ratio);
+  plate.height = Math.round(f.h * ratio);
+  const pctx = plate.getContext("2d");
+  pctx.scale(ratio, ratio);
+  pctx.imageSmoothingQuality = "high";
+  wanted.forEach((want, i) => { if (tiles[i]) pctx.drawImage(tiles[i], want.x, want.y, size + 0.5, size + 0.5); });
+  const blob = await new Promise((resolve) => plate.toBlob(resolve));
+  if (canvas.baseKey !== key || !blob) return credit;
+  if (canvas.baseUrl) URL.revokeObjectURL(canvas.baseUrl);
+  canvas.baseUrl = URL.createObjectURL(blob);
+  style.backgroundImage = `url("${canvas.baseUrl}")`;
+  style.backgroundPosition = "0 0";
+  style.backgroundSize = "100% 100%";
   style.backgroundRepeat = "no-repeat";
-  return dark ? "© MapTiler © OpenStreetMap" : "© OpenStreetMap";
+  return credit;
 }
 
 /** Screen pixels between the arrows on land on a small lake map: closer than on the big map (LakeMiniMap.landSpacing). */
@@ -474,8 +512,13 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
     ctx.lineWidth = 3;
     ctx.strokeStyle = darkMode() ? "rgba(0, 0, 0, .7)" : "rgba(255, 255, 255, .85)";
     ctx.fillStyle = darkMode() ? "#ddd" : "#333";
-    ctx.strokeText(canvas.dataset.credit, 6, hgt - 6);
-    ctx.fillText(canvas.dataset.credit, 6, hgt - 6);
+    // On a narrow tile the credit goes on two lines rather than past the edge.
+    const parts = ctx.measureText(canvas.dataset.credit).width > w - 12 ? canvas.dataset.credit.split(/ (?=©)/) : [canvas.dataset.credit];
+    parts.forEach((line, i) => {
+      const y = hgt - 6 - (parts.length - 1 - i) * 11;
+      ctx.strokeText(line, 6, y, w - 12);
+      ctx.fillText(line, 6, y, w - 12);
+    });
   }
 }
 
