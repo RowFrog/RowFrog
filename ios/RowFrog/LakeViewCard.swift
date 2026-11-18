@@ -175,66 +175,6 @@ struct LakeProjection {
     }
 }
 
-/// The lake drawn by itself, coloured by the light of each part, with wind arrows.
-struct LakeMiniMap: View {
-    let view: LakeView
-    let hour: LakeHour
-    var clubID: String?
-    var layer: LakeLayer = .light
-
-    var body: some View {
-        let image = LakeRaster.image(view, hour: hour, layer: layer)
-        let coldShore = view.coldShore
-        Canvas { ctx, size in
-            let p = LakeProjection(grid: view.grid, size: size)
-            let shore = p.outline(view.outline)
-            let even = FillStyle(eoFill: true)
-            ctx.fill(shore, with: .color(.blue.opacity(0.2)), style: even)
-            if let image {
-                var water = ctx
-                water.clip(to: shore, style: even)
-                water.opacity = 0.85
-                water.draw(Image(decorative: image, scale: 1).interpolation(.high), in: p.imageRect)
-                // The whole lake is red (dark, a warning): stripes over the greyed squares;
-                // amber (sunrise or sunset, a warning): fainter stripes wider apart.
-                if layer == .light, let light = hour.lakeWide.stripes {
-                    let red = light == .red, fall = view.stripesFall
-                    var lines = Path()
-                    for x in stride(from: -size.height, to: size.width, by: red ? 8 : 14) {
-                        lines.move(to: CGPoint(x: x, y: fall ? 0 : size.height))
-                        lines.addLine(to: CGPoint(x: x + size.height, y: fall ? size.height : 0))
-                    }
-                    water.opacity = 1
-                    water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.75)), lineWidth: red ? 1.5 : 1.2)
-                }
-            }
-            // Cold water: the shore turns blue, the squares keep their colours.
-            if let cold = coldShore {
-                ctx.stroke(shore, with: .color(cold.color), lineWidth: cold.tileWidth)
-            } else {
-                ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
-            }
-            for (point, wind) in zip(view.points, hour.wind) {
-                guard let from = wind.fromDeg else { continue }
-                let at = p.point(lon: point.lon, lat: point.lat)
-                ctx.stroke(LakeArrow.path(at: at, towardDeg: from + 180, length: 12), with: .color(.primary.opacity(0.55)), lineWidth: 1.2)
-            }
-            // The page's club last, so it stays on top of clubs sharing its boathouse.
-            for club in view.clubs.sorted(by: { ($0.id == clubID ? 1 : 0) < ($1.id == clubID ? 1 : 0) }) {
-                let at = p.point(lon: club.launchPoint.lon, lat: club.launchPoint.lat)
-                let own = club.id == clubID
-                let r: CGFloat = own ? 4.5 : 3
-                let dot = Path(ellipseIn: CGRect(x: at.x - r, y: at.y - r, width: 2 * r, height: 2 * r))
-                ctx.fill(dot, with: .color(own ? .blue : .white))
-                ctx.stroke(dot, with: .color(own ? .white : .blue), lineWidth: 1.5)
-            }
-        }
-        .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .accessibilityLabel(tr("Map of %@ coloured by the rowing light", view.name))
-    }
-}
-
 enum LakeArrow {
     /// An arrow centred on `at`, pointing where the wind blows to (0 = north, clockwise).
     static func path(at: CGPoint, towardDeg: Double, length: CGFloat) -> Path {

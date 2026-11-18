@@ -63,5 +63,6 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 44 | 2026-11-16 | [Without internet the last forecast shows, and downloads give up sooner](0044-last-forecast-without-internet.md) |
 | 45 | 2026-11-17 | [The rain chart marks where the radar hands over to the forecast](0045-radar-handover-in-rain-chart.md) |
 | 46 | 2026-11-17 | [A cold start shows the last page at once; a first start shows sweeping stand-in cards](0046-cold-start-shows-the-last-page.md) |
+| 47 | 2026-11-17 | [Small lake maps stand on the street map, as the lake view](0047-small-lake-maps-on-the-street-map.md) |
 | 48 | 2026-11-17 | [The Row Frog icon's long-press menu: home base, lake view, rain radar, last opened club](0048-home-screen-quick-actions.md) |
 | 49 | 2026-11-17 | [The tour fits the screen: Next always in sight, side by side when wider than tall](0049-tour-fits-the-screen.md) |

@@ -214,20 +214,53 @@ function show(page) {
   else if (lakeMap) wavesMap(page);
 }
 
-/** The waves page's map: the lake view's waves at the hour of the chart's blue line. */
+/**
+ * The waves page's map, shaped as the weather map's card (owner's pick B, 17 Nov 2026; DetailLakeCard): the
+ * lake view's waves on the small lake map, the chain button, and play, slider and repeat through the lake
+ * view's hours. A tap opens the lake view on its waves at the hour shown.
+ */
 async function wavesMap(page) {
   const { data, time, clubId } = page;
   const box = page.root.querySelector("#map-card");
   const start = new Date(data.now.time).getTime();
-  const at = () => new Date(start + time.hour * 3600000);
-  const draw = await fillWavesMap(box, data.forecast.lakeId, clubId, at());
+  const x = (date) => (date - start) / 3600000;
+  const mapDate = () => new Date(start + time.shownMapHour * 3600000);
+  box.innerHTML = `<header class="map-head">${conditionIcon("waves")}<strong id="map-time"></strong><span class="spacer"></span>
+      <span class="pop-anchor end"><button class="chain" id="chain"></button>${chainBubble()}</span>
+      <button class="tool" id="map-full" aria-label="${h(t("Opens the lake view"))}">${icon("maximize-2")}</button></header>
+    <div class="map-frame"><div class="wm lake-wm" id="wm"></div><p class="map-note" id="map-note" hidden></p></div>`;
+  const draw = await fillWavesMap(box.querySelector("#wm"), data.forecast.lakeId, clubId, mapDate());
   if (!draw) return box.isConnected && box.remove();
+  const list = draw.hours.map((s) => new Date(s));
+  if (list.length > 1) box.insertAdjacentHTML("beforeend", controlsHtml(list));
   // The chart's green band: the hours the lake view has.
-  time.mapHours = draw.hours.map((x) => (new Date(x).getTime() - start) / 3600000);
-  time.changed();
-  const update = () => box.isConnected && draw(at());
+  time.mapHours = list.map(x);
+  const shownIndex = () => draw.index(mapDate());
+  const open = () => { location.hash = draw.link(mapDate()); };
+  box.querySelector(".map-frame").addEventListener("click", open);
+  box.querySelector("#map-full").addEventListener("click", open);
+  const update = () => {
+    if (!box.isConnected) return;
+    const i = shownIndex();
+    draw(mapDate());
+    box.querySelector("#map-time").textContent = dayTime(list[i]);
+    const chain = box.querySelector("#chain");
+    chain.className = `chain ${time.linked ? "on" : ""}`;
+    chain.innerHTML = `${icon("link")} ${h(time.linked ? t("Linked") : t("Own time"))}`;
+    const slider = box.querySelector("#slider");
+    if (slider) slider.value = i;
+    // Before or after the lake view's hours: the nearest one, greyed, as the weather maps.
+    const out = time.mapOutOfRange;
+    box.querySelector(".map-frame").classList.toggle("out", out);
+    const note = box.querySelector("#map-note");
+    note.hidden = !out;
+    if (out) note.textContent = mapDate() > list[list.length - 1] ? t("The maps end %@; the chart goes on.", dayTime(list[list.length - 1])) : t("The maps start %@.", dayTime(list[0]));
+  };
   update.page = true;
   time.listeners.add(update);
+  time.changed();
+  paceTips(box.closest("main"));
+  wireControls(page, box, list, x, shownIndex);
 }
 
 function facts(detail) {
@@ -275,9 +308,7 @@ async function mapCard(page, layerId, detail, hidden) {
       ${layer.links !== "none" ? `<span class="pop-anchor end"><button class="chain" id="chain"></button>${chainBubble()}</span>` : ""}
       <button class="tool" id="map-full" aria-label="${h(t("Opens the map full screen"))}">${icon("maximize-2")}</button></header>
     <div class="map-frame"><div class="wm" id="wm"></div><p class="map-note" id="map-note" hidden></p></div>
-    ${list.length > 1 && layer.links !== "none" ? `<div class="map-controls"><button class="tool" id="play" aria-label="${h(t("Play"))}">${icon("play")}</button>
-      <input type="range" id="slider" min="0" max="${list.length - 1}" step="1" aria-label="${h(t("Time"))}">
-      <button class="tool ${store.mapLoop ? "on" : ""}" id="loop" aria-label="${h(t("Play 3 times"))}">${icon("repeat")}</button></div>` : ""}`;
+    ${list.length > 1 && layer.links !== "none" ? controlsHtml(list) : ""}`;
   const wm = await weatherMap(box.querySelector("#wm"), point, layerId, { interactive: false, mark: markIcon(page.clubId) });
   page.map = wm;
   const radar = layerId === "rain" ? radarOverlay(await loadLeaflet(), wm.map, point) : null;
@@ -332,6 +363,20 @@ async function mapCard(page, layerId, detail, hidden) {
   wm.setLayer(layerId).then(update);
   // MapLinkTip as a bubble on the chain (rule R2); the box is drawn after the page's tips were paced.
   paceTips(box.closest("main"));
+  wireControls(page, box, list, x, current);
+}
+
+/** Play, slider and repeat under a value page's map (MapTimeControls in the app), through `list`. */
+const controlsHtml = (list) => `<div class="map-controls"><button class="tool" id="play" aria-label="${h(t("Play"))}">${icon("play")}</button>
+      <input type="range" id="slider" min="0" max="${list.length - 1}" step="1" aria-label="${h(t("Time"))}">
+      <button class="tool ${store.mapLoop ? "on" : ""}" id="loop" aria-label="${h(t("Play 3 times"))}">${icon("repeat")}</button></div>`;
+
+/**
+ * The chain button, slider, play and repeat of a value page's map, the weather map's and the waves page's lake
+ * map alike (MapLinkButton, MapTimeControls). `x` turns a time into the chart's hours, `shown` gives the frame shown.
+ */
+function wireControls(page, box, list, x, shown) {
+  const { time } = page;
   box.querySelector("#chain")?.addEventListener("click", (e) => {
     e.stopPropagation();
     closeTip(box, "mapLink");
@@ -345,7 +390,7 @@ async function mapCard(page, layerId, detail, hidden) {
   // With repeat on it goes round 3 times, as the full-screen maps do, then stops on the hour it started from.
   box.querySelector("#play")?.addEventListener("click", () => {
     if (page.playing) return stop(page);
-    let i = current() ?? 0;
+    let i = shown() ?? 0;
     if (time.mapOutOfRange || i >= list.length - 1) i = 0;
     const from = i;
     let rounds = 0;
@@ -366,7 +411,7 @@ async function mapCard(page, layerId, detail, hidden) {
   });
   box.querySelector("#loop")?.addEventListener("click", (e) => {
     store.mapLoop = !store.mapLoop;
-    e.currentTarget.classList.toggle("on", store.mapLoop);
+    e.shownTarget.classList.toggle("on", store.mapLoop);
   });
 }
 

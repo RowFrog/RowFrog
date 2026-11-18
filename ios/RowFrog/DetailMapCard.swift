@@ -21,8 +21,6 @@ struct DetailMapCard: View {
     @State private var full = Self.hookLayer != nil
     @State private var radar = false
     @State private var playing = false
-    /// The same repeat switch as the full-screen maps': on, playing goes round 3 times.
-    @AppStorage(DefaultsKey.radarLoop) private var loops = true
     private let store = ModelMapStore.shared
 
     /// The hours the card's slider goes through.
@@ -68,13 +66,14 @@ struct DetailMapCard: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint(tr("Opens the map full screen"))
             if frames.count > 1 {
-                controls
+                MapTimeControls(time: time, data: data, frames: frames, frameIndex: frameIndex, playing: $playing) {
+                    WeatherMapTip().invalidate(reason: .actionPerformed)
+                }
             }
         }
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .task(id: frames) { time.mapHours = mapHours }
-        .task(id: playing) { await play() }
         .fullScreenCover(isPresented: $full) {
             WeatherMapScreen(point: club.launchPoint, clubID: club.id, layer: Self.hookLayer ?? layer, start: mapDate,
                              time: layer.links == .none ? nil : Binding<Date?>(get: { mapDate }, set: { date in
@@ -108,7 +107,7 @@ struct DetailMapCard: View {
             .minimumScaleFactor(0.8)
             Spacer(minLength: 0)
             if layer.links != .none {
-                chain
+                MapLinkButton(time: time) { playing = false }
             }
             Button {
                 open()
@@ -133,31 +132,6 @@ struct DetailMapCard: View {
         }
     }
 
-    /// Linked: the map follows the chart's blue line. Unlinked: its own time.
-    private var chain: some View {
-        Button {
-            playing = false
-            MapLinkTip().invalidate(reason: .actionPerformed)
-            withAnimation(.easeInOut(duration: 0.2)) { time.setLinked(!time.linked) }
-        } label: {
-            Label(time.linked ? tr("Linked") : tr("Own time"), systemImage: "link")
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-                .fixedSize()
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(time.linked ? Color.accentColor.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 7))
-                .overlay {
-                    if !time.linked { RoundedRectangle(cornerRadius: 7).strokeBorder(Color.secondary.opacity(0.4)) }
-                }
-                .foregroundStyle(time.linked ? Color.accentColor : .secondary)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(tr("Map follows the chart"))
-        .accessibilityValue(time.linked ? tr("Linked") : tr("Own time"))
-        .popoverTip(MapLinkTip(), arrowEdge: .top)
-    }
-
     /// Past the maps' end or before their start: the map keeps its nearest picture, dimmed.
     @ViewBuilder
     private var note: some View {
@@ -170,63 +144,6 @@ struct DetailMapCard: View {
                 .padding(.vertical, 6)
                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 9))
                 .padding(8)
-        }
-    }
-
-    private var controls: some View {
-        HStack(spacing: 10) {
-            Button {
-                playing.toggle()
-                WeatherMapTip().invalidate(reason: .actionPerformed)
-            } label: {
-                Image(systemName: playing ? "pause.fill" : "play.fill")
-            }
-            .accessibilityLabel(playing ? tr("Pause") : tr("Play"))
-            Slider(value: Binding(get: { Double(frameIndex ?? 0) }, set: { value in
-                playing = false
-                let i = Int(value.rounded())
-                if frames.indices.contains(i) { time.setMap(data.x(frames[i]).rounded()) }
-            }), in: 0...Double(frames.count - 1), step: 1)
-            .opacity(time.mapOutOfRange ? 0.4 : 1)
-            Button {
-                loops.toggle()
-            } label: {
-                Image(systemName: "repeat")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(loops ? Color.accentColor : .secondary)
-                    .padding(5)
-                    .background(loops ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 7))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(tr("Play 3 times"))
-            .accessibilityAddTraits(loops ? .isSelected : [])
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-    }
-
-    /// Plays through the maps from the shown one; linked, the chart follows.
-    /// With repeat on it goes round 3 times, as the full-screen maps do, then
-    /// stops on the hour it started from.
-    private func play() async {
-        guard playing else { return }
-        var i = frameIndex ?? 0
-        if time.mapOutOfRange || i >= frames.count - 1 { i = 0 }
-        let from = i
-        var rounds = 0
-        while playing, !Task.isCancelled, frames.indices.contains(i) {
-            time.setMap(data.x(frames[i]).rounded())
-            try? await Task.sleep(for: .milliseconds(i == frames.count - 1 ? 1400 : 700))
-            guard playing, !Task.isCancelled else { return }
-            if i < frames.count - 1 {
-                i += 1
-            } else if loops, rounds < 2 {
-                rounds += 1
-                i = 0
-            } else {
-                playing = false
-                if loops { time.setMap(data.x(frames[from]).rounded()) }
-            }
         }
     }
 
