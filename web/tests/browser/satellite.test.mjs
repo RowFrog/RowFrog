@@ -137,6 +137,36 @@ for (const layout of LAYOUTS) {
   }
 }
 
+// Three pictures: the picks read as the app's ("Fast klar", not the sky's "Überwiegend klar") and each stays on
+// one line, the smallest phone included (owner's screenshots, 19 Nov 2026).
+for (const [language, labels] of [["de", ["Neuestes", "Fast klar", "Klarstes"]], ["en", ["Latest", "Mostly clear", "Clearest"]]]) {
+  for (const layout of [{ name: "small phone", viewport: { width: 320, height: 568 }, touch: true }, ...LAYOUTS]) {
+    test(`${layout.name}, ${language}: three satellite picks, each on one line`, async () => {
+      const { page, errors, context } = await openIn(layout, visitor({ "rf.language": language }), "light",
+        language === "de" ? () => Object.defineProperty(navigator, "language", { get: () => "de-DE" }) : null);
+      const meta = { ...META, mostlyClear: { image: "mostly.jpg", date: "2026-11-03", lakeCloud: 0.2 } };
+      await context.route((url) => url.pathname.endsWith("/satellite"), (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(meta) }));
+      await context.route((url) => /\.jpg$/.test(url.pathname), (route) => route.fulfill({ contentType: "image/png", body: PNG }));
+      await page.goto(`${base}/app/#/club/${club.id}`);
+      // The page may draw again once the language has loaded: the picks are read in one go, once in their language.
+      const picks = await page.waitForFunction((want) => {
+        const picks = [...document.querySelectorAll("#satellite [data-kind]")].map((b) => {
+          const range = document.createRange();
+          range.selectNodeContents(b);
+          return { text: b.textContent, height: Math.round(b.getBoundingClientRect().height), cut: b.scrollWidth > b.clientWidth, lines: range.getClientRects().length };
+        });
+        return picks.map((p) => p.text).join() === want.join() && picks;
+      }, labels, { timeout: 10000 }).then((h) => h.jsonValue())
+        .catch(() => page.locator("#satellite [data-kind]").evaluateAll((buttons) => buttons.map((b) => ({ text: b.textContent }))));
+      assert.deepEqual(picks.map((p) => p.text), labels);
+      assert.equal(new Set(picks.map((p) => p.height)).size, 1, `one height: ${JSON.stringify(picks)}`);
+      assert.ok(picks.every((p) => !p.cut && p.lines === 1), `each label whole, on one line: ${JSON.stringify(picks)}`);
+      assert.deepEqual(errors, []);
+      await context.close();
+    });
+  }
+}
+
 // The lake map opens on the street map, and in dark mode that is MapTiler's dark street map, not OpenStreetMap
 // with turned-round colours, whose dark green forests read as satellite pictures on a phone (owner, 15 Nov 2026).
 // The globe button switches to the satellite pictures and back; the street map follows a change of dark mode.

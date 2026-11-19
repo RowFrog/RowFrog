@@ -404,7 +404,8 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 
 /* Satellite picture. */
 .segmented { display: flex; background: var(--tile); border-radius: 9px; padding: 2px; margin-bottom: 10px; }
-.segmented button { flex: 1; text-align: center; padding: 6px; border-radius: 7px; font-size: 13px; }
+/* One line, equal parts, as the app's segmented picker: a label too long for its part ends in "…", never wraps. */
+.segmented button { flex: 1 1 0; min-width: 0; text-align: center; padding: 6px 2px; border-radius: 7px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .segmented button.on { background: var(--card); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .picture { position: relative; margin: 0 auto; border-radius: 8px; overflow: hidden; }
 .picture img { display: block; width: 100%; height: 100%; }
