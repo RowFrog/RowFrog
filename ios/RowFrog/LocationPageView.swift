@@ -239,12 +239,6 @@ struct LocationPageView: View {
                 }
                 // No bar hides the cards under the clock and the small name: the scroll
                 // view blurs or fades them itself (owner's pick D, 19 Nov 2026).
-                // On the swiping club pages the cards scroll on under the clock and the
-                // floating buttons; keep clear of whichever the page is not already clear of.
-                // On iOS 26 that room is an empty safe-area bar on the scroll view itself, so
-                // the soft scroll edge covers the buttons too, not only the clock (a padding,
-                // or a bar further out, left the cards sharp under the buttons, PR #546 shots).
-                .modifier(PageTopRoom(height: max(0, pageMargins.top - geometry.safeAreaInsets.top)))
                 .modifier(PageTopEdge(
                     active: !PowerState.shared.lowPower,
                     scrolled: PageScroll.shared.scrolled.contains(club.id),
@@ -254,9 +248,8 @@ struct LocationPageView: View {
                     // Below the club's name when the top bar shows it.
                     if let forecast {
                         stickyHourlyHeader(forecast)
-                            .padding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top)
-                                     + (PageScroll.shared.titleGone.contains(club.id)
-                                        ? max(0, pageBarBottom - pageMargins.top) : 0))
+                            .padding(.top, PageScroll.shared.titleGone.contains(club.id)
+                                     ? max(0, pageBarBottom - pageMargins.top) : 0)
                     }
                 }
                 .environment(\.pageHeight, geometry.size.height)
@@ -341,6 +334,12 @@ struct LocationPageView: View {
                     }
                 }
             }
+            // On the swiping club pages the cards scroll on under the clock and the
+            // floating buttons; keep clear of whichever the page is not already clear of.
+            // On iOS 26 that room is an empty safe-area bar, so the soft scroll edge
+            // covers the buttons and the small name too, not only the clock (with a
+            // plain padding the cards stayed sharp under the buttons, PR #546 shots).
+            .modifier(PageTopRoom(height: max(0, pageMargins.top - geometry.safeAreaInsets.top)))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
