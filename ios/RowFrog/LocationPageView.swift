@@ -336,10 +336,7 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            // On iOS 26 that room is an empty safe-area bar, so the soft scroll edge
-            // covers the buttons and the small name too, not only the clock (with a
-            // plain padding the cards stayed sharp under the buttons, PR #546 shots).
-            .modifier(PageTopRoom(height: max(0, pageMargins.top - geometry.safeAreaInsets.top)))
+            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
@@ -1742,7 +1739,10 @@ private struct PageTopEdge: ViewModifier {
         } else {
 #if compiler(>=6.2)
             if #available(iOS 26.0, *) {
-                content.scrollEdgeEffectStyle(.soft, for: .top)
+                // Apple's soft edge blurs only the strip under the clock; below it, under
+                // the top buttons and the small name, the cards fade out as on iOS 18
+                // (PR #546 iPad shots: they stayed readable there with the soft edge alone).
+                fadeOut(content.scrollEdgeEffectStyle(.soft, for: .top))
             } else {
                 fadeOut(content)
             }
@@ -1754,7 +1754,7 @@ private struct PageTopEdge: ViewModifier {
 
     /// Always masked, fully open at the top of the page, so the scroll view keeps its
     /// identity (and its place) when the cards first slide under the clock.
-    private func fadeOut(_ content: Content) -> some View {
+    private func fadeOut(_ content: some View) -> some View {
         // The page's scroll view starts at the screen's top edge (the club pages
         // ignore the top safe area), so `gone` is measured from its top already.
         // No GeometryReader in the mask: with one, the iOS 18 UI tests never saw the
@@ -1768,24 +1768,5 @@ private struct PageTopEdge: ViewModifier {
             }
             .ignoresSafeArea()
         }
-    }
-}
-
-/// The room above a club page's first card, below the clock (see `PageTopEdge`).
-private struct PageTopRoom: ViewModifier {
-    let height: CGFloat
-
-    func body(content: Content) -> some View {
-#if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            content.safeAreaBar(edge: .top, spacing: 0) {
-                Color.clear.frame(height: height).allowsHitTesting(false).accessibilityHidden(true)
-            }
-        } else {
-            content.safeAreaPadding(.top, height)
-        }
-#else
-        content.safeAreaPadding(.top, height)
-#endif
     }
 }
