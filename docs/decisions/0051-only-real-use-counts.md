@@ -2,7 +2,7 @@
 
 - Date: 2026-11-19
 - Status: done (owner's pick on 19 Nov 2026, 21:54 CET (20:54 UTC): option B "Count only the real app" for now, the minimum-use rule later)
-- Where: `realUse()` in `cloudflare/usage/src/index.js`; tests in `cloudflare/tests/usage.test.mjs`; handbook row "Usage counter"
+- Where: `realUse()` in `cloudflare/usage/src/index.js`; tests in `cloudflare/tests/usage.test.mjs`; `APIClient.get` in `ios/RowFrog/APIClient.swift` (Simulator header); handbook row "Usage counter"
 
 ## Why
 
@@ -12,7 +12,7 @@ On 19 Nov the half-hourly forecast runs built 37 "used" clubs instead of about 1
 
 - The usage counter counts a club forecast or lake view only for the app and widget with a stamped build number (User-Agent `RowFrog/<build>` or `RowFrogWidget/<build>`, build above 1) and for the website (Origin or Referer `rowfrog.com` or `www.rowfrog.com`).
 - Not counted, but still served: builds without a stamp (build 1, CI), curl, Python and other scripts, requests without a User-Agent, and any request with the header `X-RowFrog-Test`.
-- Nothing changes in the app or the website.
+- The app in the Simulator (Xcode runs, Mac screenshots) sends `X-RowFrog-Test: 1`, as those builds carry a real build number (`APIClient.get`). Real iPhones and iPads count as before; the website is unchanged.
 
 ## Later (option A)
 
