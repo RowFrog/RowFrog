@@ -1752,15 +1752,16 @@ private struct PageTopEdge: ViewModifier {
     /// Always masked, fully open at the top of the page, so the scroll view keeps its
     /// identity (and its place) when the cards first slide under the clock.
     private func fadeOut(_ content: Content) -> some View {
+        // The page's scroll view starts at the screen's top edge (the club pages
+        // ignore the top safe area), so `gone` is measured from its top already.
+        // No GeometryReader in the mask: with one, the iOS 18 UI tests never saw the
+        // app idle and timed out on a tap (PR #546; the exact cause is unclear).
         content.mask {
-            GeometryReader { proxy in
-                let top = proxy.frame(in: .global).minY
-                VStack(spacing: 0) {
-                    Color.clear.frame(height: scrolled ? max(0, gone - top) : 0)
-                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
-                        .frame(height: scrolled ? Self.fade : 0)
-                    Color.black
-                }
+            VStack(spacing: 0) {
+                Color.clear.frame(height: scrolled ? gone : 0)
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                    .frame(height: scrolled ? Self.fade : 0)
+                Color.black
             }
             .ignoresSafeArea()
         }
