@@ -1171,13 +1171,14 @@ body.has-picture { background: transparent; }
 /* Frosted: the picture shows through the cards, blurred; solid: no picture in the cards. */
 body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 /* A club row keeps its rowing-light tint over the picture, frosted like the tiles (LocationRow with cardBackground). */
-body.has-picture[data-tiles="frosted"] .row.tinted { background: color-mix(in srgb, color-mix(in srgb, var(--tint) 18%, var(--card)) 66%, transparent); }
+/* The light's tint laid over the frosted card, 22 %, as TintedCardBackground (.frosted) in the app. */
+body.has-picture[data-tiles="frosted"] .row.tinted { background: linear-gradient(color-mix(in srgb, var(--tint) 22%, transparent), color-mix(in srgb, var(--tint) 22%, transparent)), color-mix(in srgb, var(--card) 66%, transparent); }
 /* Text that sits on the picture itself gets a thin frost, as the app's labelBackground: the picture blurred
    with only a light wash (veil .25, .2 in dark). Big page titles have none, as iOS's large navigation titles. */
 body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
 body.has-picture main.page > .source, body.has-picture main.page > .credits, body.has-picture main.page > footer.links,
 body.has-picture .page-end > .source, body.has-picture .page-end > .credits, body.has-picture .page-end > footer.links,
-body.has-picture main.page > .list-links, body.has-picture main.page > .add-own, body.has-picture #updated {
+body.has-picture main.page > .list-links, body.has-picture main.page > .add-own {
   width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent);
   -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
 }
