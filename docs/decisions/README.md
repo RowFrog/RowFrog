@@ -66,3 +66,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 47 | 2026-11-17 | [Small lake maps stand on the street map, as the lake view](0047-small-lake-maps-on-the-street-map.md) |
 | 48 | 2026-11-17 | [The Row Frog icon's long-press menu: home base, lake view, rain radar, last opened club](0048-home-screen-quick-actions.md) |
 | 49 | 2026-11-17 | [The tour fits the screen: Next always in sight, side by side when wider than tall](0049-tour-fits-the-screen.md) |
+| 50 | 2026-11-19 | [The club list's cards: tight numbers, the text beside them gets the room](0050-club-list-cards-balance.md) |
