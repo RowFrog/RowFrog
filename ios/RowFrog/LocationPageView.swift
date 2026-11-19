@@ -336,7 +336,10 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            // On iOS 26 that room is an empty safe-area bar, so the soft scroll edge
+            // covers the buttons and the small name too, not only the clock (with a
+            // plain padding the cards stayed sharp under the buttons, PR #546 shots).
+            .modifier(PageTopRoom(height: max(0, pageMargins.top - geometry.safeAreaInsets.top)))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
@@ -1765,5 +1768,24 @@ private struct PageTopEdge: ViewModifier {
             }
             .ignoresSafeArea()
         }
+    }
+}
+
+/// The room above a club page's first card, below the clock (see `PageTopEdge`).
+private struct PageTopRoom: ViewModifier {
+    let height: CGFloat
+
+    func body(content: Content) -> some View {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.safeAreaBar(edge: .top, spacing: 0) {
+                Color.clear.frame(height: height).allowsHitTesting(false).accessibilityHidden(true)
+            }
+        } else {
+            content.safeAreaPadding(.top, height)
+        }
+#else
+        content.safeAreaPadding(.top, height)
+#endif
     }
 }
