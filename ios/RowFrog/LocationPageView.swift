@@ -237,6 +237,13 @@ struct LocationPageView: View {
                         if sticky.dayTops != tops { sticky.dayTops = tops }
                     }
                 }
+                // No bar hides the cards under the clock and the small name: the scroll
+                // view blurs or fades them itself (owner's pick D, 19 Nov 2026).
+                .modifier(PageTopEdge(
+                    active: !PowerState.shared.lowPower,
+                    scrolled: PageScroll.shared.scrolled.contains(club.id),
+                    gone: PageScroll.shared.titleGone.contains(club.id)
+                        ? pageBarBottom : min(pageMargins.top, pageBarBottom)))
                 .overlay(alignment: .top) {
                     // Below the club's name when the top bar shows it.
                     if let forecast {
@@ -1707,5 +1714,55 @@ private struct DaylightText: View {
 
     private var oneRow: Text {
         if let rest { Text("\(line) · \(rest)") } else { line }
+    }
+}
+
+/// The top of a club page, where no bar is drawn (owner's pick D, 19 Nov 2026, with
+/// or without a background picture, like the Claude app and Apple's own apps): on iOS 26 the scroll
+/// view's own soft edge blurs and darkens the cards under the clock and the floating
+/// buttons, only while the page is scrolled. Before iOS 26, or built with an older
+/// Xcode, the cards fade out instead, gone at the line under the buttons (option C).
+private struct PageTopEdge: ViewModifier {
+    /// Not in Low Power Mode, which keeps its plain strip.
+    let active: Bool
+    /// Whether cards are under the clock.
+    let scrolled: Bool
+    /// Where on screen the cards are gone completely (iOS 18): below the clock, or
+    /// below the small name and the top buttons.
+    let gone: CGFloat
+    /// How far the cards take to fade in again below that line.
+    static let fade: CGFloat = 28
+
+    func body(content: Content) -> some View {
+        if !active {
+            content
+        } else {
+#if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                content.scrollEdgeEffectStyle(.soft, for: .top)
+            } else {
+                fadeOut(content)
+            }
+#else
+            fadeOut(content)
+#endif
+        }
+    }
+
+    /// Always masked, fully open at the top of the page, so the scroll view keeps its
+    /// identity (and its place) when the cards first slide under the clock.
+    private func fadeOut(_ content: Content) -> some View {
+        content.mask {
+            GeometryReader { proxy in
+                let top = proxy.frame(in: .global).minY
+                VStack(spacing: 0) {
+                    Color.clear.frame(height: scrolled ? max(0, gone - top) : 0)
+                    LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                        .frame(height: scrolled ? Self.fade : 0)
+                    Color.black
+                }
+            }
+            .ignoresSafeArea()
+        }
     }
 }
