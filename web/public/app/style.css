@@ -3,6 +3,7 @@
    (no web fonts, so no third party sees visitors). */
 :root {
   --bg: #f2f2f7; --card: #ffffff; --tile: #f2f2f7; --text: #000000; --sub: #8a8a8e; --line: #e5e5ea; --fill: #e3e3e8;
+  --seg-track: rgba(118,118,128,.12); --seg-on: #ffffff;
   --accent: #007aff; --blue: #007aff; --teal: #30b0c7; --green: #34c759; --amber: #ff9500; --orange: #ff9500;
   --red: #ff3b30; --yellow: #ffcc00; --purple: #af52de; --grey: #8e8e93; --extreme: #8c004d;
   --kit: #2e80d1; --kit-light: color-mix(in srgb, #2e80d1 45%, var(--card)); --deep-water: #1c4d8c;
@@ -13,12 +14,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
+    --seg-track: rgba(118,118,128,.24); --seg-on: rgba(255,255,255,.2);
     --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
     --purple: #bf5af2; --cloud: #8e8e93; --deep-water: #78a3f0;
   }
 }
 :root[data-theme="dark"] {
   --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
+  --seg-track: rgba(118,118,128,.24); --seg-on: rgba(255,255,255,.2);
   --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
   --purple: #bf5af2; --cloud: #8e8e93; --deep-water: #78a3f0;
 }
@@ -403,10 +406,12 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 .pin { color: #fff; background: var(--accent); border-radius: 50%; display: flex !important; align-items: center; justify-content: center; font-size: 16px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
 
 /* Satellite picture. */
-.segmented { display: flex; background: var(--tile); border-radius: 9px; padding: 2px; margin-bottom: 10px; }
+/* The app's segmented picker: a see-through capsule, the picked part a lighter capsule (in dark mode see-through too,
+   so the card's picture shows), 32 points high, the picked label no bolder (owner's screenshots, 19 Nov 2026). */
+.segmented { display: flex; background: var(--seg-track); border-radius: 999px; padding: 2px; margin-bottom: 10px; }
 /* One line, equal parts, as the app's segmented picker: a label too long for its part ends in "…", never wraps. */
-.segmented button { flex: 1 1 0; min-width: 0; text-align: center; padding: 6px 2px; border-radius: 7px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.segmented button.on { background: var(--card); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.segmented button { flex: 1 1 0; min-width: 0; text-align: center; min-height: 28px; padding: 6px 2px; border-radius: 999px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.segmented button.on { background: var(--seg-on); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .picture { position: relative; margin: 0 auto; border-radius: 8px; overflow: hidden; }
 .picture img { display: block; width: 100%; height: 100%; }
 .picture .overlay { position: absolute; opacity: .9; }
