@@ -2,7 +2,7 @@
 // club page with the choice of picture, the layers drawn over it and their
 // legend, and the picture full screen with zoom and pan.
 
-import { t, num, locale } from "./i18n.js";
+import { t, tk, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl, closeX } from "./shared.js";
@@ -141,7 +141,8 @@ function chips(lake, boat = false) {
  * the day (SatelliteKindPicker.label).
  */
 export function kindLabel(lake, kind, label) {
-  if (lake.kinds.length > 2) return t(label);
+  // "Fast klar" with three pictures: the sky's "Überwiegend klar" does not fit its third (the app's "Mostly clear (picture)").
+  if (lake.kinds.length > 2) return kind === "mostlyClear" ? tk("Mostly clear", "Mostly clear (picture)") : t(label);
   const date = lake.meta[kind]?.date;
   const day = date ? new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)) : "";
   return { latest: t("Latest, %@", day), mostlyClear: t("Mostly clear, %@", day), clearest: t("Clearest, %@", day) }[kind];
