@@ -142,6 +142,11 @@ struct APIClient {
         // The system's own cache stays out: it would hold files up to GitHub's 10 minutes.
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
         if let kept, !kept.etag.isEmpty { request.setValue(kept.etag, forHTTPHeaderField: "If-None-Match") }
+        #if targetEnvironment(simulator)
+        // Simulator runs (Xcode, screenshots) carry a real build number, but are
+        // tests: the usage counter skips them (decision 0051).
+        request.setValue("1", forHTTPHeaderField: "X-RowFrog-Test")
+        #endif
         let data: Data, response: URLResponse
         // The older kept copy, where `keepFor` allows it.
         func fallback() -> T? {
