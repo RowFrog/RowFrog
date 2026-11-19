@@ -591,6 +591,6 @@ function unitRow(condition) {
   if (!kind) return "";
   const options = Object.entries(UNITS[kind].options)
     .map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(t(u.label))}</option>`).join("");
-  return `<label class="detail-unit"><span>${conditionIcon(condition)} ${h(t("Units"))}</span>
-    <span class="pick"><select id="detail-unit" data-unit="${kind}" aria-label="${h(t("Units"))}">${options}</select>${icon("chevrons-up-down")}</span></label>`;
+  return `<label class="detail-unit"><span>${conditionIcon(condition)} ${h(t("Unit"))}</span>
+    <span class="pick"><select id="detail-unit" data-unit="${kind}" aria-label="${h(t("Unit"))}">${options}</select>${icon("chevrons-up-down")}</span></label>`;
 }
