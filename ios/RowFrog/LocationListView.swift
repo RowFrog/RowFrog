@@ -325,6 +325,7 @@ private struct LocationSummaryRow: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
                                 .lineLimit(2)
+                                .labelStyle(ListLineLabelStyle())
                                 .accessibilityLabel(kit.explanation)
                         }
                     }
@@ -336,6 +337,7 @@ private struct LocationSummaryRow: View {
                             .font(.caption.weight(info ? .regular : .semibold))
                             .foregroundStyle(info ? Color.secondary : warning.severity == "minor" ? Color.orange : warning.color)
                             .lineLimit(1)
+                            .labelStyle(ListLineLabelStyle())
                     }
                     if let forecast, let sun = forecast.sunState(at: .now) {
                         Group {
@@ -414,6 +416,23 @@ struct ListMetrics: View {
         }
         .font(.caption)
         .lineLimit(1)
+        .labelStyle(ListLineLabelStyle())
+    }
+}
+
+/// A list card's symbol and text: the symbol in a 20 pt column, 8 pt before the text, as
+/// the website's rows. The system label's wider gap left the numbers so wide that the vest
+/// and warning lines beside them were cut ("Weste tragen · n…", "DWD-War…"; owner's iPad
+/// screenshots and pick, 19 Nov 2026). Both grow with the text size.
+struct ListLineLabelStyle: LabelStyle {
+    @ScaledMetric(relativeTo: .caption) private var iconWidth: CGFloat = 20
+    @ScaledMetric(relativeTo: .caption) private var spacing: CGFloat = 8
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: spacing) {
+            configuration.icon.frame(width: iconWidth)
+            configuration.title
+        }
     }
 }
 
