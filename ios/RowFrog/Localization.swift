@@ -487,6 +487,7 @@ enum German {
         "Language": "Sprache",
         "Device language": "Sprache des Geräts",
         "Units": "Einheiten",
+        "Unit": "Einheit",
         "Air and water temperature": "Luft- und Wassertemperatur",
         "Visibility and distances": "Sicht und Entfernungen",
         "Cloud cover stays in percent.": "Die Bewölkung bleibt in Prozent.",

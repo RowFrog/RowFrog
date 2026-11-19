@@ -2169,12 +2169,12 @@ private struct DetailUnitRow: View {
         @Bindable var settings = settings
         switch condition {
         case .temperature, .feelsLike, .waterTemperature:
-            UnitRow(condition: condition, title: tr("Units"), selection: $settings.temperatureUnit)
-        case .wind: UnitRow(condition: condition, title: tr("Units"), selection: $settings.windUnit)
-        case .waves: UnitRow(condition: condition, title: tr("Units"), selection: $settings.waveUnit)
-        case .precipitation: UnitRow(condition: condition, title: tr("Units"), selection: $settings.rainUnit)
-        case .visibility: UnitRow(condition: condition, title: tr("Units"), selection: $settings.distanceUnit)
-        case .pressure: UnitRow(condition: condition, title: tr("Units"), selection: $settings.pressureUnit)
+            UnitRow(condition: condition, title: tr("Unit"), selection: $settings.temperatureUnit)
+        case .wind: UnitRow(condition: condition, title: tr("Unit"), selection: $settings.windUnit)
+        case .waves: UnitRow(condition: condition, title: tr("Unit"), selection: $settings.waveUnit)
+        case .precipitation: UnitRow(condition: condition, title: tr("Unit"), selection: $settings.rainUnit)
+        case .visibility: UnitRow(condition: condition, title: tr("Unit"), selection: $settings.distanceUnit)
+        case .pressure: UnitRow(condition: condition, title: tr("Unit"), selection: $settings.pressureUnit)
         default: EmptyView()
         }
     }
