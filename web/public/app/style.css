@@ -479,7 +479,8 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 /* A desktop browser has no clock or home bar to keep readable, so it draws no blur strips. Phones and
    tablets (a touch screen, or the page added to the home screen) keep the app's thin blur behind the clock
    once the page scrolls under it (TopEdgeFade), over the page's own column only. At the bottom only the
-   floating buttons sit over the cards, with no blur behind them (app #227). */
+   floating buttons sit over the cards, with no blur behind them (app #227). Club pages draw the soft edge below
+   instead (decision 0054). */
 :root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; --area-left: 0px; --area-width: 100%; --column-pad-left: 0px; --column-pad-right: 0px; }
 @media (display-mode: standalone), (pointer: coarse) {
   body::before { content: ""; position: fixed; left: var(--area-left); width: var(--area-width); z-index: 9; pointer-events: none;
@@ -527,6 +528,36 @@ body.wide-bar .top-title::before, body.wide-bar .top-title > .top-name { opacity
 body.wide-bar.title-gone .top-title::before, body.wide-bar.title-gone .top-title > .top-name { opacity: 1; }
 body.wide-bar .top-title .head-side { visibility: visible; }
 body.wide-bar .top-title .head-side > * { pointer-events: auto; }
+/* Club pages (decision 0054, app #546, owner's pick D): no bar behind the clock, the buttons and the small name.
+   While the page is scrolled the cards blur away under them, more the higher they are, and fade into the page's
+   colour (or the colour at the picture's top), as iOS 26's soft scroll edge in Mail and the app. It covers the
+   area beside the list, never the list, and reaches 10 px below the line of buttons. Stacked layers, each blurred
+   more and masked to a shorter band, make the blur grow towards the top; the parent itself has no opacity, filter or
+   mask, so every layer still sees the cards behind it (any of those would make it a backdrop root). On the Home
+   Screen the clock sits on a solid strip in the same colour (theme-color, paintClockStrip in backgrounds.js), so
+   the edge starts at full strength and runs on from it without a step. */
+body.edge-page::before { display: none; }
+.top-title.edge::before { display: none; }
+/* The small name in its own glass capsule (InlineClubTitle); the buttons keep their places. */
+.top-pill { min-width: 0; height: 44px; padding: 0 16px; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; }
+.soft-edge { position: fixed; top: 0; left: var(--area-left); width: var(--area-width); z-index: 9; pointer-events: none;
+  height: calc(var(--safe-top) + 44px + 10px); --edge-tint: var(--bg); --edge-top: 80%; }
+body.wide-bar .soft-edge { height: calc(var(--head-mid, 22px) + 22px + 10px); }
+@media (display-mode: standalone) { .soft-edge { --edge-top: 100%; } }
+body.has-picture .soft-edge { --edge-tint: var(--picture-top, color-mix(in srgb, var(--bg) 66%, transparent)); }
+.soft-edge > i { position: absolute; inset: 0; opacity: 0; transition: opacity .2s ease-in-out;
+  backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+  -webkit-mask-image: linear-gradient(#000 var(--full), transparent var(--clear)); mask-image: linear-gradient(#000 var(--full), transparent var(--clear)); }
+.soft-edge > i:nth-child(1) { --blur: 1px; --full: 55%; --clear: 100%; }
+.soft-edge > i:nth-child(2) { --blur: 3px; --full: 35%; --clear: 80%; }
+.soft-edge > i:nth-child(3) { --blur: 6px; --full: 20%; --clear: 62%; }
+.soft-edge > i:nth-child(4) { --blur: 12px; --full: 5%; --clear: 45%; }
+.soft-edge > b { position: absolute; inset: 0; opacity: 0; transition: opacity .2s ease-in-out;
+  background: linear-gradient(color-mix(in srgb, var(--edge-tint) var(--edge-top), transparent), color-mix(in srgb, var(--edge-tint) 45%, transparent) 40%, transparent); }
+body.scrolled .soft-edge > * { opacity: 1; }
+/* Without backdrop-filter, or with reduced transparency: no blur, the page's colour alone fades the cards out. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .soft-edge > i { display: none; } .soft-edge > b { background: linear-gradient(var(--edge-tint), var(--edge-tint) 55%, transparent); } }
+@media (prefers-reduced-transparency: reduce) { .soft-edge > i { display: none; } .soft-edge > b { background: linear-gradient(var(--edge-tint), var(--edge-tint) 55%, transparent); } }
 /* The big name below the line of buttons uses the column's full width (PageTopButtons: no side room). */
 body.wide-bar .title-row .head-side { display: none; }
 body.wide-bar.title-gone .hhead { top: calc(var(--head-mid, 22px) + 22px + var(--hcap, 0px)); }
