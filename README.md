@@ -498,6 +498,9 @@ field at the bottom.
   bar), and the club's small name sits in its own glass capsule
   (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
+  The website has no top bar either (a blur over the page column while it
+  scrolls, the name in a glass capsule), and as a Home Screen web app its
+  status bar takes the colour of the page or picture.
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
   the weather maps open with ("Maps start": Close, Normal or Wide) and the
