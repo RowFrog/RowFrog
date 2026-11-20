@@ -234,6 +234,9 @@ button.wide { margin-top: 0; }
 .tile-body small { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Only the rain line may take a second line, and only when it doesn't fit on one:
    with 12-hour times "Rain from 12:40 AM" lost its "AM" (owner's pick A, 11 Nov 2026). */
+/* The Sunset tile's minutes left in the last hour, in the light's colour (owner's pick E, 20 Nov 2026). */
+.tile-body small.cause-amber { color: var(--amber); }
+.tile-body small.cause-red { color: var(--red); }
 .tile-body small.may-wrap { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .graphic { flex: none; height: 44px; display: flex; align-items: center; }
 .scale { position: relative; display: block; width: 46px; height: 8px; border-radius: 4px; background: var(--bar); }

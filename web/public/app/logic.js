@@ -64,6 +64,36 @@ export function currentHour(hours, now = new Date()) {
 }
 
 /**
+ * The order reasons are listed in within one colour, the more dangerous first; red always before
+ * amber (owner, 20 Nov 2026). Daylight last: it only says when to be back. Unknown names sit just
+ * before daylight; "nearby_water" ranks as its topic. The backend (score.py REASON_ORDER) and the app
+ * (ReasonOrder.swift) use the same list; testdata/reasons.json "order" holds it for the tests.
+ */
+export const REASON_ORDER = [
+  "lake_warning", "lake_strong_wind", "thunderstorm", "hail", "ice",
+  "freezing_water", "cold_water", "single_cold", "cool_water",
+  "fog", "gusts", "wind", "waves",
+  "shipping_stopped", "high_water", "current",
+  "weather_warning", "heavy_rain", "lake_drained", "lake_lowered",
+  "daylight", "twilight", "sunset_soon",
+];
+
+/** A reason's place within its colour; smaller comes first. */
+export function reasonRank(reason) {
+  const name = reason.condition === "nearby_water" ? reason.topic ?? "" : reason.condition;
+  const i = REASON_ORDER.indexOf(name);
+  return i >= 0 ? i : REASON_ORDER.indexOf("daylight") - 0.5;
+}
+
+/** Red first, then amber; within one colour by REASON_ORDER; equal ones keep their order (a new array). */
+export function orderReasons(reasons) {
+  return reasons
+    .map((r, i) => [r, i])
+    .sort(([a, i], [b, j]) => (RANK[b.light] ?? 0) - (RANK[a.light] ?? 0) || reasonRank(a) - reasonRank(b) || i - j)
+    .map(([r]) => r);
+}
+
+/**
  * The forecast hour as it stands at `now` (Forecast.current(at:)). The hour's daylight light is
  * the strictest of its minutes, so it is replaced by the light of this minute (daylightAt):
  * green, amber in the last hour before sunset ("sunset_soon"), red ("daylight") with the sun down.
@@ -75,10 +105,10 @@ export function nowHour(forecast, now = new Date()) {
   if (!first || !days.length || !(first.reasons ?? []).some((r) => DAYLIGHT_REASONS.includes(r.condition))) return first;
   const reasons = first.reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition));
   const now_ = daylightAt(now.getTime(), days);
-  if (now_ === "red") reasons.unshift({ condition: "daylight", light: "red" });
-  if (now_ === "amber") reasons.unshift({ condition: "sunset_soon", light: "amber" });
+  if (now_ === "red") reasons.push({ condition: "daylight", light: "red" });
+  if (now_ === "amber") reasons.push({ condition: "sunset_soon", light: "amber" });
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
-  return { ...first, reasons, light, sunUp: now_ !== "red" };
+  return { ...first, reasons: orderReasons(reasons), light, sunUp: now_ !== "red" };
 }
 
 // ---- Daylight to the minute (DaylightRule.swift, owner's pick D, 6 Nov 2026) ----------
@@ -750,7 +780,7 @@ export function applyLimitsToHour(hour, chosen, waterC, currentMs = null) {
   // The water within 1 km counts where it is worse than the launch point, with this boat's limits (app #395).
   const near = nearbyReason(hour.nearby, limits);
   if (near && RANK[near.light] > RANK[reasons.reduce((w, r) => worse(w, r.light), "green")]) reasons.unshift(near);
-  reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
+  reasons.splice(0, reasons.length, ...orderReasons(reasons));
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
   return { ...hour, reasons, light, notes: notes.length ? notes : undefined };
 }

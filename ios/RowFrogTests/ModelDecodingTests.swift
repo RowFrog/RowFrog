@@ -56,7 +56,7 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }
 
-    /// The warning line ("Sunset at 16:36: 6 min of daylight left") rounded up and the sun
+    /// The old warning line ("Sunset at 16:36: 6 min of daylight left") rounded up and the sun
     /// line ("Rowing until 16:36 · 5 min left") down, on a sunset with seconds. Both now
     /// count clock minutes (owner, 17 Nov 2026); the website's twin is sunsetminutes.test.mjs.
     func testMinutesLeftCountsClockMinutes() throws {
@@ -76,11 +76,10 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(Format.minutesLeft(from: sunset.addingTimeInterval(1), to: sunset), 0)
         XCTAssertEqual(Format.timeLeft(from: at("14:32:10"), to: sunset), "1 h 4 min")
         let hour = try XCTUnwrap(forecast.hours.first)
-        for time in ["15:31:00", "15:31:59", "14:55:30", "15:00:01", "15:36:10"] {
-            let now = at(time)
-            let warning = forecast.explanation(Reason(condition: "sunset_soon", light: .amber), in: hour, now: now)
-            let number = try XCTUnwrap(warning.firstMatch(of: /(\d+) min/)?.1, warning)
-            XCTAssertEqual("\(number) min", Format.timeLeft(from: now, to: sunset), "at \(time): \(warning)")
+        // The reason line no longer counts: the count is at the sun only (owner's pick E, 20 Nov 2026).
+        for time in ["15:31:00", "15:36:10"] {
+            let warning = forecast.explanation(Reason(condition: "sunset_soon", light: .amber), in: hour, now: at(time))
+            XCTAssertEqual(warning, "Be back ashore by sunset.")
         }
     }
 

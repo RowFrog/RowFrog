@@ -9,6 +9,9 @@ struct WindView: View {
     var size: CGFloat
     /// The worst wind within 1 km sets the light, so it shows instead of the launch point's.
     var nearby = false
+    /// The light's colour while the wind sets it: the number and its unit "m/s" take it (owner,
+    /// 20 Nov 2026: a unit takes its value's colour), the direction stays grey.
+    @Environment(\.causeTint) private var tint
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -32,7 +35,7 @@ struct WindView: View {
                 ForEach(0..<8, id: \.self) { step in
                     Text(unitLine(from: Double(step) * 45)).hidden()
                 }
-                Text(unitLine(from: hour.windFromDeg))
+                unitText(from: hour.windFromDeg)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
@@ -41,8 +44,18 @@ struct WindView: View {
     }
 
     private func unitLine(from degrees: Double?) -> String {
-        if nearby { return AppSettings.shared.windUnit.symbol + " · " + tr("Nearby") }
-        return AppSettings.shared.windUnit.symbol + (degrees.map { " · " + tr("from %@", Format.compass($0)) } ?? "")
+        AppSettings.shared.windUnit.symbol + rest(from: degrees)
+    }
+
+    /// The unit line as shown: the unit in the light's colour while the wind sets it.
+    private func unitText(from degrees: Double?) -> Text {
+        let unit = Text(AppSettings.shared.windUnit.symbol)
+        return Text("\(tint.map { unit.foregroundStyle($0) } ?? unit)\(rest(from: degrees))")
+    }
+
+    private func rest(from degrees: Double?) -> String {
+        if nearby { return " · " + tr("Nearby") }
+        return degrees.map { " · " + tr("from %@", Format.compass($0)) } ?? ""
     }
 }
 

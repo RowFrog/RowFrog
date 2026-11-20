@@ -33,8 +33,9 @@ test("an own place's hours get the backend's rowing light", () => {
   const f = ownForecast(club, { hourly }, new Date("2026-10-26T09:30:00Z"));
   assert.equal(f.lakeId, null);
   assert.deepEqual(f.hours.map((x) => x.light), ["green", "amber", "red"]);
-  assert.deepEqual(f.hours[1].reasons.map((r) => r.condition), ["wind", "gusts", "fog"]);
-  assert.deepEqual(f.hours[2].reasons.map((r) => r.condition), ["wind", "gusts", "thunderstorm"]);
+  // In the owner's order (20 Nov 2026): within one colour the more dangerous first.
+  assert.deepEqual(f.hours[1].reasons.map((r) => r.condition), ["fog", "gusts", "wind"]);
+  assert.deepEqual(f.hours[2].reasons.map((r) => r.condition), ["gusts", "wind", "thunderstorm"]);
   assert.ok(isOwn(club.id) && !isOwn("mrc-1880"));
   // Each hour's rain is the next row's, as the backend does it (decision 0043).
   assert.deepEqual(f.hours.map((x) => x.precipitationMm), [0, 2, null]);
