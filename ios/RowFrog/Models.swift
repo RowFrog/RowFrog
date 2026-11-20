@@ -614,6 +614,8 @@ struct Warnings: Codable, Hashable {
     /// Whether the DWD lake area has storm lights on the shore (not every one
     /// has, e.g. the Alster); missing from older backends, which assumed so.
     var shoreLights: Bool? = nil
+    /// When those lights run: "apr-oct" or "all-year"; nil where unknown (and from older backends).
+    var shoreLightsSeason: String? = nil
     /// When the warnings were checked; earlier than the forecast when the last
     /// check failed and the one before stands in (up to 3 h). Missing from older backends.
     var checkedAt: Date? = nil

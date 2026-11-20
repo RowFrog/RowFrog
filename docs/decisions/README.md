@@ -68,3 +68,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 49 | 2026-11-17 | [The tour fits the screen: Next always in sight, side by side when wider than tall](0049-tour-fits-the-screen.md) |
 | 50 | 2026-11-19 | [The club list's cards: tight numbers, the text beside them gets the room](0050-club-list-cards-balance.md) |
 | 51 | 2026-11-19 | [Only the real app and the website count as use](0051-only-real-use-counts.md) |
+| 52 | 2026-11-20 | [Out of season the warnings card says the storm lights are off, in one fixed order](0052-storm-lights-off-season.md) |

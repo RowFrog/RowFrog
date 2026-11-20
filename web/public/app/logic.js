@@ -839,3 +839,18 @@ export function steadierBoat(hour, waterC, boats, chosenId, limitsOf) {
   }
   return best;
 }
+
+/**
+ * What the warnings card says about a lake's storm lights on a date (ShoreLightsSeason in the
+ * app, decision 0052): "off" from 1 November to 14 March and "soon" from 15 to 31 March where
+ * they run 1 April to 31 October (season "apr-oct"), otherwise "on". German time counts. The rule
+ * is testdata/states/shore-lights-season.json, which the app's tests read too.
+ */
+export function shoreLightsState(season, now = new Date()) {
+  if (season !== "apr-oct") return "on";
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: ZONE, month: "numeric", day: "numeric" })
+    .formatToParts(now).map((p) => [p.type, Number(p.value)]));
+  if (parts.month >= 4 && parts.month <= 10) return "on";
+  if (parts.month === 3 && parts.day >= 15) return "soon";
+  return "off";
+}
