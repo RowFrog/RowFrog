@@ -1730,8 +1730,8 @@ private struct DaylightText: View {
 private struct PageTopEdge: ViewModifier {
     /// Not in Low Power Mode, which keeps its plain strip.
     let active: Bool
-    /// The page's buttons and small name are toolbar items: the system's own edge
-    /// (iOS 26 soft blur, iOS 18 frosted bar) covers them, so no fade mask.
+    /// The page sits in its own navigation stack: the bar's edge (iOS 26 soft blur,
+    /// iOS 18 frosted bar) reaches under the top buttons, so no fade mask.
     var toolbar = false
     /// Whether cards are under the clock.
     let scrolled: Bool

@@ -324,8 +324,8 @@ extension EnvironmentValues {
         set { self[PageBarBottomKey.self] = newValue }
     }
 
-    /// Whether the club page sits in its own navigation stack, with its top buttons
-    /// and small name in the toolbar (no overlays, no fade mask).
+    /// Whether the club page sits in its own navigation stack, whose bar gives it the
+    /// system's top edge (iOS 26 soft blur, iOS 18 frosted bar) instead of the fade mask.
     var pageInToolbar: Bool {
         get { self[PageInToolbarKey.self] }
         set { self[PageInToolbarKey.self] = newValue }
