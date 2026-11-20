@@ -7,6 +7,7 @@ import XCTest
 final class ReasonNamesTests: XCTestCase {
     private struct List: Decodable {
         let reasons: [String]
+        let order: [String]
         let topics: [String: [String]]
     }
 
@@ -35,6 +36,23 @@ final class ReasonNamesTests: XCTestCase {
             XCTAssertNotEqual(reason.explanation, reason.condition, what)
             XCTAssertNotEqual(reason.explanation, unknown.explanation, what)
         }
+    }
+
+    /// One order for the server, the app and the website (owner, 20 Nov 2026).
+    func testTheOrderIsTheListedOne() {
+        XCTAssertEqual(Reason.order, Self.list.order)
+        XCTAssertTrue(Set(Self.list.reasons).subtracting(["nearby_water"]).isSubset(of: Set(Reason.order)))
+    }
+
+    /// The owner's screenshot of 20 Nov 2026 listed the amber sunset above the red wind.
+    func testRedComesFirstThenTheMoreDangerousAndDaylightLast() {
+        let reasons = [
+            Reason(condition: "sunset_soon", light: .amber), Reason(condition: "wind", light: .red),
+            Reason(condition: "weather_warning", light: .amber, topic: "wind"), Reason(condition: "gusts", light: .red),
+            Reason(condition: "brand_new_reason", light: .amber), Reason(condition: "nearby_water", light: .red, topic: "fog"),
+        ]
+        XCTAssertEqual(reasons.ordered().map(\.condition),
+                       ["nearby_water", "gusts", "wind", "weather_warning", "brand_new_reason", "sunset_soon"])
     }
 
     func testAReasonNewerThanTheBuildNeverShowsItsRawName() {

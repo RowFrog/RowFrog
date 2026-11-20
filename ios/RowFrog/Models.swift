@@ -851,11 +851,11 @@ struct ClubForecast: Codable, Hashable {
         var reasons = first.reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }
         let light = DaylightRule.light(at: date, days: days)
         switch light {
-        case .red: reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
-        case .amber: reasons.insert(Reason(condition: "sunset_soon", light: .amber), at: 0)
+        case .red: reasons.append(Reason(condition: "daylight", light: .red))
+        case .amber: reasons.append(Reason(condition: "sunset_soon", light: .amber))
         case .green: break
         }
-        return first.with(reasons: reasons, sunUp: light != .red)
+        return first.with(reasons: reasons.ordered(), sunUp: light != .red)
     }
 
     /// A reason's sentence for `hour`. The daylight's say when inside the hour the light

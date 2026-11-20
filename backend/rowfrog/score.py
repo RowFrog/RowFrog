@@ -109,6 +109,32 @@ def _rising(value: float, amber: float, red: float) -> Light:
     return Light.GREEN
 
 
+# The order reasons are listed in within one colour, the more dangerous first; red always
+# before amber (owner, 20 Nov 2026). Daylight last: it only says when to be back. Unknown
+# names sit just before daylight. The app (ReasonOrder.swift) and the website (logic.js
+# REASON_ORDER) use the same list; testdata/reasons.json "order" holds it for the tests.
+REASON_ORDER = (
+    "lake_warning", "lake_strong_wind", "thunderstorm", "hail", "ice",
+    "freezing_water", "cold_water", "single_cold", "cool_water",
+    "fog", "gusts", "wind", "waves",
+    "shipping_stopped", "high_water", "current",
+    "weather_warning", "heavy_rain", "lake_drained", "lake_lowered",
+    "daylight", "twilight", "sunset_soon",
+)
+
+
+def reason_rank(name: str) -> float:
+    """A reason's place within its colour; smaller comes first."""
+    if name in REASON_ORDER:
+        return float(REASON_ORDER.index(name))
+    return REASON_ORDER.index("daylight") - 0.5
+
+
+def ordered(reasons: list[tuple[str, Light]]) -> list[tuple[str, Light]]:
+    """Red first, then amber; within one colour by REASON_ORDER (stable)."""
+    return sorted(reasons, key=lambda r: (-r[1], reason_rank(r[0])))
+
+
 def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
     t = t.for_water(c.water_temp_c)
     lake = {
@@ -146,4 +172,4 @@ def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
 
     reasons = [(name, light) for name, light in checks if light > Light.GREEN]
     worst = max((light for _, light in reasons), default=Light.GREEN)
-    return Assessment(light=worst, reasons=sorted(reasons, key=lambda r: -r[1]))
+    return Assessment(light=worst, reasons=ordered(reasons))

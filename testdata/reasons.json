@@ -9,6 +9,15 @@
     "lake_lowered", "lake_drained",
     "nearby_water"
   ],
+  "order_about": "The order reasons are listed in within one colour, the more dangerous first (owner, 20 Nov 2026); red always before amber. Daylight last; unknown names just before daylight; nearby_water ranks as its topic. score.py REASON_ORDER, ReasonOrder.swift Reason.order and logic.js REASON_ORDER must equal this list. cold_water, single_cold, cool_water and sunset_soon come from the app and the website, not the backend.",
+  "order": [
+    "lake_warning", "lake_strong_wind", "thunderstorm", "hail", "ice",
+    "freezing_water", "cold_water", "single_cold", "cool_water",
+    "fog", "gusts", "wind", "waves",
+    "shipping_stopped", "high_water", "current",
+    "weather_warning", "heavy_rain", "lake_drained", "lake_lowered",
+    "daylight", "twilight", "sunset_soon"
+  ],
   "topics": {
     "weather_warning": ["wind", "thunderstorm", "rain", "snow", "fog", "other"],
     "nearby_water": ["wind", "gusts", "waves", "fog", "heavy_rain", "hail", "thunderstorm"]

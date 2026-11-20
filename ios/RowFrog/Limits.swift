@@ -386,7 +386,7 @@ extension ForecastHour {
         }
         var hour = self
         hour.notes = notes.isEmpty ? nil : notes
-        return hour.with(reasons: reasons.sorted { $0.light > $1.light }, sunUp: sunUp)
+        return hour.with(reasons: reasons.ordered(), sunUp: sunUp)
     }
 }
 

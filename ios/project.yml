@@ -144,6 +144,7 @@ targets:
       # The app's models, settings and formatting, and the widget's views, which
       # the app also uses for its widget preview page.
       - path: RowFrog/Models.swift
+      - path: RowFrog/ReasonOrder.swift
       - path: RowFrog/DefaultsKey.swift
       - path: RowFrog/APIClient.swift
       - path: RowFrog/Localization.swift
