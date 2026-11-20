@@ -300,6 +300,10 @@ private struct PageBarBottomKey: EnvironmentKey {
     static let defaultValue: CGFloat = 0
 }
 
+private struct PageInToolbarKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
 private struct CurrentPageKey: EnvironmentKey {
     static let defaultValue = true
 }
@@ -318,6 +322,13 @@ extension EnvironmentValues {
     var pageBarBottom: CGFloat {
         get { self[PageBarBottomKey.self] }
         set { self[PageBarBottomKey.self] = newValue }
+    }
+
+    /// Whether the club page sits in its own navigation stack, whose bar gives it the
+    /// system's top edge (iOS 26 soft blur, iOS 18 frosted bar) instead of the fade mask.
+    var pageInToolbar: Bool {
+        get { self[PageInToolbarKey.self] }
+        set { self[PageInToolbarKey.self] = newValue }
     }
 
     /// Whether this club page is the one in front. Pages beside it stay alive

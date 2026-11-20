@@ -324,14 +324,33 @@ struct RootView: View {
         let margins = EdgeInsets(top: top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
         return TabView(selection: $selection) {
             ForEach(saved) { club in
-                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
-                                 savedIDs: saved.map(\.id))
-                    .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
-                    .environment(\.isCurrentPage, club.id == selection)
-                    .environment(\.openBoatSettings, openBoatSettings)
-                    .environment(\.pageMargins, margins)
-                    .environment(\.pageBarBottom, barBottom)
-                    .tag(club.id)
+                // Each page in its own navigation stack with an empty bar: only so that iOS 26
+                // draws its soft scroll edge as deep as a bar (under the top buttons, as in
+                // Mail), and iOS 18 its frosted bar once the page is scrolled. The buttons and
+                // the small name stay the overlays below, so they keep still while the pages
+                // swipe. One stack around the whole TabView gave no soft edge at all (iOS 27).
+                NavigationStack {
+                    LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
+                                     savedIDs: saved.map(\.id))
+                        .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
+                        .environment(\.isCurrentPage, club.id == selection)
+                        .environment(\.openBoatSettings, openBoatSettings)
+                        .environment(\.pageMargins, margins)
+                        .environment(\.pageBarBottom, barBottom)
+                        .environment(\.pageInToolbar, true)
+                        .navigationBarTitleDisplayMode(.inline)
+                        // An empty bar gets no depth on iOS 27 (the soft edge covered only the
+                        // clock): an invisible item the size of a top button gives it a bar's.
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
+                            }
+                            .ownGlass()
+                        }
+                        // The club's picture lies behind the whole TabView.
+                        .containerBackground(.clear, for: .navigation)
+                }
+                .tag(club.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -343,8 +362,7 @@ struct RootView: View {
             TopEdgeFade(statusBar: insets.top, scrolled: scroll.scrolled.contains(selection),
                         title: scroll.titleGone.contains(selection) ? club : nil,
                         light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
-                        sideRoom: PageTopButtons.sideRoom(chrome),
-                        picture: BackgroundPictures.shared.image(for: AppSettings.shared.background(for: .clubPages, clubID: selection), clubID: selection) != nil)
+                        sideRoom: PageTopButtons.sideRoom(chrome))
                 .frame(maxHeight: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
         }
@@ -450,10 +468,12 @@ struct RootView: View {
     }
 }
 
-/// Behind the clock and the signal icons: the cards blur and fade out as they
-/// scroll under, as Apple's guide asks for the status bar; a plain strip in
-/// Low Power Mode, which draws nothing live. At the bottom only the floating
-/// buttons sit over the cards, with no blur behind them (owner, 30 Oct 2026).
+/// Behind the clock and the signal icons, and the small club name once the big one
+/// has scrolled away. No bar is drawn (owner's pick D, 19 Nov 2026, with or without a
+/// background picture): the page's scroll view blurs the cards itself (PageTopEdge),
+/// and the name sits in a glass capsule, as in Apple's own apps. Low Power Mode, which
+/// draws nothing live, keeps a plain strip. At the bottom only the floating buttons sit
+/// over the cards (owner, 30 Oct 2026).
 private struct TopEdgeFade: View {
     let statusBar: CGFloat
     /// Whether cards are under the clock; at the top of a page nothing is drawn.
@@ -464,45 +484,20 @@ private struct TopEdgeFade: View {
     let stale: Bool
     /// Kept free on each side of the small title for the buttons beside it.
     let sideRoom: CGFloat
-    /// Over a background picture the bar is thick glass rather than the page grey, so no
-    /// grey band sits on the picture (owner's iPhone shots, 12 Nov 2026).
-    var picture = false
-    /// How far the fade reaches below the bar: 8 pt on the plain page (owner's pick A, 14 Nov 2026);
-    /// over a picture a longer, softer fade, so no slab lies across it (owner's iPad shot, 15 Nov 2026).
-    static let tail: CGFloat = 8
-    static let pictureTail: CGFloat = 28
-    private var tail: CGFloat { picture ? Self.pictureTail : Self.tail }
 
     var body: some View {
         let bar = statusBar + (title == nil ? 0 : InlineClubTitle.barHeight(statusBar: statusBar))
+        let lowPower = PowerState.shared.lowPower
         ZStack(alignment: .bottom) {
-            if PowerState.shared.lowPower {
+            if lowPower {
                 Rectangle().fill(Color(.systemGroupedBackground))
                     .frame(height: bar)
                     .accessibilityHidden(true)
             } else {
-                let height = bar + tail
-                // Plain page: solid down to just below the name, then a short fade (owner's pick A,
-                // 14 Nov 2026), so headings scrolled under the name no longer show through it.
-                // Over a picture: frosted glass that blurs what scrolls under the name and fades out
-                // over 28 pt, so the picture runs on under the bar as beside it in the list (15 Nov 2026).
-                Rectangle().fill(picture ? AnyShapeStyle(Material.regularMaterial) : AnyShapeStyle(Color(.systemGroupedBackground)))
-                    .mask {
-                        LinearGradient(stops: picture
-                                       ? [.init(color: .black, location: 0),
-                                          .init(color: .black.opacity(0.9), location: bar / max(height, 1)),
-                                          .init(color: .clear, location: 1)]
-                                       : [.init(color: .black, location: 0),
-                                          .init(color: .black, location: bar / max(height, 1)),
-                                          .init(color: .clear, location: 1)],
-                                       startPoint: .top, endPoint: .bottom)
-                    }
-                    .frame(height: height)
-                    .accessibilityHidden(true)
+                Color.clear.frame(height: bar)
             }
             if let title {
-                InlineClubTitle(club: title, light: light, stale: stale, sideRoom: sideRoom)
-                    .padding(.bottom, PowerState.shared.lowPower ? 0 : tail)
+                InlineClubTitle(club: title, light: light, stale: stale, sideRoom: sideRoom, capsule: !lowPower)
                     .transition(.opacity)
             }
         }
@@ -522,6 +517,9 @@ struct InlineClubTitle: View {
     let light: Light?
     let stale: Bool
     var sideRoom: CGFloat = 60
+    /// The name in its own glass capsule, with no bar behind it (owner's pick D,
+    /// 19 Nov 2026, as in Apple's own apps); not in Low Power Mode.
+    var capsule = false
     static let height: CGFloat = 44
 
     /// How far the top bar with the small name reaches below the clock. On an iPad the
@@ -538,9 +536,21 @@ struct InlineClubTitle: View {
             if let light { TrafficLightDot(light: light, size: 12, stale: stale) }
             Text(club.displayName).font(.headline).lineLimit(1)
         }
+        .padding(.horizontal, capsule ? 16 : 0)
+        .frame(minHeight: capsule ? 36 : nil)
+        .modifier(CapsuleGlass(on: capsule))
         .padding(.horizontal, sideRoom + 16)
         .frame(height: Self.height)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+}
+
+/// The small club name's glass capsule over a background picture (InlineClubTitle).
+private struct CapsuleGlass: ViewModifier {
+    let on: Bool
+
+    func body(content: Content) -> some View {
+        if on { content.glass(in: Capsule()) } else { content }
     }
 }
 
@@ -825,5 +835,21 @@ enum PageJump {
             instant.disablesAnimations = true
             withTransaction(instant) { set(id) }
         }
+    }
+}
+
+extension ToolbarContent {
+    /// No shared iOS 26 glass behind the item.
+    @ToolbarContentBuilder
+    func ownGlass() -> some ToolbarContent {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            sharedBackgroundVisibility(.hidden)
+        } else {
+            self
+        }
+#else
+        self
+#endif
     }
 }

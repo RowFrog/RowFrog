@@ -105,6 +105,7 @@ struct LocationPageView: View {
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
     @Environment(\.pageBarBottom) private var pageBarBottom
+    @Environment(\.pageInToolbar) private var inToolbar
 
     /// Whether this tip shows now: one tip on the page at a time (ClubPageTip).
     private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
@@ -237,6 +238,14 @@ struct LocationPageView: View {
                         if sticky.dayTops != tops { sticky.dayTops = tops }
                     }
                 }
+                // No bar hides the cards under the clock and the small name: the scroll
+                // view blurs or fades them itself (owner's pick D, 19 Nov 2026).
+                .modifier(PageTopEdge(
+                    active: !PowerState.shared.lowPower,
+                    toolbar: inToolbar,
+                    scrolled: PageScroll.shared.scrolled.contains(club.id),
+                    gone: PageScroll.shared.titleGone.contains(club.id)
+                        ? pageBarBottom : min(pageMargins.top, pageBarBottom)))
                 .overlay(alignment: .top) {
                     // Below the club's name when the top bar shows it.
                     if let forecast {
@@ -329,8 +338,11 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            // In its navigation stack the page keeps its own top margin, measured from the
+            // screen's top, rather than the bar's, so the phone's page starts where it did.
+            .safeAreaPadding(.top, inToolbar ? pageMargins.top : max(0, pageMargins.top - geometry.safeAreaInsets.top))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
+            .ignoresSafeArea(.container, edges: inToolbar ? .top : [])
         }
     }
 
@@ -1711,5 +1723,72 @@ private struct DaylightText: View {
 
     private var oneRow: Text {
         if let rest { Text("\(line) · \(rest)") } else { line }
+    }
+}
+
+/// The top of a club page, where no bar is drawn (owner's pick D, 19 Nov 2026, with
+/// or without a background picture, like the Claude app and Apple's own apps): on iOS 26 the scroll
+/// view's own soft edge blurs and darkens the cards under the clock and the floating
+/// buttons, only while the page is scrolled. Before iOS 26, or built with an older
+/// Xcode, the cards fade out instead, gone at the line under the buttons (option C).
+private struct PageTopEdge: ViewModifier {
+    /// Not in Low Power Mode, which keeps its plain strip.
+    let active: Bool
+    /// The page sits in its own navigation stack: the bar's edge (iOS 26 soft blur,
+    /// iOS 18 frosted bar) reaches under the top buttons, so no fade mask.
+    var toolbar = false
+    /// Whether cards are under the clock.
+    let scrolled: Bool
+    /// Where on screen the cards are gone completely (iOS 18): below the clock, or
+    /// below the small name and the top buttons.
+    let gone: CGFloat
+    /// How far the cards take to fade in again below that line.
+    static let fade: CGFloat = 28
+
+    func body(content: Content) -> some View {
+        if !active {
+            content
+        } else if toolbar {
+#if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                content.scrollEdgeEffectStyle(.soft, for: .top)
+            } else {
+                content
+            }
+#else
+            content
+#endif
+        } else {
+#if compiler(>=6.2)
+            if #available(iOS 26.0, *) {
+                // Apple's soft edge blurs only the strip under the clock; below it, under
+                // the top buttons and the small name, the cards fade out as on iOS 18
+                // (PR #546 iPad shots: they stayed readable there with the soft edge alone).
+                fadeOut(content.scrollEdgeEffectStyle(.soft, for: .top))
+            } else {
+                fadeOut(content)
+            }
+#else
+            fadeOut(content)
+#endif
+        }
+    }
+
+    /// Always masked, fully open at the top of the page, so the scroll view keeps its
+    /// identity (and its place) when the cards first slide under the clock.
+    private func fadeOut(_ content: some View) -> some View {
+        // The page's scroll view starts at the screen's top edge (the club pages
+        // ignore the top safe area), so `gone` is measured from its top already.
+        // No GeometryReader in the mask: with one, the iOS 18 UI tests never saw the
+        // app idle and timed out on a tap (PR #546; the exact cause is unclear).
+        content.mask {
+            VStack(spacing: 0) {
+                Color.clear.frame(height: scrolled ? gone : 0)
+                LinearGradient(colors: [.clear, .black], startPoint: .top, endPoint: .bottom)
+                    .frame(height: scrolled ? Self.fade : 0)
+                Color.black
+            }
+            .ignoresSafeArea()
+        }
     }
 }

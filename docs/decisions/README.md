@@ -70,3 +70,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 51 | 2026-11-19 | [Only the real app and the website count as use](0051-only-real-use-counts.md) |
 | 52 | 2026-11-20 | [Out of season the warnings card says the storm lights are off, in one fixed order](0052-storm-lights-off-season.md) |
 | 53 | 2026-11-20 | [The sunset count sits at the sun, reasons go red first, a unit takes its value's colour](0053-sunset-count-at-the-sun-red-first.md) |
+| 54 | 2026-11-20 | [The top of a club page has no bar: the cards blur away under the buttons](0054-soft-top-edge-on-club-pages.md) |
