@@ -86,7 +86,8 @@ struct RootView: View {
                                 sideList(sharedPicture: true) { withAnimation(Self.slide) { sideListHidden = true } }
                                     .transition(.move(edge: .leading))
                             }
-                            pages(saved, chrome: chrome, insets: geometry.safeAreaInsets)
+                            pages(saved, chrome: chrome, insets: geometry.safeAreaInsets,
+                                  areaWidth: geometry.size.width - (wide && !sideListHidden ? Self.sideListWidth : 0))
                                 // The column count is worked out as if the list were shown (rule B).
                                 .environment(\.widthBesideList, wide ? geometry.size.width - Self.sideListWidth : nil)
                         }
@@ -312,7 +313,7 @@ struct RootView: View {
     static let sideListMinWidth: CGFloat = 860
     static let sideListMinHeight: CGFloat = 560
 
-    private func pages(_ saved: [Club], chrome: PageChrome, insets: EdgeInsets) -> some View {
+    private func pages(_ saved: [Club], chrome: PageChrome, insets: EdgeInsets, areaWidth: CGFloat) -> some View {
         // Each page keeps clear of the clock and the floating buttons with its own
         // margins, while the cards scroll on under both (Apple's guide).
         // On an iPad the page's buttons sit in a line at the top, level with the list's;
@@ -322,12 +323,14 @@ struct RootView: View {
         let barBottom = insets.top + InlineClubTitle.barHeight(statusBar: insets.top, topButtons: topButtons)
         let top = topButtons ? barBottom + PageTopButtons.gapBelow : insets.top
         let margins = EdgeInsets(top: top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
-        return TabView(selection: $selection) {
-            ForEach(saved) { club in
-                // Each page in its own navigation stack, with its top buttons and small
-                // name as real toolbar items: iOS 26 then draws its soft scroll edge under
-                // them (as in Mail), iOS 18 its frosted bar once the page is scrolled.
-                NavigationStack {
+        let lowPower = PowerState.shared.lowPower
+        let scrolled = PageScroll.shared.scrolled.contains(selection)
+        // One navigation stack around all the pages, so the top buttons stay put while
+        // the pages swipe; they and the small name are real toolbar items, so iOS 26
+        // draws its soft scroll edge under them (as in Mail) and iOS 18 its bar.
+        return NavigationStack {
+            TabView(selection: $selection) {
+                ForEach(saved) { club in
                     LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
                                      savedIDs: saved.map(\.id))
                         .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
@@ -336,16 +339,20 @@ struct RootView: View {
                         .environment(\.pageMargins, margins)
                         .environment(\.pageBarBottom, barBottom)
                         .environment(\.pageInToolbar, true)
-                        .toolbar { pageToolbar(club, chrome: chrome) }
-                        .navigationBarTitleDisplayMode(.inline)
-                        // The club's picture lies behind the whole TabView.
-                        .containerBackground(.clear, for: .navigation)
+                        .tag(club.id)
                 }
-                .tag(club.id)
             }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea(edges: [.top, .bottom])
+            .toolbar { pageToolbar(chrome: chrome, areaWidth: areaWidth) }
+            .navigationBarTitleDisplayMode(.inline)
+            // Low Power Mode draws nothing live: a plain strip behind the buttons once
+            // cards are under them, as before (TopEdgeFade).
+            .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
+            .toolbarBackground(lowPower ? (scrolled ? .visible : .hidden) : .automatic, for: .navigationBar)
+            // The club's picture lies behind the whole stack.
+            .containerBackground(.clear, for: .navigation)
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .ignoresSafeArea(edges: [.top, .bottom])
         .overlay(alignment: .bottom) {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
@@ -362,40 +369,65 @@ struct RootView: View {
         }
     }
 
-    /// The page's top buttons (iPad: sidebar and cog leading, the boat trailing) and the
-    /// small club name once the big one has scrolled away, as toolbar items.
+    /// The page's top buttons (iPad: sidebar and cog leading, the boat trailing), each on
+    /// its own glass as before, and the small club name once the big one has scrolled
+    /// away, as toolbar items for the club shown. The buttons sit over the card column.
     @ToolbarContentBuilder
-    private func pageToolbar(_ club: Club, chrome: PageChrome) -> some ToolbarContent {
-        let forecast = forecasts.forecasts[club.id]
+    private func pageToolbar(chrome: PageChrome, areaWidth: CGFloat) -> some ToolbarContent {
+        let club = locations.saved.first { $0.id == selection }
+        let forecast = forecasts.forecasts[selection]
+        // From the area's edge in to the card column's (PageScroll.pageWidth).
+        let inset = max(0, (areaWidth - (PageScroll.shared.pageWidth[selection] ?? areaWidth)) / 2)
+        let sidebar = chrome == .pad || chrome == .wide(listShown: false)
         if chrome != .phone {
-            ToolbarItemGroup(placement: .topBarLeading) {
-                if chrome == .pad || chrome == .wide(listShown: false) {
-                    Button {
-                        withAnimation(Self.slide) {
-                            if chrome == .pad { showingSideOverlay = true } else { sideListHidden = false }
+            ToolbarItem(placement: .topBarLeading) {
+                HStack(spacing: 8) {
+                    if sidebar {
+                        Button {
+                            withAnimation(Self.slide) {
+                                if chrome == .pad { showingSideOverlay = true } else { sideListHidden = false }
+                            }
+                        } label: {
+                            Image(systemName: "sidebar.left")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
                         }
-                    } label: {
-                        Image(systemName: "sidebar.left")
+                        .floatingControl(Circle())
+                        .accessibilityLabel(tr("Show the club list"))
+                        .transition(.move(edge: .leading).combined(with: .opacity))
                     }
-                    .accessibilityLabel(tr("Show the club list"))
+                    Button { showingSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                    }
+                    .floatingControl(Circle())
+                    .accessibilityLabel(tr("Settings"))
                 }
-                Button { showingSettings = true } label: {
-                    Image(systemName: "gearshape")
-                }
-                .accessibilityLabel(tr("Settings"))
+                .tint(.primary)
+                .foregroundStyle(.primary)
+                .padding(.leading, inset)
+                .dynamicTypeSize(...DynamicTypeSize.large)
             }
+            .ownGlass()
             ToolbarItem(placement: .topBarTrailing) {
-                PageBoatButton(clubID: club.id, now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius, tipEdge: .top)
+                PageBoatButton(clubID: selection, now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius, tipEdge: .top)
+                    .padding(.horizontal, 4)
+                    .floatingControl(Capsule())
                     .environment(\.openBoatSettings, openBoatSettings)
+                    .padding(.trailing, inset)
+                    .dynamicTypeSize(...DynamicTypeSize.large)
             }
+            .ownGlass()
         }
         ToolbarItem(placement: .principal) {
-            if PageScroll.shared.titleGone.contains(club.id) {
+            if let club, PageScroll.shared.titleGone.contains(selection) {
                 InlineClubTitle(club: club, light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
                                 sideRoom: 0, capsule: !PowerState.shared.lowPower)
                     .transition(.opacity)
             }
         }
+        .ownGlass()
     }
 
     /// The countries of the saved clubs, the phone's and any near the user;
@@ -839,5 +871,22 @@ enum PageJump {
             instant.disablesAnimations = true
             withTransaction(instant) { set(id) }
         }
+    }
+}
+
+extension ToolbarContent {
+    /// The item draws its own glass (floatingControl), not iOS 26's shared one, so the
+    /// sidebar button and the cog keep a circle each, as before.
+    @ToolbarContentBuilder
+    func ownGlass() -> some ToolbarContent {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            sharedBackgroundVisibility(.hidden)
+        } else {
+            self
+        }
+#else
+        self
+#endif
     }
 }
