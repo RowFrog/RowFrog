@@ -200,6 +200,10 @@ Only at lakes that really have shore warning lights (`data/shore-lights.json`:
 the Bavarian lakes, Lake Constance and Steinhuder Meer, but not, for example,
 the Alster, Müritz or Dümmer) does the card explain both lights (40 and 90 flashes a minute) and
 the season they run in; elsewhere it says there are no storm lights.
+Out of season (November to March on the Bavarian lakes) the row says the lights
+are off until 1 April, and from 15 March that they are on again from 1 April;
+Lake Constance runs all year (`docs/decisions/0052`). The card keeps one order:
+warnings, then the storm lights row, then what was checked.
 
 **Warnings in Austria and Switzerland.** Austrian clubs get GeoSphere
 Austria's official warnings for their municipality
