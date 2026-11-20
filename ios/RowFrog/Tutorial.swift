@@ -322,11 +322,6 @@ struct TutorialView: View {
     /// Each club choice's search. Kept in TourProgress too: picking the home base builds the tour
     /// again (see init), and the search should still be there, also after turning the device.
     @State private var searches = TourProgress.searches
-    // The location question is a system alert. When it closes, the paged view can
-    // jump back to its first page while `page` still says otherwise, so the pager
-    // is rebuilt on the current page once the answer is in.
-    @State private var pagerID = 0
-    @Environment(\.scenePhase) private var scenePhase
 
     init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
         self.locations = locations
@@ -383,30 +378,18 @@ struct TutorialView: View {
                     .accessibilityIdentifier("tour-skip")
                 }
                 .padding(.horizontal)
-                TabView(selection: $page) {
-                    ForEach(pages) { page in
-                        Group {
-                            if page.isChoice {
-                                ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload,
-                                           search: Binding(get: { searches[page] ?? "" }, set: { searches[page] = $0; TourProgress.searches[page] = $0 }))
-                            } else {
-                                TourPageView(page: page)
-                            }
+                // The tour's own pager (TourLayout.swift), not a paged TabView: that one crashed on the
+                // iPad when the search was tapped after turning the device (20 Nov 2026).
+                TourPager(pages: pages, selection: $page) { page in
+                    Group {
+                        if page.isChoice {
+                            ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload,
+                                       search: Binding(get: { searches[page] ?? "" }, set: { searches[page] = $0; TourProgress.searches[page] = $0 }))
+                        } else {
+                            TourPageView(page: page)
                         }
-                        .tag(page)
                     }
                 }
-                // Its own dots (TourDots), so on a wide screen they can sit under the left column.
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .id(pagerID)
-                .onChange(of: scenePhase) { old, new in
-                    if new == .active, old != .active, here.askedForPermission {
-                        here.askedForPermission = false
-                        pagerID += 1
-                    }
-                }
-                // On an iPad the app can stay active under the location question.
-                .onChange(of: here.answers) { pagerID += 1 }
                 .task(id: page) {
                     // Ask for the location when choosing the home base, for clubs nearby.
                     if page == .homeBase { here.request() }
