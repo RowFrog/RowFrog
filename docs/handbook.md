@@ -394,6 +394,14 @@ Geometry checks run on every merge in every combination; the whole set of pictur
 
 How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simulator tool); Mobile Safari with `xcrun simctl openurl booted <url>` and `simctl io booted screenshot`, headless (no Simulator.app window); Chrome with Playwright's Chromium. Chrome on iPhone and iPad uses Apple's WebKit, so Simulator Safari stands in for its drawing.
 
+## Python versions (owner, 20 Nov 2026)
+
+One Python line everywhere: 3.12, pinned in `.python-version`.
+
+- GitHub: every workflow uses `actions/setup-python` with `python-version: "3.12"`.
+- Pi: uv's own CPython 3.12 in `~/venv` (publishing, Model check, GKD log, budget check) and `~/venv-check` (push gate).
+- Mac: `backend/.venv` (a link to `backend/.venv.nosync`) is uv's own CPython 3.12, made with `uv venv --managed-python --python 3.12 backend/.venv.nosync`, packages as in update.sh with `uv pip install`, plus `pip` itself so update.sh's `python -m pip` keeps working. uv comes from MacPorts (`port install uv`); MacPorts' own Pythons are not used by RowFrog. Before 20 Nov 2026 the Mac used MacPorts' 3.14, which let 3.13+ code pass the local checks.
+
 ## Weekly Mac cleanup (owner, 12 Nov 2026)
 
 Sundays 03:30 CET (02:30 UTC), by the merge queue, only when the Mac is idle. The 03:30 run only lists what it would delete, with sizes; the deletions run at the next idle gap after the owner writes "Run the weekly cleanup" in the merge thread (a standing OK does not pass the Mac's safety check). It also reports when something fails or the RowFrog folder grows past 5 GB.
