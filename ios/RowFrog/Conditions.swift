@@ -208,7 +208,7 @@ enum Format {
     /// Minutes left until `end` (sunset), counted the way the reader sees them: the
     /// clock minute shown for `end` minus the clock minute now, so "16:36" at 16:31
     /// is 5 min whatever the seconds. At least 1 while `end` is still ahead. Every
-    /// "until sunset" count (warning line, sun line, daylight sheet) uses this, and
+    /// "until sunset" count (sun line, Sunset tile, daylight sheet) uses this, and
     /// the website's minutesLeft in shared.js does the same.
     static func minutesLeft(from start: Date, to end: Date) -> Int {
         guard end > start else { return 0 }

@@ -143,7 +143,7 @@ enum German {
         "The sun is down. Rowing is only advised in daylight.": "Die Sonne ist untergegangen. Rudern wird nur bei Tageslicht empfohlen.",
         "The last hour before sunset: back ashore by sunset.": "Die letzte Stunde vor Sonnenuntergang: bis Sonnenuntergang zurück an Land.",
         "Sunset soon": "Bald Sonnenuntergang",
-        "Sunset at %@: %@ min of daylight left.": "Sonnenuntergang um %@: noch %@ min Tageslicht.",
+        "Be back ashore by sunset.": "Bis Sonnenuntergang zurück an Land sein.",
         "Sunrise at %@: good to row from then.": "Sonnenaufgang um %@: ab dann gut zum Rudern.",
         "Sunset at %@: stay ashore from then.": "Sonnenuntergang um %@: ab dann nicht rudern.",
         "Sunset at %@: row with care from %@.": "Sonnenuntergang um %@: ab %@ vorsichtig rudern.",

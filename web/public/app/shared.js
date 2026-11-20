@@ -599,7 +599,7 @@ export function duration(from, to) {
 /**
  * Minutes left until `to` (sunset), counted the way the reader sees them: the clock minute
  * shown for `to` minus the clock minute now, so "16:36" at 16:31 is 5 min whatever the seconds.
- * At least 1 while `to` is still ahead. Every "until sunset" count (warning line, sun line,
+ * At least 1 while `to` is still ahead. Every "until sunset" count (sun line, Sunset tile,
  * daylight sheet) uses this, as the app does (Format.minutesLeft).
  */
 export function minutesLeft(from, to) {
@@ -696,25 +696,22 @@ export function baseLabel(condition, topic = null, value = null) {
 export const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
 
 /** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
-export function hourExplanation(forecast, reason, hour, now = new Date()) {
+export function hourExplanation(forecast, reason, hour, _now = new Date()) {
   const days = sunDaysOf(forecast);
   if (DAYLIGHT_REASONS.includes(reason.condition) && days.length) {
-    if (reason.condition === "sunset_soon") {
-      const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > now.getTime());
-      if (set != null) return t("Sunset at %@: %@ min of daylight left.", time(new Date(set)), String(minutesLeft(now, set)));
-    } else {
-      const start = Date.parse(hour.time);
-      const parts = daylightParts(start, days);
-      if (parts.length > 1) {
-        return parts.slice(1).map((p) => {
-          if (p.light === "green") return t("Sunrise at %@: good to row from then.", time(new Date(p.from)));
-          if (p.light === "red") return t("Sunset at %@: stay ashore from then.", time(new Date(p.from)));
-          return t("Sunset at %@: row with care from %@.", time(new Date(p.from + SUNSET_WINDOW_MS)), time(new Date(p.from)));
-        }).join(" ");
-      }
-      const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > start);
-      if (parts[0]?.light === "amber" && set != null) return t("Sunset at %@: back ashore by then.", time(new Date(set)));
+    // "Now" in the last hour: one line, the count down is at the sun (owner's pick E, 20 Nov 2026).
+    if (reason.condition === "sunset_soon") return t("Be back ashore by sunset.");
+    const start = Date.parse(hour.time);
+    const parts = daylightParts(start, days);
+    if (parts.length > 1) {
+      return parts.slice(1).map((p) => {
+        if (p.light === "green") return t("Sunrise at %@: good to row from then.", time(new Date(p.from)));
+        if (p.light === "red") return t("Sunset at %@: stay ashore from then.", time(new Date(p.from)));
+        return t("Sunset at %@: row with care from %@.", time(new Date(p.from + SUNSET_WINDOW_MS)), time(new Date(p.from)));
+      }).join(" ");
     }
+    const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > start);
+    if (parts[0]?.light === "amber" && set != null) return t("Sunset at %@: back ashore by then.", time(new Date(set)));
   }
   const text = reasonExplanation(reason.condition, reason.light, reason.topic, reason.value);
   return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
