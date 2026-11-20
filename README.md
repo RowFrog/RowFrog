@@ -493,8 +493,10 @@ field at the bottom.
   or dark and turning the screen follow the iPhone, as Apple's guidelines
   ask. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
-  The top bar is clear at rest and shows a blur with the club's name once
-  the page scrolls; the page bar floats as three Liquid Glass groups, with
+  There is no top bar: once the page scrolls, the cards blur away under the
+  clock and the buttons as in Mail (iOS 26 and later; iOS 18 shows its frosted
+  bar), and the club's small name sits in its own glass capsule
+  (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
@@ -532,7 +534,7 @@ language and time formats in the same way.
 
 On a club page, the "For *boat*" line under the rowing light says which boat
 the light is for. The boat button (in the bottom bar on iPhone; on iPad level
-with the club's name, staying in the top bar once the page scrolls) opens the
+with the club's name, staying at the top once the page scrolls) opens the
 boat picker; the same button sits at the top of the lake map and route
 planning, and beside the legend in the satellite picture's full view while
 Rowing light, Waves or Shore is on (the website does the same). It shows the chosen boat's class

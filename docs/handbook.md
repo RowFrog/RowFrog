@@ -154,7 +154,8 @@ choice A, 30 Oct 2026). Small and big boats are everywhere.
    - iPhone: bottom bar with cog and boat left, page dots, list button right
      (as Weather; easy to reach on big phones).
    - iPad: the boat button sits level with the club's big name on the right,
-     scrolls up with it and stays in the top bar beside the small name.
+     scrolls up with it and stays at the top beside the small name (no top bar
+     since decision 0054).
    - iPad upright: sidebar button and cog level with the name on the left; the
      sidebar button slides the list in over the page; page dots at the bottom.
    - iPad sideways: the list beside the page has the sidebar button, its title
