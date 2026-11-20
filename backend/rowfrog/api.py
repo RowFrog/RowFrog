@@ -641,6 +641,9 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     if area is not None:
         # Only some of DWD's lake areas have storm lights on the shore; the app explains them only there.
         block["shoreLights"] = dwd_warnings.has_shore_lights(area.warncell_id)
+        # When they run, so the card can say they are off in winter; left out where unknown.
+        if season := dwd_warnings.shore_lights_season(area.warncell_id):
+            block["shoreLightsSeason"] = season
     block["checkedAt"] = now.replace(microsecond=0).isoformat()
     result = (block, current)
     _warnings_cache[club.id] = (time.monotonic(), result)

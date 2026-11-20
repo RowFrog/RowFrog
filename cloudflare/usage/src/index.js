@@ -25,6 +25,13 @@
 // bucket bound as FILES, the /v1/ files come from that bucket, which the Pi
 // fills after every forecast run (scripts/local/pi/run-publish.sh). With no
 // FILES binding everything passes through to GitHub Pages as before.
+//
+// Only real use counts (owner, 19 Nov 2026, decision 0051): the app and widget
+// with a stamped build number (User-Agent "RowFrog/885 …", "RowFrogWidget/885
+// …"), and the website (Origin or Referer rowfrog.com). Builds without a stamp
+// (build 1: CI tap tests), curl and other scripts, and any request with the
+// header "X-RowFrog-Test" still get the file but are not counted. On 17 Nov
+// such requests made 37 clubs "used" instead of about 10.
 
 const COUNTED = /^\/v1\/(clubs|lakes)\/([a-z0-9][a-z0-9-]{0,79})\/(forecast|view)$/;
 const KEEP_DAYS = 120;
@@ -37,7 +44,7 @@ export default {
     }
     const response = await tagged(request, url, env);
     const match = url.pathname.match(COUNTED);
-    if (match && request.method === "GET" && response.ok) {
+    if (match && request.method === "GET" && response.ok && realUse(request)) {
       const kind = match[1] === "clubs" ? "club" : "lake";
       ctx.waitUntil(count(env, kind, match[2]).catch(() => {}));
     }
@@ -129,6 +136,23 @@ async function fromBucket(request, url, bucket) {
 
 function day(offsetDays = 0) {
   return new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);
+}
+
+const APP = /^RowFrog(?:Widget)?\/(\d+)\b/;
+const WEBSITE = new Set(["rowfrog.com", "www.rowfrog.com"]);
+
+function realUse(request) {
+  if (request.headers.has("x-rowfrog-test")) return false;
+  const app = (request.headers.get("user-agent") || "").match(APP);
+  if (app) return Number(app[1]) > 1;
+  for (const name of ["origin", "referer"]) {
+    try {
+      if (WEBSITE.has(new URL(request.headers.get(name)).hostname)) return true;
+    } catch {
+      // missing or not a URL
+    }
+  }
+  return false;
 }
 
 async function count(env, kind, id) {

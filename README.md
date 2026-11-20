@@ -119,7 +119,10 @@ bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on
 every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). The map sits in the same place
 on every detail view; on the waves page it is the lake view's waves at the
-chosen time, and a tap opens the lake view on that layer. Maps opened full
+chosen time on the street map (Apple's muted map, OpenStreetMap on the
+website) with the lake view's wind arrows over water and land, and it has the weather maps' chain
+button, play and slider (`docs/decisions/0047`); a tap opens the lake view on
+that layer. The lake view tile's small map stands on the same street map. Maps opened full
 screen run to the top with floating buttons. Swipe between detail views,
 use the arrow buttons (each shows the next value's symbol), or jump to another
 from the menu in the title; tapping an entry in a chart's
@@ -197,6 +200,10 @@ Only at lakes that really have shore warning lights (`data/shore-lights.json`:
 the Bavarian lakes, Lake Constance and Steinhuder Meer, but not, for example,
 the Alster, Müritz or Dümmer) does the card explain both lights (40 and 90 flashes a minute) and
 the season they run in; elsewhere it says there are no storm lights.
+Out of season (November to March on the Bavarian lakes) the row says the lights
+are off until 1 April, and from 15 March that they are on again from 1 April;
+Lake Constance runs all year (`docs/decisions/0052`). The card keeps one order:
+warnings, then the storm lights row, then what was checked.
 
 **Warnings in Austria and Switzerland.** Austrian clubs get GeoSphere
 Austria's official warnings for their municipality
@@ -728,7 +735,7 @@ More detail, including the secrets each one needs, is in the
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough, "App vs measured" (how far the forecasts the app actually showed, lake squares included, were off; on the Pi, where the published files are at hand) and "On the lake vs on land" (wind and air temperature from the GKD buoy on the Ammersee, plus GKD lake water temperatures, logged from the first run on). Changes to its scripts start it only on `main`. |
 | **Interpolation check** (`interpolation-check.yml`) | Compares how the lake view blends between forecast points (natural neighbour, `backend/rowfrog/interpolate.py` and `LakeInterpolation.swift`) with other methods, on made-up fields and the latest ICON-D2 run, and lists bias, errors and values outside the points' range in the run summary. Nothing is stored. By hand: every Monday (started by the recurring tasks) and after changing the blending code. |
-| **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. It also tags each `/v1/` file by its content, so a file that did not change answers 304 and is not downloaded again. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
+| **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Only the real app, widget and website count; CI builds, scripts and requests with the `X-RowFrog-Test` header (sent by the app in the Simulator) are served but not counted (`docs/decisions/0051`). It also tags each `/v1/` file by its content, so a file that did not change answers 304 and is not downloaded again. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and Cloudflare's free Worker and database limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
 | **Merge Dependabot updates** (`dependabot-merge.yml`) | Dependabot (`.github/dependabot.yml`) opens one PR a month raising the pinned backend packages, and a PR for each security fix straight away. Once CI passes on such a PR that changes only those versions, this workflow merges it; any other PR, or one whose CI fails, stays open for a person. Monthly grouped PRs for the npm tools (`package.json`: Wrangler, Playwright) and the GitHub Actions versions also come, and always wait for a person. |

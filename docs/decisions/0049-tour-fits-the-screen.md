@@ -10,6 +10,7 @@
 - **Searching on a phone:** the icon and the intro step aside while the search has text, so the list keeps room above the keyboard. Text, not focus: a tap on a club that ends the typing must not move the list under the finger.
 - **C, wider than tall** (iPad and iPhone on their side, a computer window at least 560 pt wide): two columns, centred. Left: icon, title, intro, search, then the dots and Next at the bottom. Right: the list or the page's content at full height. At most 400 + 48 + 560 pt. A club choice's head starts at the top, level with its list; the other pages' heads sit in the middle. Little height (an iPhone on its side) gives a smaller icon and title.
 - **Live:** turning the device or resizing the window switches between A and C at once, on the same page, with the search text and the clubs picked kept.
+- The pages scroll in the tour's own pager (`TourPager`, a paging scroll view), not a paged TabView: that one crashed on the iPad when the club search was tapped after turning the device (found in the Simulator check, 20 Nov 2026).
 - The page dots are the tour's own (app `TourDots`, as the website's), so they can sit under the left column; a tap on a dot goes to that page.
 - App and website alike; the app leads.
 

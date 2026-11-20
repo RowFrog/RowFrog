@@ -22,8 +22,10 @@ struct LakeMiniMap: View {
 
     /// The map pictures, by lake, size and appearance.
     private static let pictures = NSCache<NSString, UIImage>()
-    /// Screen points between the arrows on land: closer than on the big map, as the map is small.
-    static let landSpacing: CGFloat = 40
+    /// Screen points between the arrows: closer than on the big map, as the map is small.
+    static let arrowSpacing: CGFloat = 40
+    /// The arrows' length against the big map's.
+    static let arrowScale: CGFloat = 0.6
 
     var body: some View {
         GeometryReader { geometry in
@@ -91,27 +93,29 @@ struct LakeMiniMap: View {
             } else {
                 ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
             }
-            // On land the wind map's wind, faint, faded in from the lake's over the
-            // first kilometre, as in the lake view; white on the dark map.
+            // The wind as in the lake view, only smaller (owner, 20 Nov 2026): every arrow, on the
+            // water and on land, on one grid; the lake's wind on the water, the wind map's on land,
+            // faded in over the first kilometre; dark with a light edge, light on the dark map's land.
             let samples = zip(view.points, hour.wind).compactMap { point, wind -> WindArrows.Sample? in
                 guard let from = wind.fromDeg else { return nil }
                 return WindArrows.Sample(point: frame.point(lon: point.lon, lat: point.lat), towardDeg: from + 180, speedMs: wind.speedMs ?? 0)
             }
-            if let land, !samples.isEmpty {
+            if !samples.isEmpty {
                 let water = shore.cgPath
                 let blend = CGFloat(WindArrows.blendM * MKMapPointsPerMeterAtLatitude(view.grid.centre.lat)) * frame.pointsPerMapPoint
-                let onLand = WindArrows.arrows(in: CGRect(origin: .zero, size: size), spacing: Self.landSpacing, water: water,
-                                               from: samples, land: { land.at(frame.mapPoint($0)) },
-                                               shore: WindArrows.Shore(rings: rings), blend: blend)
-                    .filter(\.ashore)
-                var arrows = Path()
-                for arrow in onLand {
-                    arrows.addPath(LakeArrow.path(at: arrow.at, towardDeg: arrow.towardDeg, length: WindArrows.length(arrow.speedMs) * 0.6))
+                var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
+                if let land { onLand = { land.at(frame.mapPoint($0)) } }
+                let grid = WindArrows.arrows(in: CGRect(origin: .zero, size: size), spacing: Self.arrowSpacing, water: water,
+                                             from: samples, land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
+                for light in [false, true] {
+                    var arrows = Path()
+                    for arrow in grid where (dark && (arrow.ashore || image == nil)) == light {
+                        arrows.addPath(LakeArrow.path(at: arrow.at, towardDeg: arrow.towardDeg, length: WindArrows.length(arrow.speedMs) * Self.arrowScale))
+                    }
+                    let (edge, core) = light ? (Color.black.opacity(0.6), Color.white) : (Color.white.opacity(0.7), Color(white: 0.1).opacity(0.75))
+                    ctx.stroke(arrows, with: .color(edge), style: StrokeStyle(lineWidth: light ? 2.2 : 2.5, lineCap: .round, lineJoin: .round))
+                    ctx.stroke(arrows, with: .color(core), style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
                 }
-                ctx.stroke(arrows, with: .color(dark ? Color.white.opacity(0.5) : Color.black.opacity(0.4)), lineWidth: 1.2)
-            }
-            for sample in samples {
-                ctx.stroke(LakeArrow.path(at: sample.point, towardDeg: sample.towardDeg, length: 12), with: .color(.primary.opacity(0.55)), lineWidth: 1.2)
             }
             // The other clubs on the lake; the page's own has its mark on top.
             for club in view.clubs where club.id != clubID {

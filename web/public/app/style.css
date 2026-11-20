@@ -213,6 +213,8 @@ button.wide { margin-top: 0; }
 .original p { margin: 2px 0; }
 .tag { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 6px; background: var(--fill); color: var(--text); }
 .shore summary { color: var(--accent); font-weight: 600; font-size: 15px; cursor: pointer; margin: 8px 0; }
+.shore summary .lights-off { color: var(--text); }
+.shore .legend.dimmed { opacity: .6; }
 
 /* Current conditions (ConditionsCard). */
 .cc-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }

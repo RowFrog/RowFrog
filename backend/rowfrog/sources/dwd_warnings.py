@@ -187,16 +187,27 @@ def lake_area_for(lon: float, lat: float, areas: list[LakeArea], tolerance_m: fl
     return min(scored, key=lambda s: s[0])[1] if scored else None
 
 
-_shore_lights: dict[int, bool] | None = None
+_shore_lights: dict[int, dict] | None = None
+
+
+def _shore_light_areas() -> dict[int, dict]:
+    global _shore_lights
+    if _shore_lights is None:
+        areas = json.loads(SHORE_LIGHTS_PATH.read_text(encoding="utf-8"))["areas"]
+        _shore_lights = {int(a["warncellId"]): a for a in areas}
+    return _shore_lights
 
 
 def has_shore_lights(warncell_id: int) -> bool:
     """True where the lake warning is also shown by storm lights on the shore (data/shore-lights.json)."""
-    global _shore_lights
-    if _shore_lights is None:
-        areas = json.loads(SHORE_LIGHTS_PATH.read_text(encoding="utf-8"))["areas"]
-        _shore_lights = {int(a["warncellId"]): bool(a["lights"]) for a in areas}
-    return _shore_lights.get(warncell_id, False)
+    return bool(_shore_light_areas().get(warncell_id, {}).get("lights", False))
+
+
+def shore_lights_season(warncell_id: int) -> str | None:
+    """When the shore lights run: "apr-oct" (1 April to 31 October, as on most Bavarian lakes),
+    "all-year" (Lake Constance), or None where the lake has no lights or the season is not known."""
+    area = _shore_light_areas().get(warncell_id, {})
+    return area.get("season") if area.get("lights") else None
 
 
 # DWD's GeoServer now and then drops a connection or answers 502/503 for a moment;

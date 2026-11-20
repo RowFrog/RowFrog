@@ -259,20 +259,6 @@ function lakeColourLayer(L) {
   return new Layer({ pane: "lakeColours", interactive: false, updateWhenZooming: false, keepBuffer: 4 });
 }
 
-function arrowPath(ctx, x, y, towardDeg, length) {
-  const r = (towardDeg * Math.PI) / 180;
-  const dx = Math.sin(r);
-  const dy = -Math.cos(r);
-  const tip = [x + (dx * length) / 2, y + (dy * length) / 2];
-  ctx.moveTo(x - (dx * length) / 2, y - (dy * length) / 2);
-  ctx.lineTo(...tip);
-  for (const side of [-1, 1]) {
-    const a = r + Math.PI + side * 0.5;
-    ctx.moveTo(...tip);
-    ctx.lineTo(tip[0] + Math.sin(a) * length * 0.35, tip[1] - Math.cos(a) * length * 0.35);
-  }
-}
-
 /** The lake by itself, north up, coloured by the light of each part, with wind arrows and the clubs (LakeMiniMap). */
 /** Web Mercator in pixels of the world at zoom 0 (256 across), as Apple's and Leaflet's maps. */
 const worldX = (lon) => ((lon + 180) / 360) * 256;
@@ -395,8 +381,10 @@ function expectedCredit(canvas) {
   return darkMode() ? "© MapTiler © OpenStreetMap" : "© OpenStreetMap";
 }
 
-/** Screen pixels between the arrows on land on a small lake map: closer than on the big map (LakeMiniMap.landSpacing). */
-const MINI_LAND_SPACING = 40;
+/** Screen pixels between the arrows on a small lake map: closer than on the big map (LakeMiniMap.arrowSpacing). */
+const MINI_ARROW_SPACING = 40;
+/** The arrows' length against the big map's (LakeMiniMap.arrowScale). */
+const MINI_ARROW_SCALE = 0.6;
 /** The lakes whose land wind was asked for, so a small map asks once. */
 const landAsked = new WeakSet();
 
@@ -477,8 +465,9 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   ctx.strokeStyle = cold ? COLD_SHORE[cold] : "rgba(0, 122, 255, .4)";
   ctx.lineWidth = cold ? (cold === "cool" ? 1.6 : 2.2) : 0.7;
   ctx.stroke(shore);
-  // On land the weather map's wind, faint, faded in from the lake's over the first kilometre, as in the lake
-  // view; white on the dark map.
+  // The wind as in the lake view, only smaller (owner, 20 Nov 2026): every arrow, on the water and on land,
+  // on one grid; the lake's wind on the water, the weather map's on land, faded in over the first kilometre;
+  // dark with a light edge, light where the dark street map shows (drawArrows, LakeMiniMap in the app).
   const samples = view.points.flatMap((p, i) => {
     const wnd = hour.wind[i];
     if (wnd?.fromDeg == null) return [];
@@ -490,31 +479,33 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
     landAsked.add(view);
     loadLandWind(gridCentre(view)).then(() => canvas.isConnected && drawMiniMap(canvas, ...canvas.mini)).catch(() => {});
   }
-  if (fromLand && samples.length) {
+  if (samples.length) {
     const metresPerPixel = (40075016.686 * Math.cos((((e.north + e.south) / 2) * Math.PI) / 180)) / (256 * f.scale);
-    const onLand = windArrows({
-      area: [0, 0, w, hgt], spacing: MINI_LAND_SPACING, rings, samples, blend: BLEND_M / metresPerPixel,
-      land: (p) => fromLand(f.place(p)),
-    }).filter((a) => a.ashore);
-    ctx.strokeStyle = onBase && darkMode() ? "rgba(255, 255, 255, .5)" : "rgba(0, 0, 0, .4)";
-    ctx.lineWidth = 1.2;
+    const grid = windArrows({
+      area: [0, 0, w, hgt], spacing: MINI_ARROW_SPACING, rings, samples, blend: BLEND_M / metresPerPixel,
+      land: fromLand && ((p) => fromLand(f.place(p))),
+    });
+    const darkBase = onBase && darkMode();
     ctx.lineCap = "round";
-    ctx.beginPath();
-    for (const a of onLand) {
-      for (const [[ax, ay], [bx, by]] of arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs) * 0.6)) {
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
+    ctx.lineJoin = "round";
+    for (const light of [false, true]) {
+      const shown = grid.filter((a) => (darkBase && a.ashore) === light);
+      if (!shown.length) continue;
+      const [edge, core] = light ? ["rgba(0, 0, 0, .6)", "#fff"] : ["rgba(255, 255, 255, .7)", "rgba(26, 26, 26, .75)"];
+      for (const [color, width] of [[edge, light ? 2.2 : 2.5], [core, 1.2]]) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        for (const a of shown) {
+          for (const [[ax, ay], [bx, by]] of arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs) * MINI_ARROW_SCALE)) {
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+          }
+        }
+        ctx.stroke();
       }
     }
-    ctx.stroke();
   }
-  ctx.strokeStyle = getComputedStyle(canvas).color;
-  ctx.globalAlpha = 0.55;
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  for (const s of samples) arrowPath(ctx, s.x, s.y, s.towardDeg, 12);
-  ctx.stroke();
-  ctx.globalAlpha = 1;
   // The other clubs on the lake; the page's own has its mark on top.
   for (const club of view.clubs) {
     if (club.id === clubId) continue;

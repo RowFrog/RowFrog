@@ -67,4 +67,6 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 48 | 2026-11-17 | [The Row Frog icon's long-press menu: home base, lake view, rain radar, last opened club](0048-home-screen-quick-actions.md) |
 | 49 | 2026-11-17 | [The tour fits the screen: Next always in sight, side by side when wider than tall](0049-tour-fits-the-screen.md) |
 | 50 | 2026-11-19 | [The club list's cards: tight numbers, the text beside them gets the room](0050-club-list-cards-balance.md) |
-| 51 | 2026-11-19 | [The top of a club page has no bar: the cards blur away under the buttons](0051-soft-top-edge-on-club-pages.md) |
+| 51 | 2026-11-19 | [Only the real app and the website count as use](0051-only-real-use-counts.md) |
+| 52 | 2026-11-20 | [Out of season the warnings card says the storm lights are off, in one fixed order](0052-storm-lights-off-season.md) |
+| 53 | 2026-11-20 | [The top of a club page has no bar: the cards blur away under the buttons](0053-soft-top-edge-on-club-pages.md) |

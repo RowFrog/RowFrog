@@ -19,9 +19,11 @@ beforeEach(() => {
 });
 afterEach(() => upstream.restore());
 
-async function get(path, { method = "GET", key, body } = {}) {
+const APP_UA = "RowFrog/885 CFNetwork/3826.500.111 Darwin/25.1.0";
+
+async function get(path, { method = "GET", key, body, headers: extra = { "user-agent": APP_UA } } = {}) {
   const ctx = fakeCtx();
-  const headers = key ? { authorization: `Bearer ${key}` } : {};
+  const headers = { ...extra, ...(key ? { authorization: `Bearer ${key}` } : {}) };
   const response = await worker.fetch(new Request(`https://api.rowfrog.com${path}`, { method, headers, body }), env, ctx);
   await ctx.done();
   return response;
@@ -48,6 +50,30 @@ test("other requests pass through without a count", async () => {
   await get("/v1/clubs/mrc-1880/forecast", { method: "POST", body: "x" });
   assert.equal(upstream.length, 6);
   assert.deepEqual(env.DB.rows("SELECT * FROM hits"), []);
+});
+
+test("only the real app, widget and website count; tests and scripts get the file uncounted", async () => {
+  const counted = [
+    { "user-agent": APP_UA },
+    { "user-agent": "RowFrogWidget/885 CFNetwork/3826.500.111 Darwin/25.1.0" },
+    { "user-agent": "Mozilla/5.0 (iPhone) Safari/604.1", origin: "https://rowfrog.com" },
+    { "user-agent": "Mozilla/5.0 Safari/605.1.15", referer: "https://www.rowfrog.com/app/" },
+  ];
+  const ignored = [
+    { "user-agent": "RowFrog/1 CFNetwork/3826.500.111 Darwin/25.1.0" },
+    { "user-agent": "curl/8.5.0" },
+    { "user-agent": "python-httpx/0.28.1" },
+    {},
+    { "user-agent": APP_UA, "x-rowfrog-test": "1" },
+    { "user-agent": "Mozilla/5.0 Safari/605.1.15", origin: "https://rowfrog.com.example.net" },
+    { "user-agent": "Mozilla/5.0 Safari/605.1.15", referer: "not a url" },
+  ];
+  for (const headers of [...counted, ...ignored]) {
+    const response = await get("/v1/clubs/mrc-1880/forecast", { headers });
+    assert.equal(response.status, 200);
+  }
+  assert.equal(upstream.length, counted.length + ignored.length);
+  assert.deepEqual(env.DB.rows("SELECT id, n FROM hits"), [{ id: "mrc-1880", n: counted.length }]);
 });
 
 test("a counting error never breaks the response", async () => {

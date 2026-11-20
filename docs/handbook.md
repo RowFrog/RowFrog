@@ -292,6 +292,7 @@ switch gets its name there (settings go in `AppSettings.Keys`). The most useful:
 - Publisher `LAKE_VIEW_WORKERS=<n>` (scripts/publish_static.py): how many processes build the lake views at once. Default: the number of cores, at most 4 (the Raspberry Pi 4 has 4; about 2.8 times faster than one, Nov 2026). `LAKE_VIEW_WORKERS=1` builds them one after another in the publishing process, as before; use it if a run runs short of memory or to compare
 - Publisher `PUBLISH_UPLOAD='<command with {files}>'` (scripts/publish_static.py, per-club publishing Nov 2026): while the run goes on, every few seconds (`PUBLISH_UPLOAD_EVERY`, default 5 s) the files written since the last time are listed, one path per line relative to the output folder, and the command runs with that list's path for `{files}`. On the Pi: `PUBLISH_UPLOAD='rclone copy /home/rowfrog/site/v1 r2:rowfrog-api/v1 --files-from-raw {files} --no-check-dest --transfers 8 --stats 0 --log-level NOTICE'`. Each club and lake view is online seconds after it's built; the `rclone sync` after the run still sends anything missed and removes files that are gone. Not set = nothing uploaded during the run (GitHub Pages, tests). In an all-clubs run the clubs and lakes people use (usage counter) are loaded, built and uploaded first, the rest after; the log shows two "Wrote … forecasts" lines then. `PUBLISH_CLUBS_DONE` now runs after each of those parts
 - Backend `RW_SAMPLE_SATELLITE_WATER=<lake ids>` gives those lakes a made-up Landsat reading from five days ago, so the water detail shows the satellite estimate (the screenshot workflow sets it for the Simssee, shots 152-153)
+- Header `X-RowFrog-Test: 1` on any `api.rowfrog.com` request: the file is served but the usage counter does not count it (decision 0051). The app sends it by itself in the Simulator; send it from sessions and scripts too, e.g. `curl -H 'X-RowFrog-Test: 1' https://api.rowfrog.com/v1/clubs/mrc-1880/forecast`
 
 ## What runs on its own (GitHub Actions)
 
@@ -309,7 +310,7 @@ switch gets its name there (settings go in `AppSettings.Keys`). The most useful:
 
 | Workflow | When to run it |
 |---|---|
-| Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then). The Worker also tags every `/v1/` file up to 2 MB by its content (`W/"rf-…"`), so a file whose bytes did not change answers 304 although GitHub Pages re-tags everything on each publish |
+| Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then). The Worker also tags every `/v1/` file up to 2 MB by its content (`W/"rf-…"`), so a file whose bytes did not change answers 304 although GitHub Pages re-tags everything on each publish. Only real use counts (decision 0051): User-Agent `RowFrog/<build>` or `RowFrogWidget/<build>` with a build above 1, or Origin/Referer `rowfrog.com`. CI builds (build 1), curl, scripts and any request with the header `X-RowFrog-Test` get the file but are not counted, so a check of live files from a session or script no longer makes a club "used" |
 | API check | to see whether api.rowfrog.com, the Cloudflare proxy and the usage counter answer |
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
 | Interpolation check | every Monday (the thread "Run recurring background tasks" starts it), and after changing `backend/rowfrog/interpolate.py`: compares how the lake view blends between its forecast points (natural neighbour, also `LakeInterpolation.swift` in the app) with nearest point, inverse distance and triangles, on made-up fields and the latest ICON-D2 run (the model's own 2.2 km field is the true value). The summary lists bias (above 0 inflates), mean and 95 % error, bias on the windiest or foggiest tenth, values outside the points' range (must stay 0 % for natural neighbour) and squares with the wrong light. Input `lakes` (ids, space-separated) for other lakes; locally `python3 scripts/interpolation_check.py sample` (no network) or `icon-d2` (needs `pip install eccodes`) |
@@ -392,6 +393,14 @@ Geometry checks run on every merge in every combination; the whole set of pictur
 - Each at the top, in the middle and near the end of the page; light and dark; with a picture (frosted, solid) and without; keyboard open where there is a text field. Positions are measured, not judged by eye.
 
 How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simulator tool); Mobile Safari with `xcrun simctl openurl booted <url>` and `simctl io booted screenshot`, headless (no Simulator.app window); Chrome with Playwright's Chromium. Chrome on iPhone and iPad uses Apple's WebKit, so Simulator Safari stands in for its drawing.
+
+## Python versions (owner, 20 Nov 2026)
+
+One Python line everywhere: 3.12, pinned in `.python-version`.
+
+- GitHub: every workflow uses `actions/setup-python` with `python-version: "3.12"`.
+- Pi: uv's own CPython 3.12 in `~/venv` (publishing, Model check, GKD log, budget check) and `~/venv-check` (push gate).
+- Mac: `backend/.venv` (a link to `backend/.venv.nosync`) is uv's own CPython 3.12, made with `uv venv --managed-python --python 3.12 backend/.venv.nosync`, packages as in update.sh with `uv pip install`, plus `pip` itself so update.sh's `python -m pip` keeps working. uv comes from MacPorts (`port install uv`); MacPorts' own Pythons are not used by RowFrog. Before 20 Nov 2026 the Mac used MacPorts' 3.14, which let 3.13+ code pass the local checks.
 
 ## Weekly Mac cleanup (owner, 12 Nov 2026)
 

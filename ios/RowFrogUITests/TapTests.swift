@@ -158,6 +158,13 @@ final class TapTests: XCTestCase {
             XCTAssertTrue(next.isEnabled, "The home base picked was lost on turning")
             XCTAssertEqual(search.value as? String, "MRC 1880", "The search was lost on turning")
         }
+        // Typing in the search after the turns: this crashed the paged TabView on the iPad (20 Nov 2026).
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCUIDevice.shared.orientation = .portrait
+        search.tap()
+        search.typeText(" ")
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "The tour went away after typing in the search; the app shows:\n\(app.debugDescription)")
+        XCTAssertEqual(app.state, .runningForeground, "The app quit after typing in the search following a turn")
     }
 
     /// The settings and the club list open from a club page and close again.

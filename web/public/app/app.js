@@ -22,7 +22,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel, endsAtSunrise, loadable,
+  forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1896,7 +1896,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
     const note = warnings.lakeArea
       ? t("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", warnings.lakeArea, where)
       : t("Lake and weather warnings for %@ are not checked yet.", where);
-    return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${lightsInfo(warnings, guideOpen)}`;
+    return `${lakeRows}${notCheckedNote(warnings.local)}${lightsInfo(warnings, guideOpen)}<p class="sub small">${h(note)}</p>`;
   }
   const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
   const service = warnings.local?.service ?? "";
@@ -1911,7 +1911,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   const guide = lightsInfo(warnings, guideOpen);
   if (!items.length) {
     return `<p class="green strong">${icon("shield-check")} ${h(t("No warning right now"))}</p>
-      <p class="sub small">${h(`${coverage} ${t("Checked %@.", time(checkedAt))}`)}</p>${guide}`;
+      ${guide}<p class="sub small">${h(`${coverage} ${t("Checked %@.", time(checkedAt))}`)}</p>`;
   }
   const lake = items.filter((w) => w.kind === "lake");
   const other = items.filter((w) => w.kind !== "lake");
@@ -1919,8 +1919,9 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   const now = other.filter((w) => warningActive(w));
   const later = other.filter((w) => !warningActive(w)).sort((a, b) => new Date(a.onset ?? 0) - new Date(b.onset ?? 0));
   const label = (text) => `<p class="warn-group">${h(text)}</p>`;
-  return `${lake.map(warningRow).join("")}${guide}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
-    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
+  // One order in every state (decision 0052): the warnings, then the shore lights, then what was checked.
+  return `${lake.map(warningRow).join("")}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
+    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}${guide}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
 }
 
 const SEVERITY = { extreme: "var(--extreme)", severe: "var(--red)", moderate: "var(--orange)" };
@@ -1972,19 +1973,28 @@ function sourceLinks(w) {
  */
 function lightsInfo(warnings, open) {
   if (!warnings.lakeArea) return "";
-  if (warnings.shoreLights ?? true) return shoreLights(open);
+  if (warnings.shoreLights ?? true) return shoreLights(open, warnings.shoreLightsSeason);
   return `<p class="sub small info-line">${icon("siren")} <span>${h(t("This lake has no storm warning lights on the shore. DWD's lake warning shows here in the app."))}</span></p>`;
 }
 
-function shoreLights(open) {
+function shoreLights(open, season = null, now = new Date()) {
+  const state = shoreLightsState(season, now);
   const row = (flashes, colour, title, text) => `<li><span style="color:var(--${colour})">${icon("siren")}</span>
     <span><strong>${h(t("%@ flashes a minute: %@", flashes, title))}</strong><small>${h(text)}</small></span></li>`;
-  return `<details class="shore" ${open ? "open" : ""}><summary>${icon("siren")} ${h(t("What the shore warning lights mean"))}</summary>
-    <ul class="legend">
+  // Out of season the row says first that the lights are off, and still opens the explanation (ShoreLightsGuide).
+  const summary = state === "on"
+    ? `${icon("siren")} ${h(t("What the shore warning lights mean"))}`
+    : `<span class="sub">${icon("siren")}</span> <span class="lights-off">${h(state === "off" ? t("Storm lights off until 1 April") : t("Storm lights back on from 1 April"))}</span>`;
+  const hours = season === "all-year"
+    ? t("The lights here run all year, for shorter hours in winter. Outside these times there is no light, so check the forecast yourself.")
+    : t("The lights run from 1 April to 31 October, usually from 7:00 to 22:00; times may vary by lake. Outside these times there is no light, so check the forecast yourself.");
+  return `<details class="shore" ${open ? "open" : ""}><summary>${summary}</summary>
+    ${state === "on" ? "" : `<p class="small">${h(t("From November to March nothing flashes on the shore, even in a storm. Check the warnings here and the forecast yourself."))}</p>`}
+    <ul class="legend${state === "on" ? "" : " dimmed"}">
       ${row(40, "orange", t("Strong-wind warning"), t("Wind or gusts of Beaufort 6 to 7 (39 to 61 km/h) are expected. Boats on the water head for the shore; small boats stay ashore. The rowing light is red for small racing and training boats and amber for the others."))}
       ${row(90, "red", t("Storm warning"), t("Beaufort 8 or more (62 km/h and above). Go ashore at once and do not launch. The rowing light is red for every boat."))}
     </ul>
-    <p class="sub small">${h(t("The lights run from 1 April to 31 October, usually from 7:00 to 22:00; times may vary by lake. Outside these times there is no light, so check the forecast yourself."))}</p>
+    <p class="sub small">${h(hours)}</p>
   </details>`;
 }
 
