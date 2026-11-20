@@ -861,6 +861,9 @@
         "shoreLights": {
           "type": "boolean"
         },
+        "shoreLightsSeason": {
+          "type": "string"
+        },
         "status": {
           "type": "string"
         }

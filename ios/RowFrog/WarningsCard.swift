@@ -40,21 +40,23 @@ struct WarningsCard: View {
             } else if !warnings.localChecked {
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
                 NotCheckedNote(local: warnings.local)
+                lightsInfo(now: checkedNow)
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                lightsInfo
             } else if warnings.items.isEmpty {
                 Label(tr("No warning right now"), systemImage: "checkmark.shield.fill")
                     .font(.headline)
                     .foregroundStyle(.green)
+                lightsInfo(now: checkedNow)
                 Text(coverage + " " + tr("Checked %@.", Format.time(checkedAt)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                // The shore lights explained right under the lake warning, before the weather warnings.
+                // One order in every state (owner, 20 Nov 2026, decision 0052): the warnings,
+                // then the shore lights, then what was checked. The lake warning itself
+                // says how many times the lights flash.
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
-                lightsInfo
                 let local = warnings.items.filter { !$0.isLake }
                 let now = local.filter { $0.isActive(at: checkedNow) }
                 let later = local.filter { !$0.isActive(at: checkedNow) }.sorted { ($0.onset ?? .distantPast) < ($1.onset ?? .distantPast) }
@@ -63,12 +65,10 @@ struct WarningsCard: View {
                 ForEach(now) { WarningRow(warning: $0) }
                 if !later.isEmpty { SectionLabel(text: tr("Later")) }
                 ForEach(later) { WarningRow(warning: $0) }
+                lightsInfo(now: checkedNow)
                 Text(earlierCheck ? coverage + " " + tr("Checked %@.", Format.time(checkedAt)) : coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-            if warnings.checked, warnings.localChecked, warnings.items.isEmpty {
-                lightsInfo
             }
         }
         .font(.subheadline)
@@ -76,10 +76,10 @@ struct WarningsCard: View {
 
     /// The shore lights explained where the lake has them; where DWD warns for the
     /// lake without lights (e.g. the Alster), one line saying so instead.
-    @ViewBuilder private var lightsInfo: some View {
+    @ViewBuilder private func lightsInfo(now: Date) -> some View {
         if warnings.lakeArea != nil {
             if warnings.shoreLights ?? true {
-                ShoreLightsGuide(startOpen: guideOpen)
+                ShoreLightsGuide(startOpen: guideOpen, season: ShoreLightsSeason(warnings.shoreLightsSeason), now: now)
             } else {
                 Label(tr("This lake has no storm warning lights on the shore. DWD's lake warning shows here in the app."), systemImage: "light.beacon.min")
                     .font(.caption)
@@ -253,48 +253,6 @@ struct SourceLinks: View {
             .font(.subheadline.weight(.semibold))
             .padding(.top, 2)
         }
-    }
-}
-
-/// What the lake's shore warning lights mean, where DWD runs the lake warning
-/// service (Bavarian notice "Sturmwarndienst auf bayerischen Seen", AllMBl. 2010 S. 170).
-struct ShoreLightsGuide: View {
-    @State private var open: Bool
-
-    init(startOpen: Bool = false) {
-        _open = State(initialValue: startOpen || UserDefaults.standard.bool(forKey: DefaultsKey.shoreLights))
-    }
-
-    var body: some View {
-        DisclosureGroup(isExpanded: $open) {
-            VStack(alignment: .leading, spacing: 8) {
-                row(flashes: 40, color: .orange, title: tr("Strong-wind warning"),
-                    text: tr("Wind or gusts of Beaufort 6 to 7 (39 to 61 km/h) are expected. Boats on the water head for the shore; small boats stay ashore. The rowing light is red for small racing and training boats and amber for the others."))
-                row(flashes: 90, color: .red, title: tr("Storm warning"),
-                    text: tr("Beaufort 8 or more (62 km/h and above). Go ashore at once and do not launch. The rowing light is red for every boat."))
-                Text(tr("The lights run from 1 April to 31 October, usually from 7:00 to 22:00; times may vary by lake. Outside these times there is no light, so check the forecast yourself."))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.top, 6)
-        } label: {
-            Label(tr("What the shore warning lights mean"), systemImage: "light.beacon.max")
-                .font(.subheadline.weight(.semibold))
-        }
-    }
-
-    private func row(flashes: Int, color: Color, title: String, text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "light.beacon.max.fill")
-                .foregroundStyle(color)
-                .frame(width: 22)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(tr("%@ flashes a minute: %@", "\(flashes)", title)).font(.subheadline.weight(.semibold))
-                Text(text).font(.caption).fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 

@@ -1,0 +1,23 @@
+{
+ "comment": "What the warnings card says about the storm lights on the shore, by season and date (owner's pick on 20 Nov 2026, decision 0052: option A with the transitions). The date counts in German time. season comes from data/shore-lights.json via the forecast file (warnings.shoreLightsSeason). Read by the app (ShoreLightsSeason in ios/RowFrog/ShoreLights.swift, tested in ios/RowFrogTests/ShoreLightsSeasonTests.swift) and the website (shoreLightsState in web/public/app/logic.js, tested in web/tests/shorelights.test.mjs); change all three together.",
+ "states": {
+  "on": "The lights run: the row reads 'What the shore warning lights mean', as before.",
+  "off": "1 November to 14 March on a lake with season apr-oct: 'Storm lights off until 1 April'.",
+  "soon": "15 to 31 March on a lake with season apr-oct: 'Storm lights back on from 1 April'."
+ },
+ "rows": [
+  {"season": "apr-oct", "at": "2026-11-20T08:00:00Z", "state": "off"},
+  {"season": "apr-oct", "at": "2026-10-31T22:59:00Z", "state": "on"},
+  {"season": "apr-oct", "at": "2026-10-31T23:00:00Z", "state": "off"},
+  {"season": "apr-oct", "at": "2027-01-01T12:00:00Z", "state": "off"},
+  {"season": "apr-oct", "at": "2027-03-14T22:59:00Z", "state": "off"},
+  {"season": "apr-oct", "at": "2027-03-14T23:00:00Z", "state": "soon"},
+  {"season": "apr-oct", "at": "2027-03-31T21:59:00Z", "state": "soon"},
+  {"season": "apr-oct", "at": "2027-03-31T22:00:00Z", "state": "on"},
+  {"season": "apr-oct", "at": "2027-07-15T12:00:00Z", "state": "on"},
+  {"season": "all-year", "at": "2026-11-20T08:00:00Z", "state": "on"},
+  {"season": "all-year", "at": "2027-03-20T08:00:00Z", "state": "on"},
+  {"season": null, "at": "2026-11-20T08:00:00Z", "state": "on"},
+  {"season": "something-new", "at": "2026-11-20T08:00:00Z", "state": "on"}
+ ]
+}

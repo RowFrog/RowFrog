@@ -157,6 +157,14 @@ def test_shore_lights_list_covers_every_dwd_lake_area():
     assert not dwd_warnings.has_shore_lights(1)  # unknown areas: no lights claimed
 
 
+def test_shore_lights_season():
+    assert dwd_warnings.shore_lights_season(209904000) == "apr-oct"  # Starnberger See
+    assert dwd_warnings.shore_lights_season(208439000) == "all-year"  # Bodensee - West
+    assert dwd_warnings.shore_lights_season(209903000) is None  # Forggensee: own start date, not known
+    assert dwd_warnings.shore_lights_season(202006000) is None  # Alster: no lights
+    assert dwd_warnings.shore_lights_season(1) is None
+
+
 def _serve(handler):
     original = httpx.AsyncClient
 
@@ -219,6 +227,7 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
         "items": [],
         "local": {"source": "dwd", "service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
         "shoreLights": True,
+        "shoreLightsSeason": "apr-oct",
         "checkedAt": "2026-10-18T06:00:00+00:00",
     }
     assert "dwd:Warnungen_Binnenseen" in seen and "dwd:Warnungen_Gemeinden" in seen
