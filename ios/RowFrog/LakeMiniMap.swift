@@ -24,12 +24,15 @@ struct LakeMiniMap: View {
     private static let pictures = NSCache<NSString, UIImage>()
     /// Screen points between the arrows: closer than on the big map, as the map is small.
     static let arrowSpacing: CGFloat = 40
+    /// The foot of the map kept free for Apple's logo in the map picture, so neither
+    /// the lake nor arrows lie over it (owner, 20 Nov 2026, as on the website).
+    static let logoStrip: CGFloat = 26
     /// The arrows' length against the big map's.
     static let arrowScale: CGFloat = 0.6
 
     var body: some View {
         GeometryReader { geometry in
-            let frame = LakeMiniFrame(grid: view.grid, size: geometry.size)
+            let frame = LakeMiniFrame(grid: view.grid, size: geometry.size, bottom: Self.logoStrip)
             let key = "\(view.lakeId)|\(Int(geometry.size.width))x\(Int(geometry.size.height))|\(colorScheme == .dark ? "dark" : "light")" as NSString
             let land = ModelMapStore.shared.landWind(at: view.grid.centre, time: hour.time)
             ZStack(alignment: .topLeading) {
@@ -105,7 +108,7 @@ struct LakeMiniMap: View {
                 let blend = CGFloat(WindArrows.blendM * MKMapPointsPerMeterAtLatitude(view.grid.centre.lat)) * frame.pointsPerMapPoint
                 var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
                 if let land { onLand = { land.at(frame.mapPoint($0)) } }
-                let grid = WindArrows.arrows(in: CGRect(origin: .zero, size: size), spacing: Self.arrowSpacing, water: water,
+                let grid = WindArrows.arrows(in: CGRect(x: 0, y: 0, width: size.width, height: max(size.height - Self.logoStrip, 0)), spacing: Self.arrowSpacing, water: water,
                                              from: samples, land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
                 for light in [false, true] {
                     var arrows = Path()
@@ -158,13 +161,17 @@ struct LakeMiniFrame {
     let shown: MKMapRect
     let size: CGSize
 
-    init(grid: LakeGrid, size: CGSize, padding: CGFloat = 8) {
+    /// `bottom`: the strip kept free at the foot, where Apple's map picture has its
+    /// logo; the lake is centred in the room above it.
+    init(grid: LakeGrid, size: CGSize, padding: CGFloat = 8, bottom: CGFloat = 8) {
         self.size = size
         let lake = Self.mapRect(of: grid)
-        let w = Double(max(size.width - 2 * padding, 1)), h = Double(max(size.height - 2 * padding, 1))
+        let w = Double(max(size.width - 2 * padding, 1)), h = Double(max(size.height - padding - bottom, 1))
         let scale = min(w / max(lake.width, 1), h / max(lake.height, 1))
         let width = Double(max(size.width, 1)) / scale, height = Double(max(size.height, 1)) / scale
-        shown = MKMapRect(x: lake.midX - width / 2, y: lake.midY - height / 2, width: width, height: height)
+        // The lake's middle at the middle of the room between `padding` and `bottom`.
+        let middle = Double(padding) + h / 2
+        shown = MKMapRect(x: lake.midX - width / 2, y: lake.midY - middle / scale, width: width, height: height)
     }
 
     /// The grid's corners in map points.

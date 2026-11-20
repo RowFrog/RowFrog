@@ -985,7 +985,7 @@ private struct NowCard: View {
                         let left = Format.timeLeft(from: at ?? .now, to: sunset)
                         DaylightText(
                             line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(sunTime(sunset))"),
-                            rest: Text(tr("%@ left", left))
+                            rest: sunTinted(Text(tr("%@ left", left)))
                         )
                             .accessibilityLabel(tr("Rowing until sunset at %@, %@ left", Format.time(sunset), left))
                     case let .down(sunrise, _):
@@ -1006,11 +1006,15 @@ private struct NowCard: View {
     }
 
     /// The sunset or sunrise time, in amber or red while daylight is what sets the light
-    /// (owner's pick S1, 5 Nov 2026); the rest of the line stays as it is.
-    private func sunTime(_ date: Date) -> Text {
-        let time = Text(Format.time(date))
-        guard let tint = Condition.daylight.cause(in: hour)?.causeTint else { return time }
-        return time.foregroundStyle(tint)
+    /// (owner's pick S1, 5 Nov 2026).
+    private func sunTime(_ date: Date) -> Text { sunTinted(Text(Format.time(date))) }
+
+    /// A part of the sun line's value, the time and the minutes left, in amber or red while
+    /// daylight sets the light: the minutes take the time's colour, as a unit takes its
+    /// value's (owner, 20 Nov 2026). "Rowing until" stays as it is.
+    private func sunTinted(_ text: Text) -> Text {
+        guard let tint = Condition.daylight.cause(in: hour)?.causeTint else { return text }
+        return text.foregroundStyle(tint)
     }
 
     /// A sunset or sunrise symbol to sit in the daylight line's text.

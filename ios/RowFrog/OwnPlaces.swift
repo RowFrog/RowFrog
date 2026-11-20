@@ -199,7 +199,7 @@ enum PlaceForecaster {
             if let visibility {
                 if visibility < visibilityRed { add("fog", .red) } else if visibility <= visibilityAmber { add("fog", .amber) }
             }
-            reasons.sort { $0.light > $1.light }
+            reasons = reasons.ordered()
             return ForecastHour(
                 time: times[i], light: reasons.map(\.light).max() ?? .green, reasons: reasons,
                 windSpeedMs: wind, windGustMs: gust, windFromDeg: at(h.wind_direction_10m, i),

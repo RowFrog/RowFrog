@@ -1,4 +1,4 @@
-# 0053. The top of a club page has no bar: the cards blur away under the buttons
+# 0054. The top of a club page has no bar: the cards blur away under the buttons
 
 - Date: 2026-11-19 (built 20 Nov)
 - Status: decided (owner's pick D on 19 Nov 2026, 16:29 CET (15:29 UTC): "Then lets go with option D for now. Keep the mock-ups, perhaps we change later on once again", after the mock-ups artifact "Top bar over a picture" and the owner's iPad screenshots of app, website and the Claude app; 16:31 CET: pages without a background picture get the same; 20 Nov 18:03 CET: "Yes, lets try 1", the empty bar that makes iOS blur as deep as in Mail, with the buttons and their places unchanged)

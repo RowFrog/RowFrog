@@ -1,4 +1,4 @@
-// The warning line ("Sunset at 16:36: 6 min of daylight left") and the sun line
+// The old warning line ("Sunset at 16:36: 6 min of daylight left") and the sun line
 // ("Rowing until 16:36 · 5 min left") once counted the same moment differently:
 // the warning rounded up, the sun line down, and the sunset carries seconds
 // (16:36:40). Both now count clock minutes, as the reader does (owner, 17 Nov 2026).
@@ -22,12 +22,10 @@ test("the last minute before sunset still says 1 min, after it 0", () => {
   assert.equal(minutesLeft(sunset + 1000, sunset), 0);
 });
 
-test("the warning line and the sun line give the same number", () => {
+test("the reason line in the last hour says only to be back, without a count (owner's pick E, 20 Nov 2026)", () => {
   const forecast = { daylight: [{ date: "2026-11-16", sunrise: "2026-11-16T06:23:00Z", sunset: "2026-11-16T15:36:40Z" }] };
-  for (const at of ["15:31:00", "15:31:59", "14:55:30", "15:00:01", "15:36:10"]) {
-    const now = new Date(`2026-11-16T${at}Z`);
-    const warning = hourExplanation(forecast, { condition: "sunset_soon", light: "amber" }, { time: "2026-11-16T15:00:00Z" }, now);
-    const minutes = warning.match(/(\d+) min/)[1];
-    assert.equal(`${minutes} min`, timeLeft(now, sunset), `at ${at}: ${warning}`);
+  for (const at of ["15:31:00", "15:36:10"]) {
+    const warning = hourExplanation(forecast, { condition: "sunset_soon", light: "amber" }, { time: "2026-11-16T15:00:00Z" }, new Date(`2026-11-16T${at}Z`));
+    assert.equal(warning, "Be back ashore by sunset.");
   }
 });

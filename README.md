@@ -79,7 +79,10 @@ GitHub issue, so no GitHub account is needed.
    opens its chart. A value that sets the light amber or red shows its number
    in that colour, and cold water shows in blue while the life jacket badge
    is on; while daylight is the reason, the sunrise or sunset time takes the
-   light's colour. Tapping "All values" under the sun line opens Current
+   light's colour, and in the last hour before sunset so do the minutes left
+   (the reason then reads "Be back ashore by sunset."). Reasons list red
+   first, then by one fixed list of dangers, with daylight last
+   (`docs/decisions/0053`). Tapping "All values" under the sun line opens Current
    conditions inside the tile; tapping "Fewer values" closes it. Each club
    page starts closed and keeps its choice until the app restarts. Closed, a hidden value that counts for the light
    (thunderstorm, or ice when it matters) shows as one line under the sun line.

@@ -230,11 +230,11 @@ struct LakeWide: Decodable, Hashable {
         guard !days.isEmpty, reasons.contains(where: { DaylightRule.reasonNames.contains($0.condition) }) else { return self }
         var rest = reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }
         switch DaylightRule.light(at: date, days: days) {
-        case .red: rest.insert(Reason(condition: "daylight", light: .red), at: 0)
-        case .amber: rest.insert(Reason(condition: "sunset_soon", light: .amber), at: 0)
+        case .red: rest.append(Reason(condition: "daylight", light: .red))
+        case .amber: rest.append(Reason(condition: "sunset_soon", light: .amber))
         case .green: break
         }
-        return LakeWide(light: rest.map(\.light).max() ?? .green, reasons: rest)
+        return LakeWide(light: rest.map(\.light).max() ?? .green, reasons: rest.ordered())
     }
 }
 
@@ -344,7 +344,7 @@ extension LakeView {
             let cold = waterC.map { $0 < RowingLimits.coldWaterC }
                 ?? original.lakeWide.reasons.contains { $0.condition == "cold_water" }  // older backends
             let forBoat = limits.forWater(cold ? 0 : nil)
-            hour.lakeWide.reasons = forBoat.boatReasons(original.lakeWide.reasons).sorted { $0.light > $1.light }
+            hour.lakeWide.reasons = forBoat.boatReasons(original.lakeWide.reasons).ordered()
             hour.lakeWide.light = hour.lakeWide.reasons.map(\.light).max() ?? .green
             var zoneLights = [Light](repeating: .green, count: hour.zones.count)
             hour.lights = hour.lights.indices.map { i in

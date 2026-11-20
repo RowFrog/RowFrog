@@ -214,9 +214,14 @@ def test_nearby_water_counts_only_the_water_near_the_launch_point():
     (n,) = lake_view.nearby_water(grid, foggy_north, south, lon_mid).values()
     assert n.light == Light.GREEN
     # A strong wind nearby is named with its worst value; fog alone sets `other`.
-    windy = [[hour(speed=9.0, gust=11.0, visibility=300.0)] for _ in grid.samples]
+    windy = [[hour(speed=9.0, gust=11.0, visibility=20_000.0)] for _ in grid.samples]
     (n,) = lake_view.nearby_water(grid, windy, south, lon_mid).values()
-    assert n.light == Light.RED and n.cause == "wind" and abs(n.value - 9.0) < 1e-6
+    # Gusts and wind both red: the gusts come first (owner's order, 20 Nov 2026).
+    assert n.light == Light.RED and n.cause == "gusts" and abs(n.value - 11.0) < 1e-6
+    # With thick fog as well, the fog is named: it comes first among the reds (owner, 20 Nov 2026).
+    foggy = [[hour(speed=9.0, gust=11.0, visibility=300.0)] for _ in grid.samples]
+    (n,) = lake_view.nearby_water(grid, foggy, south, lon_mid).values()
+    assert n.light == Light.RED and n.cause == "fog" and abs(n.value - 300.0) < 1e-6
     assert n.other == Light.RED and n.other_cause == "fog" and abs(n.vis_m - 300.0) < 1e-6
 
 

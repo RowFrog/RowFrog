@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { baseLabel, reasonExplanation } from "../public/app/shared.js";
-import { REASONS, reasonCondition } from "../public/app/logic.js";
+import { REASONS, reasonCondition, REASON_ORDER, orderReasons } from "../public/app/logic.js";
 
 // testdata/reasons.json lists every reason the backend may send; the backend's and the app's
 // tests read it too. The owner saw "nearby_water" as raw text on an old build (12 Nov 2026).
@@ -36,4 +36,18 @@ test("every listed reason has a tile", () => {
 test("a reason newer than the page never shows its raw name", () => {
   assert.notEqual(baseLabel("brand_new_reason"), "brand_new_reason");
   assert.notEqual(reasonExplanation("brand_new_reason", "amber"), "brand_new_reason");
+});
+
+test("one order for the server, the app and the website (owner, 20 Nov 2026)", () => {
+  assert.deepEqual(REASON_ORDER, list.order);
+  for (const name of list.reasons) if (name !== "nearby_water") assert.ok(REASON_ORDER.includes(name), name);
+});
+
+test("red first, then the more dangerous, daylight last (owner's screenshot, 20 Nov 2026)", () => {
+  const got = orderReasons([
+    { condition: "sunset_soon", light: "amber" }, { condition: "wind", light: "red" },
+    { condition: "weather_warning", light: "amber", topic: "wind" }, { condition: "gusts", light: "red" },
+    { condition: "brand_new_reason", light: "amber" }, { condition: "nearby_water", light: "red", topic: "fog" },
+  ]).map((r) => r.condition);
+  assert.deepEqual(got, ["nearby_water", "gusts", "wind", "weather_warning", "brand_new_reason", "sunset_soon"]);
 });

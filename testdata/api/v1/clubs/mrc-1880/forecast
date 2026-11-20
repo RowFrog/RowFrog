@@ -308,19 +308,19 @@
    "pressureHpa": 1014.4,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],
@@ -1036,19 +1036,19 @@
    "pressureHpa": 1009.6,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],
@@ -1806,19 +1806,19 @@
    "pressureHpa": 1014.4,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],
@@ -2548,19 +2548,19 @@
    "pressureHpa": 1009.6,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],
@@ -3276,19 +3276,19 @@
    "pressureHpa": 1004.8,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],
@@ -4004,19 +4004,19 @@
    "pressureHpa": 1000.0,
    "reasons": [
     {
-     "condition": "gusts",
-     "light": "red"
-    },
-    {
      "condition": "hail",
      "light": "red"
     },
     {
-     "condition": "wind",
-     "light": "amber"
+     "condition": "gusts",
+     "light": "red"
     },
     {
      "condition": "thunderstorm",
+     "light": "amber"
+    },
+    {
+     "condition": "wind",
      "light": "amber"
     }
    ],

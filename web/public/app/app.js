@@ -22,7 +22,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState,
+  forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState, daylightAt,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1625,6 +1625,8 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   // Where the worst value within 1 km sets the light, the tile shows it, marked "Nearby" (app #409).
   const near = nearbyCondition(hour);
   const shown = shownWind(hour);
+  // The unit takes the wind's colour while the wind sets the light; the direction stays grey (owner, 20 Nov 2026).
+  const windCause = causeClass(causeOf("wind", hour)).trim();
   const unitLine = (deg) => windUnit() + (near === "wind" ? ` · ${t("Nearby")}` : deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
@@ -1667,7 +1669,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       <div data-top="wind" role="button" tabindex="0">
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
         <span class="v28${causeClass(causeOf("wind", hour))}">${h(windRange(shown.speed, shown.gust))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
-        <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
+        <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span><span class="${windCause}">${h(windUnit())}</span>${h(unitLine(hour.windFromDeg).slice(windUnit().length))}</span></small>
       </div>
       <div data-top="waves" role="button" tabindex="0">
         <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17${causeClass(causeOf("waves", hour))}">${h(waves(shownWaveHeightM(hour)))}</span>
@@ -1682,7 +1684,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
     ${ice && !combined ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17${causeClass(causeOf("ice", hour))}">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
-      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), timeLeft(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span><span class="${sunCause}">${h(time(sun.sunset))}</span></span> · <span class="nowrap">${h(t("%@ left", timeLeft(at ?? new Date(), sun.sunset)))}</span></span>`
+      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), timeLeft(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span><span class="${sunCause}">${h(time(sun.sunset))}</span></span> · <span class="nowrap${sunCause ? ` ${sunCause}` : ""}">${h(t("%@ left", timeLeft(at ?? new Date(), sun.sunset)))}</span></span>`
       : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span><span class="${sunCause}">${h(time(sun.sunrise))}</span></span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
     ${combined ? `${peeks(forecast, hour).map((c) => peekLine(c, forecast, hour, radar)).join("")}</div>
     <div class="tt-open"><div class="tiles">${TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarState)).join("")}</div></div>
@@ -2101,8 +2103,14 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       const sun = sunState(forecast, at);
       if (!sun) return tile("–", "");
       const graphic = sunPath(sun.sunrise, sun.sunset, at);
+      // In the last hour before sunset the minutes left take the sunrise's place, in the light's
+      // colour; the closed tile's sun line counts too (owner's pick E, 20 Nov 2026; ConditionTile.sunTile).
+      const lastHour = sun.up && daylightAt(at.getTime(), sunDaysOf(forecast)) === "amber";
+      const below = lastHour
+        ? `<small class="${cause.trim()}">${h(t("%@ left", timeLeft(at, sun.sunset)))}</small>`
+        : `<small>${h(t("Sunrise %@", time(sun.sunrise)))}</small>`;
       return sun.up
-        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong><small>${h(t("Sunrise %@", time(sun.sunrise)))}</small></span><span class="graphic">${graphic}</span></span></button>`
+        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong>${below}</span><span class="graphic">${graphic}</span></span></button>`
         : `<button class="tile${cause}" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
     }
     default:
