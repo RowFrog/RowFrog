@@ -324,41 +324,28 @@ struct RootView: View {
         let margins = EdgeInsets(top: top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
         return TabView(selection: $selection) {
             ForEach(saved) { club in
-                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
-                                 savedIDs: saved.map(\.id))
-                    .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
-                    .environment(\.isCurrentPage, club.id == selection)
-                    .environment(\.openBoatSettings, openBoatSettings)
-                    .environment(\.pageMargins, margins)
-                    .environment(\.pageBarBottom, barBottom)
-                    .tag(club.id)
+                // Each page in its own navigation stack, with its top buttons and small
+                // name as real toolbar items: iOS 26 then draws its soft scroll edge under
+                // them (as in Mail), iOS 18 its frosted bar once the page is scrolled.
+                NavigationStack {
+                    LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
+                                     savedIDs: saved.map(\.id))
+                        .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
+                        .environment(\.isCurrentPage, club.id == selection)
+                        .environment(\.openBoatSettings, openBoatSettings)
+                        .environment(\.pageMargins, margins)
+                        .environment(\.pageBarBottom, barBottom)
+                        .environment(\.pageInToolbar, true)
+                        .toolbar { pageToolbar(club, chrome: chrome) }
+                        .navigationBarTitleDisplayMode(.inline)
+                        // The club's picture lies behind the whole TabView.
+                        .containerBackground(.clear, for: .navigation)
+                }
+                .tag(club.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea(edges: [.top, .bottom])
-        .overlay(alignment: .top) {
-            let scroll = PageScroll.shared
-            let club = saved.first { $0.id == selection }
-            let forecast = forecasts.forecasts[selection]
-            TopEdgeFade(statusBar: insets.top, scrolled: scroll.scrolled.contains(selection),
-                        title: scroll.titleGone.contains(selection) ? club : nil,
-                        light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
-                        sideRoom: PageTopButtons.sideRoom(chrome))
-                .frame(maxHeight: .infinity, alignment: .top)
-                .ignoresSafeArea(edges: .top)
-        }
-        .overlay(alignment: .top) {
-            let forecast = forecasts.forecasts[selection]
-            PageTopButtons(clubID: selection, chrome: chrome, statusBar: insets.top,
-                           now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius,
-                           showList: {
-                               withAnimation(Self.slide) {
-                                   if chrome == .pad { showingSideOverlay = true } else { sideListHidden = false }
-                               }
-                           },
-                           showSettings: { showingSettings = true })
-                .environment(\.openBoatSettings, openBoatSettings)
-        }
         .overlay(alignment: .bottom) {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
@@ -372,6 +359,42 @@ struct RootView: View {
         .onAppear { if selection.isEmpty { selection = saved[0].id } }
         .onChange(of: chrome, initial: true) {
             PageScroll.shared.update(topButtons: chrome != .phone)
+        }
+    }
+
+    /// The page's top buttons (iPad: sidebar and cog leading, the boat trailing) and the
+    /// small club name once the big one has scrolled away, as toolbar items.
+    @ToolbarContentBuilder
+    private func pageToolbar(_ club: Club, chrome: PageChrome) -> some ToolbarContent {
+        let forecast = forecasts.forecasts[club.id]
+        if chrome != .phone {
+            ToolbarItemGroup(placement: .topBarLeading) {
+                if chrome == .pad || chrome == .wide(listShown: false) {
+                    Button {
+                        withAnimation(Self.slide) {
+                            if chrome == .pad { showingSideOverlay = true } else { sideListHidden = false }
+                        }
+                    } label: {
+                        Image(systemName: "sidebar.left")
+                    }
+                    .accessibilityLabel(tr("Show the club list"))
+                }
+                Button { showingSettings = true } label: {
+                    Image(systemName: "gearshape")
+                }
+                .accessibilityLabel(tr("Settings"))
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                PageBoatButton(clubID: club.id, now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius, tipEdge: .top)
+                    .environment(\.openBoatSettings, openBoatSettings)
+            }
+        }
+        ToolbarItem(placement: .principal) {
+            if PageScroll.shared.titleGone.contains(club.id) {
+                InlineClubTitle(club: club, light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
+                                sideRoom: 0, capsule: !PowerState.shared.lowPower)
+                    .transition(.opacity)
+            }
         }
     }
 
