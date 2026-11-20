@@ -201,3 +201,37 @@ for (const layout of LAYOUTS.filter((l) => l.touch)) {
     await context.close();
   });
 }
+
+// Decision 0054 (app #546): no bar over the club page; while scrolled the cards blur away under the buttons, over
+// the area beside the list only, and the Home Screen's clock strip (theme-color) takes the page's or picture's colour.
+for (const layout of [LAYOUTS[0], LAYOUTS[3]]) for (const background of ["sample:lake-waves", "none"]) {
+  test(`looks: ${layout.name}, ${background === "none" ? "no picture" : "picture"}: the soft top edge`, async () => {
+    const { page, errors, context } = await openIn(layout, visitor({ "rf.background": background }));
+    await page.goto(`${base}/app/#/club/mrc-1880`);
+    await page.locator(".hhead").first().waitFor({ timeout: 20000 });
+    await page.waitForTimeout(500);
+    const edge = () => page.evaluate(() => {
+      const box = document.querySelector(".soft-edge").getBoundingClientRect();
+      const side = document.querySelector("aside.side")?.getBoundingClientRect();
+      const bar = document.querySelector(".top-title").getBoundingClientRect();
+      const shown = [...document.querySelectorAll(".soft-edge > *")].map((el) => Number(getComputedStyle(el).opacity));
+      const blurs = [...document.querySelectorAll(".soft-edge > i")].map((el) => getComputedStyle(el).backdropFilter);
+      return { left: box.left, bottom: box.bottom, sideRight: side?.width ? side.right : 0, barBottom: bar.bottom, shown, blurs,
+        strip: document.querySelector('meta[name="theme-color"]').content, before: getComputedStyle(document.body, "::before").display };
+    });
+    const rest = await edge();
+    assert.ok(rest.shown.every((o) => o === 0), `nothing drawn at the top while the page is at its top (${rest.shown})`);
+    assert.equal(rest.before, "none", "no thin strip behind the clock on club pages");
+    if (background === "none") assert.equal(rest.strip, "#f2f2f7", "the clock strip has the page's colour");
+    else assert.notEqual(rest.strip, "#f2f2f7", "the clock strip takes the picture's colour");
+    await page.evaluate(() => scrollTo(0, 400));
+    await page.waitForTimeout(500);
+    const now = await edge();
+    assert.ok(now.shown.every((o) => o === 1), `the edge shows while scrolled (${now.shown})`);
+    assert.deepEqual(now.blurs, ["blur(1px)", "blur(3px)", "blur(6px)", "blur(12px)"], "the blur grows towards the top");
+    assert.ok(now.left >= now.sideRight - 0.5, `the edge stays off the list (${now.left} < ${now.sideRight})`);
+    assert.ok(Math.abs(now.bottom - (now.barBottom + 10)) <= 1, `the edge ends 10 px below the line of buttons (${now.bottom} vs ${now.barBottom})`);
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+}

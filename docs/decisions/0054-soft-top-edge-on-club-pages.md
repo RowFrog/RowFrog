@@ -2,7 +2,7 @@
 
 - Date: 2026-11-19 (built 20 Nov)
 - Status: decided (owner's pick D on 19 Nov 2026, 16:29 CET (15:29 UTC): "Then lets go with option D for now. Keep the mock-ups, perhaps we change later on once again", after the mock-ups artifact "Top bar over a picture" and the owner's iPad screenshots of app, website and the Claude app; 16:31 CET: pages without a background picture get the same; 20 Nov 18:03 CET: "Yes, lets try 1", the empty bar that makes iOS blur as deep as in Mail, with the buttons and their places unchanged)
-- Where: app `pages(_:chrome:insets:)` (a `NavigationStack` per club page), `TopEdgeFade` and `InlineClubTitle` in `ios/RowFrog/RootView.swift`, `PageTopEdge` in `ios/RowFrog/LocationPageView.swift`; website to follow
+- Where: app `pages(_:chrome:insets:)` (a `NavigationStack` per club page), `TopEdgeFade` and `InlineClubTitle` in `ios/RowFrog/RootView.swift`, `PageTopEdge` in `ios/RowFrog/LocationPageView.swift`; website `.soft-edge` and `.top-pill` in `web/public/app/style.css`, `paintClockStrip` in `web/public/app/backgrounds.js`
 - Replaces: item 3 of [0037](0037-app-web-detail-check-picks.md) (title fade A)
 
 ## Decision
@@ -13,7 +13,7 @@
 - On iOS 18 the same bar gives iOS's standard frosted bar once the page is scrolled. Not seen on iOS 18 yet (no Simulator for it on the Mac); the fade mask (option C) stays in the code for pages outside the stack.
 - The small club name sits in its own glass capsule.
 - Low Power Mode keeps its plain strip, as before.
-- The website follows with the same look.
+- The website follows with the same look (21 Nov 2026): four stacked blur layers (1, 3, 6 and 12 px), each masked to a shorter band from the top, plus a fade into the page's colour, over the area beside the list, 10 px below the line of buttons, only while scrolled. On the Home Screen the solid strip behind the clock (theme-color) takes the page's colour, or over a picture the median colour of the picture's top 5 % under its veil, and the edge starts there at full strength, so the two run into each other. Without backdrop-filter or with reduced transparency the edge is the colour fade alone.
 
 ## Why
 

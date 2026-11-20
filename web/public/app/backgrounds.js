@@ -232,6 +232,98 @@ if (typeof window !== "undefined" && window.visualViewport) {
   vv.addEventListener("scroll", queue);
 }
 
+// ---- The strip behind the clock (decision 0054) --------------------------------------------
+
+/** The median colour of the picture's top 5 % as it lies in the window, or null (not drawn yet, or not readable). */
+let pictureTop = null;
+
+const hexRgb = (value) => {
+  const m = /^#([0-9a-f]{6})$/i.exec(String(value).trim());
+  return m ? [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16)) : null;
+};
+const isDark = () => {
+  const theme = document.documentElement.dataset.theme;
+  return theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
+/**
+ * The colour seen at the picture's top edge: its own median under the page-coloured veil, 60 % at the top
+ * (#page-picture::before), and a little darker in dark mode (::after, 30 % black).
+ */
+export function stripColour(median, bg, dark) {
+  const veiled = median.map((c, i) => c * 0.4 + bg[i] * 0.6);
+  return veiled.map((c) => Math.round(dark ? c * 0.7 : c));
+}
+
+/** The median of each channel over RGBA pixels. */
+export function medianColour(data) {
+  const channels = [[], [], []];
+  for (let i = 0; i + 3 < data.length; i += 4) for (let c = 0; c < 3; c++) channels[c].push(data[i + c]);
+  return channels.map((values) => {
+    values.sort((a, b) => a - b);
+    return values.length ? values[Math.floor(values.length / 2)] : 0;
+  });
+}
+
+/** Reads the colours along the picture's top 5 %, placed as the layer shows it; null if the browser will not tell. */
+async function sampleTop(url, pictureFocus) {
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const area = { width: innerWidth || 1, height: innerHeight || 1 };
+    const place = picturePlace({ width: img.naturalWidth, height: img.naturalHeight }, area, pictureFocus);
+    const scale = 64 / area.width;
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = Math.max(1, Math.round(area.height * 0.05 * scale));
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, place.x * scale, place.y * scale, place.width * scale, place.height * scale);
+    return medianColour(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
+  } catch {
+    // A picture from another site without CORS taints the canvas: the edge then uses the page's veil colour.
+    return null;
+  }
+}
+
+/**
+ * The Home Screen's solid strip behind the clock (theme-color) and the club pages' soft top edge take the page's
+ * colour, or over a picture the colour at its top, so the strip runs into the edge without a step.
+ */
+export function paintClockStrip() {
+  if (typeof document === "undefined") return;
+  const bg = hexRgb(getComputedStyle(document.documentElement).getPropertyValue("--bg")) ?? [242, 242, 247];
+  const picture = document.body.classList.contains("has-picture");
+  const colour = picture && pictureTop ? stripColour(pictureTop, bg, isDark()) : null;
+  if (colour) document.body.style.setProperty("--picture-top", `rgb(${colour.join(" ")})`);
+  else document.body.style.removeProperty("--picture-top");
+  const strip = colour ?? (picture ? stripColour(bg, bg, isDark()) : bg);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const value = `#${strip.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+  if (meta && meta.content !== value) meta.content = value;
+}
+
+// A turned or resized window shows another part of the picture at the top.
+let resample = 0;
+if (typeof window !== "undefined") window.addEventListener("resize", () => {
+  clearTimeout(resample);
+  resample = setTimeout(async () => {
+    const layer = document.querySelector("#page-picture");
+    const url = layer?.dataset.sampled;
+    if (!url) return;
+    const ticket = shown;
+    const top = await sampleTop(url, focus);
+    if (ticket !== shown || layer.dataset.sampled !== url) return;
+    pictureTop = top;
+    paintClockStrip();
+  }, 400);
+});
+
+if (typeof window !== "undefined" && typeof MutationObserver !== "undefined") {
+  new MutationObserver(paintClockStrip).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", paintClockStrip);
+}
+
 /** Puts the page's picture behind it, or none (page null: pages without pictures). */
 export async function showBackground(page, clubId = null) {
   const ticket = ++shown;
@@ -244,6 +336,8 @@ export async function showBackground(page, clubId = null) {
     layer?.remove();
     document.body.classList.remove("has-picture");
     delete document.body.dataset.tiles;
+    pictureTop = null;
+    paintClockStrip();
     return;
   }
   if (!layer) {
@@ -258,6 +352,15 @@ export async function showBackground(page, clubId = null) {
   layer.classList.toggle("blurred", backgrounds.blur);
   document.body.classList.add("has-picture");
   document.body.dataset.tiles = backgrounds.tiles;
+  if (layer.dataset.sampled !== url) {
+    pictureTop = null;
+    paintClockStrip();
+    const top = await sampleTop(url, focus);
+    if (ticket !== shown) return;
+    layer.dataset.sampled = url;
+    pictureTop = top;
+  }
+  paintClockStrip();
 }
 
 // ---- Settings › Background pictures ------------------------------------------------------

@@ -53,3 +53,13 @@ test("the picture stays on the screen while the keyboard is open, not while zoom
   // Pinch zoom moves the visible part too; the picture zooms with the page then.
   assert.equal(keyboardShift({ layoutHeight: 852, height: 400, offsetTop: 200, scale: 2 }), 0);
 });
+
+test("the clock strip takes the colour seen at the picture's top (decision 0054)", async () => {
+  const { stripColour, medianColour } = await import("../public/app/backgrounds.js");
+  // Median per channel, so a few bright pixels (a cloud's rim) don't move it.
+  const pixels = [10, 20, 30, 255, 12, 22, 32, 255, 250, 250, 250, 255, 11, 21, 31, 255, 13, 23, 33, 255];
+  assert.deepEqual(medianColour(pixels), [12, 22, 32]);
+  // Under the page-coloured veil (60 % at the top), and 30 % darker in dark mode.
+  assert.deepEqual(stripColour([100, 150, 200], [242, 242, 247], false), [185, 205, 228]);
+  assert.deepEqual(stripColour([100, 150, 200], [0, 0, 0], true), [28, 42, 56]);
+});
