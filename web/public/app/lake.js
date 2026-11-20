@@ -1,7 +1,7 @@
 // The lake view and route planning, worked out from /lakes/{id}/view as in the
 // app (LakeView.swift, Route.swift). Kept free of the page so Node can test it.
 
-import { key, limitsFor, coldWaterKit, daylightAt, DAYLIGHT_REASONS, COLD } from "./logic.js";
+import { key, limitsFor, coldWaterKit, daylightAt, DAYLIGHT_REASONS, COLD, orderReasons } from "./logic.js";
 import { lakeInterpolation, blendWind } from "./interpolate.js";
 
 const RANK = { green: 0, amber: 1, red: 2 };
@@ -101,9 +101,9 @@ export function lakeWideAt(lakeWide, t, days) {
   if (!lakeWide || !days?.length || !(lakeWide.reasons ?? []).some((r) => DAYLIGHT_REASONS.includes(r.condition))) return lakeWide;
   const reasons = lakeWide.reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition));
   const now = daylightAt(t, days);
-  if (now === "red") reasons.unshift({ condition: "daylight", light: "red" });
-  if (now === "amber") reasons.unshift({ condition: "sunset_soon", light: "amber" });
-  return { ...lakeWide, reasons, light: reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green") };
+  if (now === "red") reasons.push({ condition: "daylight", light: "red" });
+  if (now === "amber") reasons.push({ condition: "sunset_soon", light: "amber" });
+  return { ...lakeWide, reasons: orderReasons(reasons), light: reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green") };
 }
 
 /** The view with its current hour's whole-lake light for this minute (LakeViewStore.view): only an hour already begun. */
@@ -137,10 +137,9 @@ export function applyLakeLimits(view, limits, standard) {
       // In cold water the app's wind limits drop, as on the backend.
       const cold = view.waterC != null ? view.waterC < 10 : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
       const forBoat = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
-      const reasons = hour.lakeWide.reasons
+      const reasons = orderReasons(hour.lakeWide.reasons
         .map((r) => (r.condition === "lake_strong_wind" ? { ...r, light: forBoat.strongWindLight } : r))
-        .filter((r) => r.condition !== "single_cold" || forBoat.maybeSingle)
-        .sort((a, b) => RANK[b.light] - RANK[a.light]);
+        .filter((r) => r.condition !== "single_cold" || forBoat.maybeSingle));
       const zoneLights = hour.zones.map(() => "green");
       const lights = hour.lights.map((_, i) => {
         const wind = cellWind(view, hour, i);

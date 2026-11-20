@@ -851,21 +851,20 @@ struct ClubForecast: Codable, Hashable {
         var reasons = first.reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }
         let light = DaylightRule.light(at: date, days: days)
         switch light {
-        case .red: reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
-        case .amber: reasons.insert(Reason(condition: "sunset_soon", light: .amber), at: 0)
+        case .red: reasons.append(Reason(condition: "daylight", light: .red))
+        case .amber: reasons.append(Reason(condition: "sunset_soon", light: .amber))
         case .green: break
         }
-        return first.with(reasons: reasons, sunUp: light != .red)
+        return first.with(reasons: reasons.ordered(), sunUp: light != .red)
     }
 
     /// A reason's sentence for `hour`. The daylight's say when inside the hour the light
-    /// changes, and "now" in the last hour counts down to sunset.
+    /// changes. "Now" in the last hour says only to be back by sunset, on one line: the
+    /// count down is at the sun itself, on the sun line or the Sunset tile (owner's pick E,
+    /// 20 Nov 2026).
     func explanation(_ reason: Reason, in hour: ForecastHour, now: Date = .now) -> String {
         guard DaylightRule.reasonNames.contains(reason.condition), let days = daylight, !days.isEmpty else { return reason.explanation }
-        if reason.condition == "sunset_soon" {
-            guard let set = days.map(\.sunset).sorted().first(where: { $0 > now }) else { return reason.explanation }
-            return tr("Sunset at %@: %@ min of daylight left.", Format.time(set), String(Format.minutesLeft(from: now, to: set)))
-        }
+        if reason.condition == "sunset_soon" { return tr("Be back ashore by sunset.") }
         let parts = DaylightRule.parts(from: hour.time, days: days)
         if parts.count > 1 {
             return parts.dropFirst().map { part -> String in

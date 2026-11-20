@@ -74,3 +74,28 @@ def test_every_backend_reason_has_a_website_tile():
     # topic's tile (reasonCondition in logic.js).
     missing = {n for n in backend_reasons() - website_reasons() if not n.endswith("_warning") and n != "nearby_water"}
     assert missing == set()
+
+
+def test_reason_order_is_the_listed_one():
+    """One order for the server, the app and the website (owner, 20 Nov 2026)."""
+    from rowfrog.score import REASON_ORDER
+
+    data = listed()
+    assert list(REASON_ORDER) == data["order"]
+    # Every reason the backend may send has its place; nearby_water ranks as its topic.
+    assert set(data["reasons"]) - {"nearby_water"} <= set(data["order"])
+    assert set(data["topics"]["nearby_water"]) <= set(data["order"])
+
+
+def test_red_comes_first_then_the_more_dangerous():
+    """The owner's screenshot of 20 Nov 2026 listed the amber sunset above red wind."""
+    from rowfrog.score import Light, ordered
+
+    got = ordered([
+        ("twilight", Light.AMBER), ("wind", Light.RED), ("weather_warning", Light.AMBER),
+        ("gusts", Light.RED), ("brand_new_reason", Light.AMBER),
+    ])
+    assert got == [
+        ("gusts", Light.RED), ("wind", Light.RED), ("weather_warning", Light.AMBER),
+        ("brand_new_reason", Light.AMBER), ("twilight", Light.AMBER),
+    ]

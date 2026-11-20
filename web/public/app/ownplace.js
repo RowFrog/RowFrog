@@ -6,7 +6,7 @@
 // Without a lake outline there are no waves, and there are no water
 // temperature, ice or DWD warnings.
 
-import { daylightParts } from "./logic.js";
+import { daylightParts, orderReasons } from "./logic.js";
 
 export const OWN_PREFIX = "own-";
 export const isOwn = (id) => String(id ?? "").startsWith(OWN_PREFIX);
@@ -101,7 +101,7 @@ export function ownForecast(club, payload, now = new Date()) {
       if (visibility < T.visibilityRed) add("fog", "red");
       else if (visibility <= T.visibilityAmber) add("fog", "amber");
     }
-    reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
+    reasons.splice(0, reasons.length, ...orderReasons(reasons));
     return {
       time: new Date(start).toISOString(), light: reasons[0]?.light ?? "green", reasons,
       windSpeedMs: wind, windGustMs: gust, windFromDeg: at("wind_direction_10m", i), waveHeightM: null, fetchM: null,
