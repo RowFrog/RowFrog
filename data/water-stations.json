@@ -41,6 +41,26 @@
       "lon": 7.5947,
       "distanceKm": 5.3
     },
+    "berliner-ruder-club-hevella": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 16.2
+    },
+    "berliner-ruder-gesellschaft": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 16.1
+    },
     "bessel-ruder-club": {
       "network": "pegelonline",
       "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
@@ -151,6 +171,16 @@
       "lon": 8.714995,
       "distanceKm": 10.9
     },
+    "frankfurter-ruderverein-von-1865": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 2.0
+    },
     "frauen-ruderverein-freiweg-frankfurt-ev-1927": {
       "network": "pegelonline",
       "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
@@ -221,6 +251,26 @@
       "lon": 8.3094,
       "distanceKm": 1.0
     },
+    "lueneburger-ruder-club-wiking-v1875": {
+      "network": "pegelonline",
+      "id": "bb62b28f-9947-42b1-92e4-743a1e0c4a76",
+      "name": "Fahrenholz Up",
+      "water": "Ilmenau",
+      "kind": "river",
+      "lat": 53.360317,
+      "lon": 10.315493,
+      "distanceKm": 13.9
+    },
+    "lueneburger-ruder-club-wiking-v1875-loesegraben": {
+      "network": "pegelonline",
+      "id": "bb62b28f-9947-42b1-92e4-743a1e0c4a76",
+      "name": "Fahrenholz Up",
+      "water": "Ilmenau",
+      "kind": "river",
+      "lat": 53.360317,
+      "lon": 10.315493,
+      "distanceKm": 13.5
+    },
     "miltenberger-ruder-club-von-1900": {
       "network": "pegelonline",
       "id": "355b02d2-c578-46d9-a56b-8046d470cb95",
@@ -230,6 +280,16 @@
       "lat": 49.716138,
       "lon": 9.225244,
       "distanceKm": 2.5
+    },
+    "mindener-ruder-verein-von-1905": {
+      "network": "pegelonline",
+      "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
+      "name": "Weser",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.303606,
+      "lon": 8.932229,
+      "distanceKm": 2.0
     },
     "mrc-1880": {
       "network": "gkd",
@@ -281,6 +341,16 @@
       "lon": 8.714995,
       "distanceKm": 3.7
     },
+    "pichelsberger-rudergesellschaft-1914": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 16.4
+    },
     "pontoniersportverein-laufenburg": {
       "network": "bafu",
       "id": "2091",
@@ -290,6 +360,26 @@
       "lat": 47.5607,
       "lon": 7.7999,
       "distanceKm": 19.9
+    },
+    "post-und-telekom-sportgemeinschaft-luebbecke": {
+      "network": "pegelonline",
+      "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
+      "name": "Weser",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.303606,
+      "lon": 8.932229,
+      "distanceKm": 21.2
+    },
+    "pro-sport-berlin-24-gatow": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 11.6
     },
     "rendsburger-ruderverein": {
       "network": "pegelonline",
@@ -320,6 +410,16 @@
       "lat": 54.223219,
       "lon": 9.435676,
       "distanceKm": 18.2
+    },
+    "rr-am-ratsgymnasium-minden": {
+      "network": "pegelonline",
+      "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
+      "name": "Weser",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.303606,
+      "lon": 8.932229,
+      "distanceKm": 2.6
     },
     "rr-besselgymnasium-minden": {
       "network": "pegelonline",
@@ -451,6 +551,16 @@
       "lon": 8.3094,
       "distanceKm": 2.4
     },
+    "ruderclub-blauweiss-basel": {
+      "network": "bafu",
+      "id": "2613",
+      "name": "Weil, Palmrainbrücke",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.6014,
+      "lon": 7.5947,
+      "distanceKm": 5.3
+    },
     "ruderclub-grenzach": {
       "network": "bafu",
       "id": "2613",
@@ -471,6 +581,26 @@
       "lon": 13.651758,
       "distanceKm": 0.6
     },
+    "ruderclub-lindau-bodensee": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 1.4
+    },
+    "ruderclub-lochau": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 5.1
+    },
     "ruderclub-moeve-1919-ev-grossauheim": {
       "network": "pegelonline",
       "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
@@ -480,6 +610,16 @@
       "lat": 50.079717,
       "lon": 8.953596,
       "distanceKm": 2.4
+    },
+    "ruderclub-oberhavel-hennigsdorf": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 28.0
     },
     "ruderclub-olten": {
       "network": "bafu",
@@ -571,6 +711,16 @@
       "lon": 8.35523,
       "distanceKm": 10.6
     },
+    "rudergesellschaft-zeltingen": {
+      "network": "pegelonline",
+      "id": "abd34ee6-a578-4639-b73d-fa4e08f40345",
+      "name": "Ruwer",
+      "water": "Mosel",
+      "kind": "river",
+      "lat": 49.783052,
+      "lon": 6.704234,
+      "distanceKm": 29.2
+    },
     "ruderriege-schaumburgia-am-adolfinum-bueckeburg": {
       "network": "pegelonline",
       "id": "d2c8f60e-fda4-4744-9017-9c727fdcfe1f",
@@ -640,6 +790,16 @@
       "lat": 52.354677,
       "lon": 9.869744,
       "distanceKm": 8.6
+    },
+    "ruderverein-hellas-offenbach": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 2.0
     },
     "ruderverein-hoexter-von-1898": {
       "network": "pegelonline",
@@ -751,6 +911,26 @@
       "lon": 7.2834,
       "distanceKm": 20.6
     },
+    "spandauer-ruder-club-friesen": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 15.4
+    },
+    "sportgemeinschaft-wiking-1903": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 2.0
+    },
     "sportverein-energie-berlin-ev-abt-rudern": {
       "network": "pegelonline",
       "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
@@ -770,6 +950,26 @@
       "lat": 50.54512,
       "lon": 8.35523,
       "distanceKm": 10.6
+    },
+    "srr-gymnasium-philippinum-weilburg": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 9.0
+    },
+    "srr-leibnizgymnasium-offenbach": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 2.0
     },
     "tsv-herrsching-abt-wassersport": {
       "network": "gkd",
@@ -840,6 +1040,26 @@
       "lat": 50.54512,
       "lon": 8.35523,
       "distanceKm": 23.5
+    },
+    "wassersportverein-koenigs-wusterhausen": {
+      "network": "pegelonline",
+      "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
+      "name": "Neue Mühle Schleuse Op",
+      "water": "Dahme-Wasserstrasse",
+      "kind": "river",
+      "lat": 52.296816,
+      "lon": 13.651758,
+      "distanceKm": 0.3
+    },
+    "weilburger-ruderverein-1905": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 9.2
     },
     "wuerzburger-ruderverein-bayern-von-18751905": {
       "network": "gkd",

@@ -14,7 +14,14 @@ def test_each_club_reads_its_nearest_station():
     # Bodensee: the clubs nearest to Lindau read it, the far western clubs do not.
     arbon = data.clubs["seeclub-arbon"]
     assert water_stations.for_club(arbon, data.lakes[arbon.lake_id]).id == "lindau-20001001"
-    near = ("seeclub-arbon", "seeclub-rorschach", "ruderverein-wiking-bregenz", "ruderverein-friedrichshafen")
+    near = (
+        "seeclub-arbon",
+        "seeclub-rorschach",
+        "ruderverein-wiking-bregenz",
+        "ruderverein-friedrichshafen",
+        "ruderclub-lindau-bodensee",  # 1.4 km from the station; missing until its water became Bodensee (26 Oct)
+        "ruderclub-lochau",
+    )
     assert all(water_stations.for_club(data.clubs[c], data.lakes["bodensee"]).id == "lindau-20001001" for c in near)
     far = [c for c in data.clubs_on(arbon.lake_id) if c.id not in near]
     assert far and all(water_stations.for_club(c, data.lakes[c.lake_id]) is None for c in far)
