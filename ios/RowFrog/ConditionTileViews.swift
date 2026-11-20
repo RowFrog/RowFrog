@@ -181,7 +181,14 @@ struct ConditionTile: View {
             switch data.forecast.sunState(at: data.moment) {
             case let .up(sunrise, sunset)?:
                 header(tr("Sunset"))
-                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset, at: data.moment)
+                // In the last hour before sunset the minutes left take the sunrise's place, in the
+                // light's colour; the sun line of the closed tile counts too (owner's pick E, 20 Nov 2026).
+                if DaylightRule.light(at: data.moment, days: data.forecast.daylight ?? []) == .amber {
+                    sunLine(Format.time(sunset), tr("%@ left", Format.timeLeft(from: data.moment, to: sunset)), detailTint: cause,
+                            sunrise: sunrise, sunset: sunset, at: data.moment)
+                } else {
+                    sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset, at: data.moment)
+                }
             case let .down(sunrise, sunset)?:
                 header(tr("Sunrise"))
                 sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset, at: data.moment)
@@ -193,11 +200,15 @@ struct ConditionTile: View {
     }
 
     /// Laid out like the other tiles: value and detail on the left, the sun path on the right.
-    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date, at: Date) -> some View {
+    /// The value takes the light's colour while daylight sets it, as the other tiles' values do.
+    private func sunLine(_ value: String, _ detail: String, detailTint: Color? = nil,
+                         sunrise: Date, sunset: Date, at: Date) -> some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                    .foregroundStyle(cause ?? .primary)
+                    .accessibilityLabel(light == nil ? value : value + ", " + tr("Sets the light: %@", light?.title ?? ""))
+                Text(detail).font(.caption2).foregroundStyle(detailTint.map { AnyShapeStyle($0) } ?? AnyShapeStyle(.secondary)).lineLimit(1).minimumScaleFactor(0.8)
             }
             Spacer(minLength: 0)
             SunPath(sunrise: sunrise, sunset: sunset, at: at, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
