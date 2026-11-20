@@ -432,7 +432,8 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   ctx.scale(ratio, ratio);
   const e = gridEdges(view.grid);
   // The credit at the bottom gets a strip of its own, so it never lies over the lake (owner, 18 Nov 2026).
-  const f = miniFrame(e, w, hgt, 8, 8 + creditLines(ctx, expectedCredit(canvas), w).length * CREDIT_LINE);
+  const strip = 8 + creditLines(ctx, expectedCredit(canvas), w).length * CREDIT_LINE;
+  const f = miniFrame(e, w, hgt, 8, strip);
   const pt = f.pt;
   miniBase(canvas, f).then((credit) => {
     if (canvas.dataset.credit === credit) return;
@@ -482,7 +483,8 @@ function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   if (samples.length) {
     const metresPerPixel = (40075016.686 * Math.cos((((e.north + e.south) / 2) * Math.PI) / 180)) / (256 * f.scale);
     const grid = windArrows({
-      area: [0, 0, w, hgt], spacing: MINI_ARROW_SPACING, rings, samples, blend: BLEND_M / metresPerPixel,
+      // No arrows in the credit's strip either (LakeMiniMap.logoStrip, app #563).
+      area: [0, 0, w, Math.max(hgt - strip, 0)], spacing: MINI_ARROW_SPACING, rings, samples, blend: BLEND_M / metresPerPixel,
       land: fromLand && ((p) => fromLand(f.place(p))),
     });
     const darkBase = onBase && darkMode();
