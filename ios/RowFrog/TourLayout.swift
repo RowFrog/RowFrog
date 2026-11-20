@@ -56,6 +56,55 @@ struct TourSideColumn<Content: View>: View {
     }
 }
 
+/// The tour's pager: pages side by side in a scroll view that stops on each page. A paged TabView
+/// did this before, but on the iPad it crashed inside UIKit when the club search was tapped after
+/// the device had turned (20 Nov 2026, Simulator). `selection` and the swipes stay in step, and a turn
+/// or resize scrolls back to the page shown.
+struct TourPager<Page: Hashable, Content: View>: View {
+    let pages: [Page]
+    @Binding var selection: Page
+    @ViewBuilder let content: (Page) -> Content
+    @State private var scrolled: Page?
+
+    var body: some View {
+        // The pager takes the room it is given and hands each page exactly that size. A horizontal
+        // scroll view alone grows to its content's height, which pushed Next off the screen.
+        GeometryReader { proxy in
+            let size = proxy.size
+            ScrollViewReader { reader in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(pages, id: \.self) { page in
+                            content(page)
+                                .frame(width: size.width, height: size.height)
+                                .id(page)
+                        }
+                    }
+                    .scrollTargetLayout()
+                }
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.hidden)
+                .scrollPosition(id: $scrolled)
+                .frame(width: size.width, height: size.height)
+                .onAppear {
+                    scrolled = selection
+                    reader.scrollTo(selection)
+                }
+                .onChange(of: scrolled) {
+                    if let scrolled, scrolled != selection { selection = scrolled }
+                }
+                .onChange(of: selection) {
+                    if scrolled != selection { withAnimation { scrolled = selection } }
+                }
+                // A turn or resize scrolls back to the page shown.
+                .onChange(of: size) {
+                    reader.scrollTo(selection)
+                }
+            }
+        }
+    }
+}
+
 /// The tour's page dots, its own so they can sit under the left column on a wide screen. A tap on
 /// a dot goes to that page, as on the website.
 struct TourDots: View {
