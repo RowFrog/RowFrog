@@ -67,32 +67,39 @@ struct TourPager<Page: Hashable, Content: View>: View {
     @State private var scrolled: Page?
 
     var body: some View {
-        ScrollViewReader { reader in
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    ForEach(pages, id: \.self) { page in
-                        content(page)
-                            .containerRelativeFrame([.horizontal, .vertical])
-                            .id(page)
+        // The pager takes the room it is given and hands each page exactly that size. A horizontal
+        // scroll view alone grows to its content's height, which pushed Next off the screen.
+        GeometryReader { proxy in
+            let size = proxy.size
+            ScrollViewReader { reader in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(pages, id: \.self) { page in
+                            content(page)
+                                .frame(width: size.width, height: size.height)
+                                .id(page)
+                        }
                     }
+                    .scrollTargetLayout()
                 }
-                .scrollTargetLayout()
-            }
-            .scrollTargetBehavior(.paging)
-            .scrollIndicators(.hidden)
-            .scrollPosition(id: $scrolled)
-            .onAppear {
-                scrolled = selection
-                reader.scrollTo(selection)
-            }
-            .onChange(of: scrolled) {
-                if let scrolled, scrolled != selection { selection = scrolled }
-            }
-            .onChange(of: selection) {
-                if scrolled != selection { withAnimation { scrolled = selection } }
-            }
-            .onGeometryChange(for: CGSize.self, of: { $0.size }) { _ in
-                reader.scrollTo(selection)
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.hidden)
+                .scrollPosition(id: $scrolled)
+                .frame(width: size.width, height: size.height)
+                .onAppear {
+                    scrolled = selection
+                    reader.scrollTo(selection)
+                }
+                .onChange(of: scrolled) {
+                    if let scrolled, scrolled != selection { selection = scrolled }
+                }
+                .onChange(of: selection) {
+                    if scrolled != selection { withAnimation { scrolled = selection } }
+                }
+                // A turn or resize scrolls back to the page shown.
+                .onChange(of: size) {
+                    reader.scrollTo(selection)
+                }
             }
         }
     }
