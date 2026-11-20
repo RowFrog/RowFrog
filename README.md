@@ -120,7 +120,7 @@ every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). The map sits in the same place
 on every detail view; on the waves page it is the lake view's waves at the
 chosen time on the street map (Apple's muted map, OpenStreetMap on the
-website) with faint wind arrows on land, and it has the weather maps' chain
+website) with the lake view's wind arrows over water and land, and it has the weather maps' chain
 button, play and slider (`docs/decisions/0047`); a tap opens the lake view on
 that layer. The lake view tile's small map stands on the same street map. Maps opened full
 screen run to the top with floating buttons. Swipe between detail views,
