@@ -1,23 +1,32 @@
-# Version updates for the backend's pinned packages (backend/requirements-publish.txt,
-# and ruff in backend/requirements-dev.txt), the command-line tools in package.json
-# (wrangler, Playwright) and the GitHub Actions in .github/workflows.
-# Once a month one PR per kind raises them all; a security fix comes as its own PR as soon
-# as GitHub knows of it (needs "Dependabot security updates" on in the repository's
-# Settings > Advanced Security). .github/workflows/dependabot-merge.yml merges
-# the pip ones when CI is green and only the pinned versions changed; npm and
-# Actions PRs wait for a person, because wrangler and the Actions only show
-# a problem when the deploys run on main.
+# Version updates for the backend's packages (backend/uv.lock, with pyproject.toml),
+# the command-line tools in package.json (wrangler, Playwright, eslint) and the
+# GitHub Actions in .github/workflows (owner, 20 Nov 2026).
+# - Once a month: one PR per kind with all minor and patch updates; every major
+#   update comes as its own PR, so a break can be traced to it.
+# - Cooldown: a release must be 7 days old before it is proposed (a poisoned
+#   release is usually found and pulled within days). Security fixes skip the
+#   wait and come as soon as GitHub knows of them (Settings > Advanced Security:
+#   Dependabot security updates and grouped security updates are on).
+# .github/workflows/dependabot-merge.yml merges a backend PR by itself when CI
+# is green, only the lock changed and no package moved to a new major. Majors,
+# npm and Actions PRs wait for the owner's OK (owner rule, 20 Nov 2026).
+# Python, Node, xcodegen and uv versions are not Dependabot's: the monthly
+# dependency check (3rd of each month) compares .python-version and .nvmrc with
+# the newest releases.
 version: 2
 updates:
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /backend
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
     groups:
       backend:
         applies-to: version-updates
         patterns: ["*"]
+        update-types: [minor, patch]
       backend-security:
         applies-to: security-updates
         patterns: ["*"]
@@ -25,11 +34,14 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
     groups:
       tools:
         applies-to: version-updates
         patterns: ["*"]
+        update-types: [minor, patch]
       tools-security:
         applies-to: security-updates
         patterns: ["*"]
@@ -37,7 +49,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
     groups:
       actions:
         patterns: ["*"]
+        update-types: [minor, patch]

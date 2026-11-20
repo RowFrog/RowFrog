@@ -1,11 +1,12 @@
 name: Merge Dependabot updates
 
-# After CI passes on a Dependabot PR that only raises the backend's pinned
-# versions (backend/requirements-publish.txt, ruff in requirements-dev.txt, and
-# the ranges in pyproject.toml),
-# this merges it, so monthly bumps and security fixes need no one (owner OK
-# 2026-11-04). A PR that touches anything else, or whose CI fails, stays open
-# for a person. Runs from main's copy of this file, never the PR's.
+# After CI passes on a Dependabot PR that only raises the backend's versions
+# (backend/uv.lock, the ranges in pyproject.toml, and the generated
+# requirements-publish.txt), this merges it, so monthly minor/patch bumps and
+# security fixes need no one (owner OK 2026-11-04). A PR that moves any package
+# to a new major version (scripts/lock_majors.py), touches anything else, or
+# whose CI fails stays open for the owner's OK (owner rule, 20 Nov 2026).
+# Runs from main's copy of this file, never the PR's.
 on:
   workflow_run:
     workflows: [CI]
@@ -21,10 +22,15 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.actor.login == 'dependabot[bot]' &&
-      startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
+      (startsWith(github.event.workflow_run.head_branch, 'dependabot/uv/') ||
+       startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/'))
     runs-on: ubuntu-latest
     steps:
-      - name: Merge when only the pinned versions changed
+      # main's scripts and lock (never the PR's code); the PR's lock is read with git show.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Merge when only the locked versions changed and no major moved
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -36,7 +42,12 @@ jobs:
           if [ -z "$pr" ]; then echo "No open Dependabot PR at $SHA (newer push or already closed)"; exit 0; fi
           files=$(gh pr diff "$pr" -R "$REPO" --name-only)
           echo "PR #$pr changes:"; echo "$files"
-          if echo "$files" | grep -qvE '^backend/(requirements-publish\.txt|requirements-dev\.txt|pyproject\.toml)$'; then
+          if echo "$files" | grep -qvE '^backend/(uv\.lock|requirements-publish\.txt|requirements-dev\.txt|pyproject\.toml)$'; then
             echo "It changes other files too: left for a person."; exit 0
+          fi
+          git fetch -q origin "$SHA"
+          git show "$SHA:backend/uv.lock" > "$RUNNER_TEMP/new.lock"
+          if ! python3 scripts/lock_majors.py backend/uv.lock "$RUNNER_TEMP/new.lock"; then
+            echo "A package moves to a new major version: left for the owner's OK."; exit 0
           fi
           gh pr merge "$pr" -R "$REPO" --squash --match-head-commit "$SHA"
