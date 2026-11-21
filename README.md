@@ -636,6 +636,9 @@ Addresses and launch points the owner checked on the satellite view (or
 accepted from a suggestion) are kept
 in `data/catalogs/hand-checked.json` (with `remove` for entries that are no
 rowing clubs); the imports and Fix unknown waters apply it on every run.
+An entry can also mark a point the owner checked on the spot (`verified`, as
+for Breisach and Offenbach-Bürgel), and an import keeps a checked launch point
+from the catalog it replaces while the club stays on the same water.
 `scripts/snap_launch_points.py` moves catalog launch points that lie up to
 150 m outside their water onto its shore, leaving hand-checked points alone,
 and a data test wants every launch point within 25 m of its lake outline.
