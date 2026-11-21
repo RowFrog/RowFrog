@@ -50,3 +50,48 @@ def test_pictures_are_saved_at_our_own_jpeg_quality():
         assert picture.size == (200, 150)
         assert picture.mode == "RGB"
     assert len(sentinel2.to_jpeg(png.getvalue(), quality=75)) < len(data)
+
+
+def _png(alpha_right_from: int | None, size=(200, 150)) -> bytes:
+    """A noisy picture; with `alpha_right_from`, the pass saw nothing right of that column."""
+    import io
+
+    from PIL import Image
+
+    picture = Image.effect_noise(size, 40).convert("RGB")
+    out = io.BytesIO()
+    if alpha_right_from is None:
+        picture.save(out, "PNG")
+    else:
+        alpha = Image.new("L", size, 255)
+        alpha.paste(0, (alpha_right_from, 0, size[0], size[1]))
+        picture.putalpha(alpha)
+        picture.save(out, "PNG")
+    return out.getvalue()
+
+
+def test_parts_the_pass_did_not_see_are_grey_and_counted():
+    import io
+
+    from PIL import Image
+
+    data, gap = sentinel2.picture_from_png(_png(150))
+    assert gap == 0.25
+    with Image.open(io.BytesIO(data)) as picture:
+        assert picture.mode == "RGB" and picture.size == (200, 150)
+        r, g, b = picture.getpixel((190, 75))
+        # Grey stripes, never black (JPEG moves colours a little).
+        assert all(abs(c - want) <= 12 for c, want in zip((r, g, b), sentinel2.GAP_COLOURS[0])) or all(
+            abs(c - want) <= 12 for c, want in zip((r, g, b), sentinel2.GAP_COLOURS[1])
+        )
+
+
+def test_a_whole_picture_has_no_gap():
+    assert sentinel2.picture_from_png(_png(None))[1] == 0.0
+    assert sentinel2.picture_from_png(_png(200))[1] == 0.0  # alpha band, all seen
+    # A few pixels at a corner are not worth a note.
+    assert sentinel2.picture_from_png(_png(399, size=(400, 150)))[1] == 0.0
+
+
+def test_the_picture_asks_for_the_data_mask():
+    assert '"dataMask"' in sentinel2.PICTURE_SCRIPT and "bands: 4" in sentinel2.PICTURE_SCRIPT

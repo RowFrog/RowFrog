@@ -72,6 +72,12 @@ def test_ice_map_is_looked_at_twice_a_day():
     assert not publish.ice_map_due(utc(22, 18, 30), utc(23, 2, 0))
 
 
+def fake_render(monkeypatch, render):
+    """Stands in for Copernicus: `render` makes every picture and tile; the card's pictures see the whole frame."""
+    monkeypatch.setattr(sentinel2, "jpeg", render)
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (render(client, bbox, w, h, day), 0.0))
+
+
 def test_latest_and_clearest_pass():
     passes = [
         sentinel2.Pass(date(2026, 10, 3), 0.05),
@@ -86,7 +92,7 @@ def test_latest_and_clearest_pass():
 
 def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
     rendered = []
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: rendered.append(day) or b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: rendered.append(day) or b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     same = sentinel2.Pass(date(2026, 10, 8), 0.05)
     body = publish._picture_meta(None, tmp_path, ring, {}, same, same)
@@ -103,7 +109,7 @@ def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
 
 
 def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     clear = sentinel2.Pass(date(2026, 10, 3), 0.05)
     mostly = sentinel2.Pass(date(2026, 10, 8), 0.25)
@@ -279,7 +285,7 @@ def test_local_warnings_skip_clubs_outside_germany(monkeypatch):
 
 def test_big_lakes_get_sharp_tiles_once_per_pass(tmp_path, monkeypatch):
     rendered = []
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: rendered.append((w, h)) or b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: rendered.append((w, h)) or b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
     # About 30 x 20 km: 1280 px wide in the card, about 3300 px at 10 m, so tiles but no overview.
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
@@ -311,7 +317,7 @@ def test_only_the_biggest_lakes_get_an_overview():
 
 
 def test_tiles_wait_for_a_later_run_when_the_run_has_used_its_share(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 3)
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
@@ -323,7 +329,7 @@ def test_tiles_wait_for_a_later_run_when_the_run_has_used_its_share(tmp_path, mo
 
 
 def test_small_lakes_get_no_sharp_files(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
     body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
@@ -347,7 +353,7 @@ def test_clubs_without_an_outline_get_a_place_around_their_launch_point():
 
 
 def test_big_lakes_nobody_uses_get_no_tiles(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
@@ -664,3 +670,18 @@ def test_a_state_saved_before_0043_gets_its_rain_moved_once(tmp_path):
     # Saved again with the mark, it is not moved a second time.
     again = publish.State(path)
     assert [h.precipitation_mm for h in again.clubs["a"][1]] == [0.8, None]
+
+
+def test_gap_share_goes_into_the_satellite_file_and_stays(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (b"jpg", 0.09))
+    ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
+    edge = sentinel2.Pass(date(2026, 11, 17), 1.0)
+    clear = sentinel2.Pass(date(2026, 11, 14), 0.0)
+    body = publish._picture_meta(None, tmp_path, ring, {}, edge, None)
+    assert body["latest"]["gap"] == 0.09
+    # Kept when the same pass is looked at again, and copied when the clearest is the same pass.
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (b"jpg", 0.0))
+    again = publish._picture_meta(None, tmp_path, ring, body, edge, clear)
+    assert again["latest"]["gap"] == 0.09 and "gap" not in again["clearest"]
+    same = publish._picture_meta(None, tmp_path / "b", ring, {}, clear, clear)
+    assert "gap" not in same["latest"] and "gap" not in same["clearest"]

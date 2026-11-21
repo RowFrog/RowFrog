@@ -470,6 +470,8 @@ enum German {
         "Shore": "Ufer",
         "Ice map": "Eiskarte",
         "Why only every few days?": "Warum nur alle paar Tage?",
+        "Grey area": "Grauer Bereich",
+        "On %@ the satellite photographed only part of this view: its strip of pictures ended here. The grey area is not in this picture, and the cloud share counts only the part it photographed.": "Am %@ hat der Satellit nur einen Teil dieses Ausschnitts aufgenommen: Sein Bildstreifen endete hier. Der graue Bereich fehlt in diesem Bild, und der Bewölkungsanteil zählt nur den aufgenommenen Teil.",
         "Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older.": "Sentinel-2 fotografiert jeden See aus etwa 800 km Höhe alle 2 bis 5 Tage am späten Vormittag, wenn seine zwei Satelliten die Erde umkreisen. Er macht Bilder bei Tageslicht wie eine Kamera und kann nicht durch Wolken sehen. Das neueste Bild kann deshalb bewölkt und das klarste älter sein.",
         "Clubs": "Vereine",
         "Satellite, %@: open water": "Satellit, %@: offenes Wasser",

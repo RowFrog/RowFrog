@@ -72,3 +72,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 53 | 2026-11-20 | [The sunset count sits at the sun, reasons go red first, a unit takes its value's colour](0053-sunset-count-at-the-sun-red-first.md) |
 | 54 | 2026-11-20 | [The top of a club page has no bar: the cards blur away under the buttons](0054-soft-top-edge-on-club-pages.md) |
 | 55 | 2026-11-20 | [One lock file per kind of software; every system installs from it](0055-same-versions-everywhere.md) |
+| 56 | 2026-11-21 | [Where a pass took no picture, the satellite picture is grey and the "i" is filled](0056-satellite-gap-grey-with-filled-info.md) |

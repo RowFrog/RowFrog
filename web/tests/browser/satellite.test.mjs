@@ -89,7 +89,9 @@ async function openIn(layout, storage, scheme = "light", init = null) {
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
 const META = {
   width: 1000, height: 2000, bbox: [10.70, 47.55, 10.80, 47.65], attribution: "Contains modified Copernicus Sentinel data 2026",
-  latest: { image: "latest.jpg", date: "2026-11-11", lakeCloud: 1 },
+  // The latest with a grey area (the pass's strip ended inside the frame): only its "i" is filled, and
+  // the line keeps its height (owner 21 Nov 2026: "does this not mess up the height", decision 0056).
+  latest: { image: "latest.jpg", date: "2026-11-11", lakeCloud: 1, gap: 0.09 },
   clearest: { image: "clearest.jpg", date: "2026-10-27", lakeCloud: 0 },
 };
 
@@ -126,8 +128,10 @@ for (const layout of LAYOUTS) {
       assert.equal(kinds, 2, "two pictures to pick");
       await page.locator('#satellite [data-kind="latest"]').click();
       const latest = await box();
+      assert.ok(await page.locator("#satellite .sat-why.has-gap").count() > 0, "a filled i on the picture with a grey area");
       await page.locator('#satellite [data-kind="clearest"]').click();
       const clearest = await box();
+      assert.equal(await page.locator("#satellite .sat-why.has-gap").count(), 0, "the plain i on the whole picture");
       await page.locator('#satellite [data-kind="latest"]').click();
       assert.deepEqual(clearest, latest, "the picture keeps its place and size (x, width, height)");
       assert.deepEqual(await box(), latest, "and again on switching back");

@@ -19,6 +19,12 @@ struct SatellitePicture: Decodable, Hashable {
         var tiles: String?
         /// The three biggest lakes: a 2500 px picture for the full view, before the tiles.
         var overview: String?
+        /// Share of the picture the pass did not photograph (the edge of its strip), drawn
+        /// grey by the backend; missing when it saw the whole frame (decision 0056).
+        var gap: Double?
+
+        /// Whether part of the picture is the grey "not photographed" area.
+        var hasGap: Bool { (gap ?? 0) > 0 }
 
         var day: Date? { SatellitePicture.parser.date(from: date) }
     }
@@ -645,18 +651,21 @@ struct SatelliteCaption: View {
                 Text(line)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                // On a picture with a grey area the "i" is filled and blue, and its message
+                // explains the grey area first; the line keeps its width and height
+                // (owner's pick 21 Nov 2026, option 2; docs/decisions/0056).
                 Button { explaining = true } label: {
-                    Image(systemName: "info.circle")
+                    Image(systemName: shot.hasGap ? "info.circle.fill" : "info.circle")
                         .font(.footnote)
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(tr("Why only every few days?"))
+                .foregroundStyle(shot.hasGap ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.secondary))
+                .accessibilityLabel(shot.hasGap ? tr("Grey area") : tr("Why only every few days?"))
             }
-            .alert(tr("Why only every few days?"), isPresented: $explaining) {
+            .alert(shot.hasGap ? tr("Grey area") : tr("Why only every few days?"), isPresented: $explaining) {
                 Button(tr("OK"), role: .cancel) {}
             } message: {
-                Text(tr("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older."))
+                Text(explanation)
             }
             if layers.on.contains(.ice), let ice = picture.ice {
                 Text(tr("Satellite ice map, %@", SatellitePicture.parser.date(from: ice.date).map { Format.day($0) } ?? ice.date))
@@ -669,6 +678,13 @@ struct SatelliteCaption: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private var explanation: String {
+        let sentinel = tr("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older.")
+        guard shot.hasGap else { return sentinel }
+        let day = shot.day.map { Format.day($0) } ?? shot.date
+        return tr("On %@ the satellite photographed only part of this view: its strip of pictures ended here. The grey area is not in this picture, and the cloud share counts only the part it photographed.", day) + "\n\n" + sentinel
     }
 
     private var line: String {
