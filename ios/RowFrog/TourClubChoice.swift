@@ -177,7 +177,8 @@ struct ClubChoicePage: View {
                 .font(.title3)
             }
         }
-        .accessibilityIdentifier("tour-club-\(club.id)")
+        // The page too: the paged view can build the next page early, and More clubs lists the same club (21 Nov 2026).
+        .accessibilityIdentifier("tour-club-\(page.rawValue)-\(club.id)")
     }
 }
 
