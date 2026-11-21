@@ -978,7 +978,7 @@
       "name": "Oker",
       "country": "de",
       "center": {
-        "lat": 52.27061,
+        "lat": 52.27062,
         "lon": 10.51668
       },
       "kind": "river"
@@ -7594,9 +7594,9 @@
       "country": "de",
       "lakeId": "havel",
       "launchPoint": {
-        "lat": 52.58165,
-        "lon": 13.22015,
-        "precision": "shore point of Havel nearest the geocoded boathouse, 241 m away",
+        "lat": 52.58143,
+        "lon": 13.22021,
+        "precision": "shore point of Havel nearest the geocoded boathouse, 240 m away",
         "verified": false
       }
     },

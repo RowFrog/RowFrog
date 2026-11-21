@@ -29,6 +29,7 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from . import source_status
 from .sources import gkd
 
 UTC = timezone.utc
@@ -160,6 +161,7 @@ def fetch_table(client: httpx.Client, kind: str, station: str) -> dict[datetime,
     resp = client.get(GKD_PAGES[kind].format(station=station), headers=gkd.HEADERS, timeout=30)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
+        source_status.reject("gkd", "firewall")
         raise gkd.Rejected("GKD firewall rejected the request")
     values = parse_table(resp.text)
     if kind == "wind" and any(v > MAX_WIND_MS or v < 0 for v in values.values()):

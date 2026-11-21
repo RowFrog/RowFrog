@@ -1,8 +1,7 @@
 name: Merge Dependabot updates
 
 # After CI passes on a Dependabot PR that only raises the backend's versions
-# (backend/uv.lock, the ranges in pyproject.toml, and the generated
-# requirements-publish.txt), this merges it, so monthly minor/patch bumps and
+# (backend/uv.lock and the ranges in pyproject.toml), this merges it, so monthly minor/patch bumps and
 # security fixes need no one (owner OK 2026-11-04). A PR that moves any package
 # to a new major version (scripts/lock_majors.py), touches anything else, or
 # whose CI fails stays open for the owner's OK (owner rule, 20 Nov 2026).
@@ -42,7 +41,7 @@ jobs:
           if [ -z "$pr" ]; then echo "No open Dependabot PR at $SHA (newer push or already closed)"; exit 0; fi
           files=$(gh pr diff "$pr" -R "$REPO" --name-only)
           echo "PR #$pr changes:"; echo "$files"
-          if echo "$files" | grep -qvE '^backend/(uv\.lock|requirements-publish\.txt|requirements-dev\.txt|pyproject\.toml)$'; then
+          if echo "$files" | grep -qvE '^backend/(uv\.lock|pyproject\.toml)$'; then
             echo "It changes other files too: left for a person."; exit 0
           fi
           git fetch -q origin "$SHA"

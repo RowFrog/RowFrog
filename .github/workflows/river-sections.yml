@@ -38,6 +38,7 @@ jobs:
         with:
           python-version-file: .python-version
       - run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
+      - uses: ./.github/actions/backend-pins
       - run: pip install -c backend/requirements-publish.txt -e "backend[rivers]"
       - name: Today's date
         id: day

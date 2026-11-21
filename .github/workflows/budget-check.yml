@@ -24,6 +24,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
+      - uses: ./.github/actions/backend-pins
       - run: pip install -c backend/requirements-publish.txt -e backend
       - name: Check the limits
         id: check
