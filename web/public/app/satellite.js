@@ -115,12 +115,15 @@ function fileUrl(lake, file, date) {
 function caption(lake, shot) {
   const { meta } = lake;
   const cloud = (shot.lakeCloud ?? 0) * 100;
+  // A grey area (the pass's strip ended inside the frame): the "i" is filled and blue and
+  // explains it first, as the app's SatelliteCaption (owner 21 Nov 2026, decision 0056).
+  const gap = (shot.gap ?? 0) > 0;
   const ice = store.satLayers.includes("ice") && available(lake).some((l) => l.id === "ice");
   // The first line is always two lines high, so the picture above keeps its size when switching between
   // pictures whose line wraps and whose doesn't (SatelliteCaption, reservesSpace; owner 12 Nov 2026).
   // As the app's caption: the line and the info button on one row, the button at its end; the credit
   // under it in caption size, 2 px below (SatelliteCaption: VStack spacing 2, footnote and caption2).
-  return `<div class="sat-caption"><p class="sub small sat-line"><span>${h(overLake(lake) ? (cloud < 1 ? t("%@ · lake free of cloud", dayLabel(shot.date)) : t("%@ · lake %@%% cloudy", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("%@ · no cloud", dayLabel(shot.date)) : t("%@ · %@%% cloudy", dayLabel(shot.date), num(cloud))))}</span><button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
+  return `<div class="sat-caption"><p class="sub small sat-line"><span>${h(overLake(lake) ? (cloud < 1 ? t("%@ · lake free of cloud", dayLabel(shot.date)) : t("%@ · lake %@%% cloudy", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("%@ · no cloud", dayLabel(shot.date)) : t("%@ · %@%% cloudy", dayLabel(shot.date), num(cloud))))}</span><button class="link sub sat-why${gap ? " has-gap" : ""}" data-sat-why${gap ? ` data-gap-day="${h(dayLabel(shot.date))}"` : ""} aria-label="${h(gap ? t("Grey area") : t("Why only every few days?"))}">${icon(gap ? "info-fill" : "info")}</button></p>
     ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
     <p class="sub sat-credit">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p></div>`;
 }
@@ -157,8 +160,12 @@ function wireControls(el, lake, setKind) {
   el.querySelectorAll("[data-kind]").forEach((b) => b.addEventListener("click", () => setKind(b.dataset.kind)));
   el.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => switchLayer(b.dataset.layer)));
   el.querySelector("[data-sat-legend]")?.addEventListener("click", () => openSheet(t("Legend"), legend(lake)));
-  el.querySelectorAll("[data-sat-why]").forEach((b) => b.addEventListener("click", () => openSheet(t("Why only every few days?"),
-    `<p>${h(t("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older."))}</p>`)));
+  el.querySelectorAll("[data-sat-why]").forEach((b) => b.addEventListener("click", () => {
+    const sentinel = `<p>${h(t("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older."))}</p>`;
+    const day = b.dataset.gapDay;
+    if (!day) return openSheet(t("Why only every few days?"), sentinel);
+    openSheet(t("Grey area"), `<p>${h(t("On %@ the satellite photographed only part of this view: its strip of pictures ended here. The grey area is not in this picture, and the cloud share counts only the part it photographed.", day))}</p>${sentinel}`);
+  }));
 }
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */

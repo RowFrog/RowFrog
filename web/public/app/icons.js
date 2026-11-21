@@ -43,6 +43,8 @@ const PATHS = {
   "oars": `<path d="M3.5 20.5 14 10" /> <ellipse cx="17" cy="7" rx="2.4" ry="4.8" transform="rotate(45 17 7)" fill="currentColor" /> <path d="M20.5 20.5 10 10" /> <ellipse cx="7" cy="7" rx="2.4" ry="4.8" transform="rotate(-45 7 7)" fill="currentColor" />`,
   "sailboat": `<path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z" /> <path d="M21 14 10 2 3 14h18Z" /> <path d="M10 2v16" />`,
   "info": `<circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" />`,
+  // The filled "i" on a satellite picture with a grey area (app: info.circle.fill).
+  "info-fill": `<circle cx="12" cy="12" r="10" fill="currentColor" /> <path d="M12 16v-4" stroke="#fff" /> <path d="M12 8h.01" stroke="#fff" />`,
   "chevron-right": `<path d="m9 18 6-6-6-6" />`,
   "chevrons-up-down": `<path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" />`,
   "search": `<circle cx="11" cy="11" r="8" /> <path d="m21 21-4.3-4.3" />`,

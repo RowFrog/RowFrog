@@ -1716,6 +1716,7 @@ main.page.club .page-end > .source button.link { display: flex; align-items: cen
 .sat-line { display: flex; align-items: baseline; gap: 4px; }
 .sat-line > span { flex: 1; min-width: 0; }
 .sat-line .sat-why { flex: none; color: var(--sub); }
+.sat-line .sat-why.has-gap { color: var(--accent); }
 .sat-credit { font-size: 11px; }
 #satellite .picture { border-radius: 10px; }
 /* One saved club: the house alone in a round button as big as the others, as Weather with one place

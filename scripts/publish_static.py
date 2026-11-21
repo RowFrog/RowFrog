@@ -961,11 +961,17 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
         path = folder / entry["image"]
         folder.mkdir(parents=True, exist_ok=True)
         if before and before.get("date") == entry["date"] and path.exists():
-            pass  # already there
+            if before.get("gap"):
+                entry["gap"] = before["gap"]  # already there
         elif kind == "clearest" and latest is not None and found.day == latest.day:
             path.write_bytes((folder / "satellite-latest.jpg").read_bytes())  # the same pass
+            if body["latest"].get("gap"):
+                entry["gap"] = body["latest"]["gap"]
         else:
-            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, found.day))
+            data, gap = sentinel2.picture(client, bbox, width, height, found.day)
+            path.write_bytes(data)
+            if gap:
+                entry["gap"] = gap  # share of the picture the pass did not see, drawn grey
         if sharp:
             same = body["latest"] if kind == "clearest" and latest is not None and found.day == latest.day else None
             entry.update(_sharp(client, folder, kind, bbox, sharp, found.day, before, same))
@@ -979,8 +985,14 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
             "image": "satellite-mostly-clear.jpg",
         }
         path = folder / entry["image"]
-        if not (before and before.get("date") == entry["date"] and path.exists()):
-            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, mostly_clear.day))
+        if before and before.get("date") == entry["date"] and path.exists():
+            if before.get("gap"):
+                entry["gap"] = before["gap"]
+        else:
+            data, gap = sentinel2.picture(client, bbox, width, height, mostly_clear.day)
+            path.write_bytes(data)
+            if gap:
+                entry["gap"] = gap
         if sharp:
             entry.update(_sharp(client, folder, "mostly-clear", bbox, sharp, mostly_clear.day, before))
         body["mostlyClear"] = entry
