@@ -33,7 +33,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
-      - run: pip install -c backend/requirements-publish.txt -e backend
+      - run: pip install -c backend/requirements-publish.txt -e backend pytest
       - name: Import DRV clubs
         run: |
           set -o pipefail
@@ -41,6 +41,10 @@ jobs:
           { echo '```'; tail -n 400 drv-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the catalog loads
         run: python3 -c 'from rowfrog import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
+      # Drops outlines no club uses and runs the data file tests: a broken
+      # catalog fails here instead of turning main red (2026-11-21, 947627c).
+      - name: Check the catalog before committing
+        run: python3 scripts/check_catalog_update.py
       - name: Commit the catalog
         run: |
           git add data/catalogs/de-drv.json data/geocode.json data/outlines

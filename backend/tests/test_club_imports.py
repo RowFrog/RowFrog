@@ -106,11 +106,3 @@ def test_owner_checked_launch_points_survive_an_import(tmp_path):
     assert club_import.keep_earlier_fixes(path, [], clubs) == 1
     assert clubs[0]["launchPoint"] == point
 
-
-def test_new_outlines_no_water_uses_are_removed(tmp_path, monkeypatch):
-    kept, unused, older = tmp_path / "see.geojson", tmp_path / "teich.geojson", tmp_path / "alt.geojson"
-    for f in (kept, unused, older):
-        f.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(club_import, "NEW_OUTLINES", {kept, unused})
-    assert club_import.drop_unused_outlines([{"id": "see"}]) == 1
-    assert kept.exists() and not unused.exists() and older.exists(), "files from earlier runs stay"

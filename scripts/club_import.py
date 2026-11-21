@@ -172,7 +172,6 @@ def place(clubs: list[dict], country: str, report: list[str], id_prefix: str = "
                     }
                     outline = OUTLINES / f"{water_id}.geojson"
                     if not outline.exists():
-                        NEW_OUTLINES.add(outline)
                         outline.write_text(json.dumps({
                             "type": "Feature",
                             "properties": {"id": water_id, "name": name, "source": "© OpenStreetMap contributors, ODbL"},
@@ -329,27 +328,6 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
     return changed
 
 
-# Outline files this run wrote. A later step (water-fixes.json, a kept earlier
-# water) can take the club off that water again; write_catalog then removes
-# the files no water in the catalog uses, so ponds and harbour basins that
-# earlier fixes cleared out (#113, #139, #145, #151) do not come back.
-NEW_OUTLINES: set[Path] = set()
-
-
-def drop_unused_outlines(waters: list[dict]) -> int:
-    """Deletes this run's new outline files that no water in the catalog uses."""
-    used = {w["id"] for w in waters}
-    dropped = 0
-    for outline in sorted(NEW_OUTLINES):
-        if outline.stem not in used and outline.exists():
-            outline.unlink()
-            dropped += 1
-    NEW_OUTLINES.clear()
-    if dropped:
-        print(f"dropped {dropped} new outline files no catalog water uses")
-    return dropped
-
-
 def keep_earlier_fixes(path: Path, waters: list[dict], clubs: list[dict]) -> int:
     """Keeps what later steps put into the catalog before this import: launch
     points moved onto the shore (snap_launch_points.py, fix_unknown_waters.py
@@ -400,7 +378,6 @@ def write_catalog(name: str, source: str, waters: list[dict], clubs: list[dict])
     path = CATALOGS / f"{name}.json"
     keep_earlier_fixes(path, waters, clubs)
     apply_hand_checked(name.split("-")[0], waters, clubs)
-    drop_unused_outlines(waters)
     catalog = {
         "version": 1,
         "updated": date.today().isoformat(),
