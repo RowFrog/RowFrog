@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version-file: .python-version
       - run: pip install -c backend/requirements-publish.txt -e "backend[satellite]"
       - run: python3 scripts/jpeg_quality_probe.py "$RUNNER_TEMP/originals"
         env:
