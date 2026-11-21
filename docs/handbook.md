@@ -365,6 +365,10 @@ The Mac is the code home and the Raspberry Pi (`pi` remote, `rowfrog:git/rowfrog
 | Branch guard (`scripts/local/hooks/post-checkout`) | whenever the shared RowFrog folder (the main checkout, not a worktree) is switched away from `main` | prints a large warning that the folder belongs to the merge queue and that other sessions work in their own `git worktree`, and logs the switch in `log/branch-switch.log`; it cannot block the switch. Rule for all threads: only the merge queue changes branches in `~/Documents/Software/RowFrog` |
 | Weekly backup (`scripts/local/backup.sh`, installed as `backups/make-backup.sh`) | on a change to `main` once the newest snapshot is 7 days old, or by hand | `git bundle --all` (about 120 MB) into `RowFrog/backups/`, the last 8 kept; log `log/backup.log`. Not a launchd job: macOS keeps background jobs out of Documents |
 
+### Service status for the Pi's connection monitor (owner, 21 Nov 2026)
+
+After each job that fetches from outside (forecast run, model check, GKD log, budget check, follow job), the Pi writes what those requests showed into `STATE/sources-status.json` (`~/state/` today; `SOURCES_STATUS=` in `~/.config/rowfrog.env` moves it). The Pi's connection monitor reads it, so a service whose data keeps arriving gets no requests of its own; it only sends TLS handshakes after a failure or once `last_ok` is older than 1.5 × `expect_min`. Nothing extra is ever fetched for it. Code: `backend/rowfrog/source_status.py` (counts every httpx request per host, plus the rclone uploads and the follow job's `git fetch`); keys `openmeteo`, `dwd`, `copernicus`, `gkd`, `pegelonline`, `bafu`, `r2`, `github`, `rowfrogapi`, and also `meteoalarm` (Swiss warnings), `geosphere` (Austrian warnings), `planetary` (Landsat lake temperatures), `cloudflare` (budget check's Worker and D1 figures), `other` (any host not in the list). Counts and times only: no URLs, keys or club names. Without `SOURCES_STATUS` and `--state` (GitHub, the Mac) nothing is written.
+
 ### Merge records and identity (owner, 14 Nov 2026)
 
 - **GitHub mode** (GitHub is the code home): the PR is the record of each merge.

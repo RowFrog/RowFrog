@@ -25,6 +25,8 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
+from .. import source_status
+
 PAGE_URL = "https://www.gkd.bayern.de/en/{kind}/watertemperature/bayern/{station}/current-values/table"
 # A lake's water level, in m above sea level (lake_level.py).
 LEVEL_URL = "https://www.gkd.bayern.de/en/lakes/waterlevel/bayern/{station}/current-values/table"
@@ -71,6 +73,7 @@ async def _page(client: httpx.AsyncClient, station: str, kind: str = "lake", url
     resp = await client.get(url.format(kind=KINDS.get(kind, "lakes"), station=station), headers=HEADERS, timeout=20, follow_redirects=True)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
+        source_status.reject("gkd", "firewall")
         raise Rejected("GKD firewall rejected the request")
     return resp.text
 

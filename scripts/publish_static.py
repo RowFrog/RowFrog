@@ -64,7 +64,7 @@ import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from rowfrog import api, ice, lake_view, locations, outlines, sleet, water_estimate, water_log, water_stations, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, sleet, source_status, water_estimate, water_log, water_stations, weather_models
 from rowfrog.api import LOCAL
 from rowfrog.sources import dwd_radar, dwd_warnings, gkd, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
@@ -638,9 +638,12 @@ def archive_water_log() -> None:
     if not WATER_LOG or not target or not WATER_LOG.exists():
         return
     try:
-        result = subprocess.run(["rclone", "copy", str(WATER_LOG), target, "--checksum", "--stats", "0", "--log-level", "NOTICE"], timeout=300, check=False)
+        command = ["rclone", "copy", str(WATER_LOG), target, "--checksum", "--stats", "0", "--log-level", "NOTICE"]
+        result = subprocess.run(command, timeout=300, check=False)
+        source_status.note_command(command, result.returncode)
         print(f"  water log copied to {target} (exit {result.returncode})")
     except (OSError, subprocess.SubprocessError) as e:
+        source_status.note_command(command, error=e)
         print(f"  water log not copied: {e!r}")
 
 
@@ -1126,12 +1129,14 @@ class Uploader:
             f.write("\n".join(names) + "\n")
         try:
             result = subprocess.run([f.name if a == "{files}" else a for a in self.args], timeout=600)
+            source_status.note_command(self.args, result.returncode)
             if result.returncode == 0:
                 self.sent += len(names)
                 self.batches += 1
             else:
                 print(f"  upload of {len(names)} files failed (exit {result.returncode}); the copy after the run sends them", flush=True)
         except (OSError, subprocess.SubprocessError) as e:
+            source_status.note_command(self.args, error=e)
             print(f"  upload of {len(names)} files failed: {e!r}; the copy after the run sends them", flush=True)
         finally:
             os.unlink(f.name)
@@ -1311,11 +1316,18 @@ def clubs_written() -> None:
     if not command:
         return
     sys.stdout.flush()
+    args: list[str] = []
     try:
-        result = subprocess.run(shlex.split(command), timeout=600)
+        args = shlex.split(command)
+        result = subprocess.run(args, timeout=600)
+        source_status.note_command(args, result.returncode)
         print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
     except (OSError, ValueError, subprocess.SubprocessError) as e:
+        source_status.note_command(args, error=e)
         print(f"Club forecasts not handed on early: {e!r}", flush=True)
+    # The club forecasts are online: the sources they came from answered (or not) already,
+    # so the Pi's monitor sees it now and not only after the lake views (up to 50 minutes).
+    source_status.flush()
 
 
 def main() -> int:
@@ -1340,6 +1352,12 @@ def main() -> int:
         # The long-running water temperature log (water_log.py) lives next to the state too.
         global WATER_LOG
         WATER_LOG = args.state.parent / "water-log"
+    # What this run's own requests say about each outside service (sources-status.json,
+    # for the Pi's connection monitor; SOURCES_STATUS, else next to --state). The sources
+    # only some clubs need are fetched every 30 minutes for used clubs, else in the
+    # all-clubs runs only (every 6 hours; a regular run's 30 minutes stays while it lasts).
+    every = {k: source_status.ALL_CLUBS_EVERY for k in source_status.CLUB_DEPENDENT} if args.clubs == "all" else None
+    source_status.start("publish", args.state.parent if args.state else None, expect=every)
     global UPLOADER
     UPLOADER = start_uploader(args.out)
     try:
@@ -1349,6 +1367,7 @@ def main() -> int:
         if UPLOADER is not None:
             UPLOADER.close()
             UPLOADER = None
+        source_status.flush()
 
 
 def publish(args, now: datetime, state: "State") -> int:
