@@ -18,6 +18,8 @@ on:
       - ios/RowFrog/Charts/**
       - .github/workflows/website.yml
       - package-lock.json
+      - .nvmrc
+      - .python-version
   push:
     branches: [main]
     paths:
@@ -29,6 +31,8 @@ on:
       - ios/RowFrog/Charts/**
       - .github/workflows/website.yml
       - package-lock.json
+      - .nvmrc
+      - .python-version
   workflow_dispatch:
 
 concurrency:
