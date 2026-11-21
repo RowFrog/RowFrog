@@ -86,9 +86,10 @@ jobs:
         with:
           python-version-file: .python-version
           cache: pip
-          cache-dependency-path: backend/requirements-publish.txt
+          cache-dependency-path: backend/uv.lock
       # The pinned versions only (backend/requirements-publish.txt), so a new
       # release can't stop the forecasts before the tests have seen it.
+      - uses: ./.github/actions/backend-pins
       - run: pip install -c backend/requirements-publish.txt -e "backend[satellite]"
       - name: Get the published files
         # A separate worktree, so only the published files are committed, never the repository.
