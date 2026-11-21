@@ -60,6 +60,10 @@ enum BackgroundLibrary {
         if case .satellite = choice { return satellite(clubID: clubID) }
         guard let key = cacheKey(for: choice, thumbnail: thumbnail) else { return nil }
         if let cached = cache.object(forKey: key) { return cached }
+        if !thumbnail, let held = InUse.image(key) {
+            cache.setObject(held, forKey: key)
+            return held
+        }
         let url: URL?
         switch choice {
         case let .sample(id): url = Bundle.main.url(forResource: "bg-\(id)", withExtension: "jpg")
@@ -79,13 +83,53 @@ enum BackgroundLibrary {
             image = image.preparingForDisplay() ?? image
         }
         cache.setObject(image, forKey: key)
+        if !thumbnail { InUse.hold(image, key) }
         return image
+    }
+
+    /// The last few full-size pictures, held beside the cache. iOS empties an
+    /// NSCache when the app goes to the background (assumption: Apple's
+    /// documentation only says it evicts "at any time"); the app switcher's
+    /// snapshot, taken right then, showed the plain background behind frosted
+    /// cards (owner's iPad screenshot, 17 Nov 2026), and the picture faded in
+    /// again on return. A few, so per-club pictures don't fill the memory.
+    private enum InUse {
+        private static let lock = NSLock()
+        private static var held: [(key: NSString, image: UIImage, blurred: UIImage?)] = []
+        private static let count = 3
+
+        static func image(_ key: NSString) -> UIImage? {
+            lock.withLock { held.first { $0.key == key }?.image }
+        }
+
+        static func hold(_ image: UIImage, _ key: NSString) {
+            lock.withLock {
+                held.removeAll { $0.key == key }
+                held.append((key, image, nil))
+                if held.count > count { held.removeFirst(held.count - count) }
+            }
+        }
+
+        static func drop(_ key: NSString) {
+            lock.withLock { held.removeAll { $0.key == key } }
+        }
+
+        static func blurred(of image: UIImage) -> UIImage? {
+            lock.withLock { held.first { $0.image === image }?.blurred }
+        }
+
+        static func holdBlurred(_ blurred: UIImage, of image: UIImage) {
+            lock.withLock {
+                if let i = held.firstIndex(where: { $0.image === image }) { held[i].blurred = blurred }
+            }
+        }
     }
 
     /// The picture if it is in memory already, without reading any file.
     static func cachedImage(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
         if case .satellite = choice { return satellite(clubID: clubID) }
-        return cacheKey(for: choice, thumbnail: thumbnail).flatMap { cache.object(forKey: $0) }
+        guard let key = cacheKey(for: choice, thumbnail: thumbnail) else { return nil }
+        return cache.object(forKey: key) ?? (thumbnail ? nil : InUse.image(key))
     }
 
     /// The key a file picture is kept under; nil for "no picture" and the satellite picture.
@@ -142,7 +186,10 @@ enum BackgroundLibrary {
         let url = userDirectory.appending(path: name)
         try? FileManager.default.removeItem(at: url)
         for thumbnail in [true, false] {
-            if let key = cacheKey(for: .custom(name), thumbnail: thumbnail) { cache.removeObject(forKey: key) }
+            if let key = cacheKey(for: .custom(name), thumbnail: thumbnail) {
+                cache.removeObject(forKey: key)
+                InUse.drop(key)
+            }
         }
     }
 
@@ -155,7 +202,7 @@ enum BackgroundLibrary {
     /// the detail anyway, and a small picture blurs fast and takes little memory.
     /// `onProcessor` blurs without the graphics chip, for work in the background.
     static func blurred(_ image: UIImage, onProcessor: Bool = false) -> UIImage {
-        if let cached = blurredCache.object(forKey: image) { return cached }
+        if let cached = blurredCache.object(forKey: image) ?? InUse.blurred(of: image) { return cached }
         let small = scaled(image, maxSide: 800)
         guard let cg = small.cgImage else { return image }
         let input = CIImage(cgImage: cg)
@@ -165,6 +212,7 @@ enum BackgroundLibrary {
         guard let result = context.createCGImage(output, from: input.extent) else { return image }
         let picture = UIImage(cgImage: result, scale: small.scale, orientation: small.imageOrientation)
         blurredCache.setObject(picture, forKey: image)
+        InUse.holdBlurred(picture, of: image)
         return picture
     }
 
