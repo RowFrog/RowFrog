@@ -102,7 +102,7 @@ final class TapTests: XCTestCase {
         XCTAssertFalse(next.isEnabled, "Next works without a home base")
         search.tap()
         search.typeText("MRC 1880")
-        let club = app.buttons["tour-club-mrc-1880"]
+        let club = app.buttons["tour-club-1-mrc-1880"]
         // The club list comes from the backend.
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
         club.tap()
@@ -141,7 +141,7 @@ final class TapTests: XCTestCase {
             search.tap()
         }
         search.typeText("MRC 1880")
-        let club = app.buttons["tour-club-mrc-1880"]
+        let club = app.buttons["tour-club-1-mrc-1880"]
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
         club.tap()
         let window = app.windows.firstMatch
