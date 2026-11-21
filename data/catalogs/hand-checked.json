@@ -1,5 +1,5 @@
 {
-  "comment": "Launch points and addresses checked by hand by the owner (satellite view), and entries that are not rowing clubs. club id -> address, club (the boathouse, [lat, lon]), launchPoint ([lat, lon]), checked (date); \"sameAs\" copies another club's values (a school crew at a club's boathouse). \"remove\" lists ids to drop: associations and clubs of other sports. Applied by club_import.apply_hand_checked on every import, after water-fixes.json; the water itself stays with water-fixes.json and extra-sites.json.",
+  "comment": "Launch points and addresses checked by hand by the owner (satellite view), and entries that are not rowing clubs. club id -> address, club (the boathouse, [lat, lon]), launchPoint ([lat, lon]), checked (date), optional precision (the text shown) and verified (true when the owner checked it on the spot); \"sameAs\" copies another club's values (a school crew at a club's boathouse). \"remove\" lists ids to drop: associations and clubs of other sports. Applied by club_import.apply_hand_checked on every import, after water-fixes.json; the water itself stays with water-fixes.json and extra-sites.json.",
   "remove": [
     "landesruderverband-niederoesterreich",
     "landesruderverband-oberoesterreich",
@@ -697,6 +697,24 @@
         12.384892
       ],
       "checked": "2026-11-02"
+    },
+    "breisacher-ruderverein": {
+      "launchPoint": [
+        48.01977,
+        7.58695
+      ],
+      "checked": "2026-10-29",
+      "precision": "slip below the boathouse, which the club rows out from (checked by the owner)",
+      "verified": true
+    },
+    "wassersportverein-1926-ev-offenbach-am-main-buergel": {
+      "launchPoint": [
+        50.11953,
+        8.77803
+      ],
+      "checked": "2026-10-30",
+      "precision": "launch spot at the boathouse on the Main (checked by the owner)",
+      "verified": true
     }
   }
 }

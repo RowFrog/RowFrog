@@ -54,8 +54,8 @@ jobs:
           LON: ${{ steps.take.outputs.lon }}
         run: |
           branch="launch-point/issue-$ISSUE"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "RowFrog"
+          git config user.email "344322998+RowFrog@users.noreply.github.com"
           git checkout -B "$branch"
           git add data/catalogs
           git commit -m "Launch point for $NAME from suggestion #$ISSUE" -m "Closes #$ISSUE"

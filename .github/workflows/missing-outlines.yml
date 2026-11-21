@@ -62,8 +62,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new outlines."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git config user.name "RowFrog"
+            git config user.email "344322998+RowFrog@users.noreply.github.com"
             git commit -m "Outlines for lakes that had none (OpenStreetMap, part ${{ matrix.shard }})"
             for i in 1 2 3 4 5; do
               git pull --rebase && git push && break

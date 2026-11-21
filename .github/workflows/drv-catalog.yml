@@ -34,7 +34,7 @@ jobs:
         with:
           python-version-file: .python-version
       - uses: ./.github/actions/backend-pins
-      - run: pip install -c backend/requirements-publish.txt -e backend
+      - run: pip install -c backend/requirements-publish.txt -e backend pytest
       - name: Import DRV clubs
         run: |
           set -o pipefail
@@ -42,14 +42,18 @@ jobs:
           { echo '```'; tail -n 400 drv-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the catalog loads
         run: python3 -c 'from rowfrog import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
+      # Drops outlines no club uses and runs the data file tests: a broken
+      # catalog fails here instead of turning main red (2026-11-21, 947627c).
+      - name: Check the catalog before committing
+        run: python3 scripts/check_catalog_update.py
       - name: Commit the catalog
         run: |
           git add data/catalogs/de-drv.json data/geocode.json data/outlines
           if git diff --cached --quiet; then
             echo "No changes."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git config user.name "RowFrog"
+            git config user.email "344322998+RowFrog@users.noreply.github.com"
             git commit -m "Update club catalog from the DRV club list"
             git pull --rebase
             git push

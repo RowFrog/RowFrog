@@ -1287,6 +1287,11 @@
   "lon": 8.71578,
   "precision": "street"
  },
+ "Mainwasenweg 35|60599|Frankfurt am Main": {
+  "lat": 50.10517,
+  "lon": 8.71532,
+  "precision": "street"
+ },
  "Mainzer Landstr. 791|65934|Frankfurt": {
   "lat": 50.09774,
   "lon": 8.56584,
