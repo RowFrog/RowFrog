@@ -65,6 +65,17 @@ else
   fi
 fi
 
+# Same versions as pinned (owner, 21 Nov 2026): one line per run in the log,
+# "DIFF" when the Pi's Python or packages differ from .python-version/uv.lock.
+# ~/venv is the link to the environment in use. Never stops the run.
+if [ -f "$REPO/scripts/check_versions.py" ]; then
+  if out=$("$VENV/bin/python" "$REPO/scripts/check_versions.py" --env "$VENV" --extras satellite 2>&1); then
+    echo "VERSIONS: same as pinned"
+  else
+    echo "VERSIONS: DIFF"; echo "$out" | grep -v '^same' || true
+  fi
+fi
+
 # 3. Which clubs: the same plan as the Cloudflare timer (cloudflare/timer/),
 #    all clubs in the first half of 04, 10, 16 and 22 UTC (05, 11, 17, 23 German winter time).
 if [ -z "${CLUBS:-}" ]; then
