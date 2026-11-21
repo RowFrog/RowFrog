@@ -107,11 +107,21 @@ final class TapTests: XCTestCase {
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
         club.tap()
         XCTAssertTrue(next.isEnabled, "Picking the home base did not enable Next")
-        next.tap()
+        // Each Next waits for its page, read from the dots ("Page 3 of 12"). On the iOS 18 job the
+        // tour twice ended after these two taps (21 Nov 2026); the pages seen say where it went.
+        let dots = app.descendants(matching: .any)["tour-dots"]
+        var seen = [tourPage(dots)]
+        for target in ["Page 3 of", "Page 4 of"] {
+            next.tap()
+            let arrived = NSPredicate(format: "value BEGINSWITH %@", target)
+            let ok = XCTWaiter().wait(for: [expectation(for: arrived, evaluatedWith: dots)], timeout: 15) == .completed
+            seen.append(tourPage(dots))
+            XCTAssertTrue(ok, "Next did not go to \(target) (pages seen: \(seen)); the app shows:\n\(app.debugDescription)")
+            if !ok { return }
+        }
         // More clubs is optional; the page after it can be skipped.
-        next.tap()
         let skip = app.buttons["tour-skip"]
-        XCTAssertTrue(skip.waitForExistence(timeout: 30) && skip.isEnabled, "No Skip after the club pages; the app shows:\n\(app.debugDescription)")
+        XCTAssertTrue(skip.waitForExistence(timeout: 30) && skip.isEnabled, "No Skip after the club pages (pages seen: \(seen)); the app shows:\n\(app.debugDescription)")
         skip.tap()
 
         // The home base's page, with its forecast (see the wait in the test above).
@@ -218,6 +228,11 @@ final class TapTests: XCTestCase {
         }
         XCTAssertTrue(issues.isEmpty, "Accessibility audit of the club page:\n" + issues.joined(separator: "\n")
                       + "\n\nThe page shows:\n\(app.debugDescription)")
+    }
+
+    /// The tour page the dots show, or "no tour" once it is gone.
+    private func tourPage(_ dots: XCUIElement) -> String {
+        dots.exists ? (dots.value as? String ?? "?") : "no tour"
     }
 
     /// The tour asks for the location on the home base page; the answer does
