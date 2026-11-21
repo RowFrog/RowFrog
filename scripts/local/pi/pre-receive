@@ -2,8 +2,8 @@
 # RowFrog push gate on the Pi (set up 11 Nov 2026 while GitHub is down).
 # For a push to main: refuses deleting it, non-fast-forward updates and a main
 # without 86e1980, then runs the backend tests on exactly the pushed commit in a
-# temporary copy, with the test environment ~/venv-check (Python 3.12, the
-# publishing job's pinned packages plus the dev tools). A failure refuses the
+# temporary copy, with the test environment ~/venv-check (backend/uv.lock and
+# .python-version of that commit, with the dev tools). A failure refuses the
 # push, so the forecast runs never take untested code. Other branches pass as they are.
 # Log: ~/gate.log. Undo: delete this file (~/git/rowfrog.git/hooks/pre-receive).
 zero=0000000000000000000000000000000000000000
@@ -21,11 +21,33 @@ while read -r old new ref; do
   if ! git merge-base --is-ancestor "$keep" "$new"; then echo "gate: 86e1980 must stay in main"; status=1; continue; fi
   tmp=$(mktemp -d /tmp/rowfrog-gate.XXXXXX)
   git archive "$new" | tar -x -C "$tmp"
-  deps=$(cat "$tmp/backend/requirements-publish.txt" "$tmp/backend/pyproject.toml" | sha256sum | cut -c1-16)
-  if [ "$deps" != "$(cat "$venv/deps.hash" 2>/dev/null)" ]; then
-    echo "gate: the pinned packages changed, updating the test environment"
-    "$uv" pip install -q --python "$venv/bin/python" -c "$tmp/backend/requirements-publish.txt" "$tmp/backend[dev,satellite]" \
-      && echo "$deps" > "$venv/deps.hash"
+  # The test environment = exactly the commit's backend/uv.lock (with the dev and
+  # satellite extras) on the Python in its .python-version, re-synced when either
+  # changes. A failed install fails the gate: main never moves to a commit whose
+  # packages were not installed and tested here (before 21 Nov 2026 the tests
+  # then ran on the old packages and could pass).
+  if [ -f "$tmp/backend/uv.lock" ]; then
+    deps=$(cat "$tmp/backend/uv.lock" "$tmp/backend/pyproject.toml" "$tmp/.python-version" | sha256sum | cut -c1-16)
+    if [ "$deps" != "$(cat "$venv/deps.hash" 2>/dev/null)" ]; then
+      echo "gate: the locked packages changed, syncing the test environment"
+      if ! (cd "$tmp/backend" && UV_PROJECT_ENVIRONMENT="$venv" "$uv" sync -q --locked --no-install-project \
+              --managed-python --python "$(cat "$tmp/.python-version")" --extra dev --extra satellite); then
+        echo "gate: installing the locked packages FAILED, main stays at ${old:0:9}"
+        echo "$(date '+%F %T') ${new:0:9} INSTALL FAILED" >> "$log"
+        rm -f "$venv/deps.hash"; rm -rf "$tmp"; status=1; continue
+      fi
+      echo "$deps" > "$venv/deps.hash"
+    fi
+  else
+    deps=$(cat "$tmp/backend/requirements-publish.txt" "$tmp/backend/pyproject.toml" | sha256sum | cut -c1-16)
+    if [ "$deps" != "$(cat "$venv/deps.hash" 2>/dev/null)" ]; then
+      echo "gate: the pinned packages changed, updating the test environment"
+      if ! "$uv" pip install -q --python "$venv/bin/python" -c "$tmp/backend/requirements-publish.txt" "$tmp/backend[dev,satellite]"; then
+        echo "gate: installing the pinned packages FAILED, main stays at ${old:0:9}"
+        rm -rf "$tmp"; status=1; continue
+      fi
+      echo "$deps" > "$venv/deps.hash"
+    fi
   fi
   echo "gate: backend tests on ${new:0:9} ..."
   start=$(date +%s)
