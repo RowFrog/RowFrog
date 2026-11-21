@@ -373,7 +373,10 @@ drained. The website shows the tile too.
 **Satellite pictures.** A card near the end of the page shows the latest
 Sentinel-2 picture of the lake, with a line such as "Wednesday, 22 Oct ·
 lake 25% cloudy" and an "i" that explains why a new picture
-comes only every 2 to 5 days. A switch chooses between the latest pass
+comes only every 2 to 5 days. Where the satellite's pass took no picture of
+part of the frame, that part shows soft grey stripes, and the "i" is filled
+blue and explains the grey area first (app and website,
+`docs/decisions/0056`). A switch chooses between the latest pass
 (clouds or not), the clearest one and, in cloudy weeks, a newer mostly clear
 one; every picture shows the same area. When the latest pass has 90 % or
 more cloud over the 2 × 2 km around the club, the card opens on the clearest
