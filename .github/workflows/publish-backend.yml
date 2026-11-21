@@ -138,8 +138,8 @@ jobs:
       - name: Publish to gh-pages as a single commit
         run: |
           cd site
-          git config user.name "github-actions[bot]"
-          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git config user.name "RowFrog"
+          git config user.email "344322998+RowFrog@users.noreply.github.com"
           git checkout -q --orphan publish
           git add -A
           # Never publish anything but the forecast files (and CNAME, which GitHub writes for a custom domain).

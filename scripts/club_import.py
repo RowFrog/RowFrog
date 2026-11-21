@@ -297,7 +297,9 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
     """Puts in the addresses and launch points the owner checked by hand on
     the satellite view (hand-checked.json) and drops the entries listed under
     "remove" (associations, clubs of other sports), then waters no club is
-    left on. "sameAs" copies another club's checked values. The water stays
+    left on. "sameAs" copies another club's checked values; an entry may also
+    give the point's "precision" text and "verified" (checked on the spot by
+    the owner, e.g. Breisach and Offenbach-Bürgel). The water stays
     as water-fixes.json and extra-sites.json have it. Returns how many clubs
     changed or went."""
     data = json.loads(HAND_CHECKED.read_text(encoding="utf-8")) if HAND_CHECKED.exists() else {}
@@ -321,7 +323,8 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
                 club["address"] = entry["address"]
             lat, lon = entry["launchPoint"]
             club["launchPoint"] = {"lat": round(lat, 5), "lon": round(lon, 5),
-                                   "precision": f"launch point checked by hand on the satellite view ({entry['checked']})", "verified": False}
+                                   "precision": entry.get("precision", f"launch point checked by hand on the satellite view ({entry['checked']})"),
+                                   "verified": entry.get("verified", False)}
         changed += 1
     used = {c["lakeId"] for c in clubs}
     waters[:] = [w for w in waters if w["id"] in used]
@@ -346,7 +349,14 @@ def keep_earlier_fixes(path: Path, waters: list[dict], clubs: list[dict]) -> int
         old = old_clubs.get(club["id"])
         if old is None:
             continue
-        if club["lakeId"].startswith("near-") and not old["lakeId"].startswith("near-"):
+        old_point = old.get("launchPoint", {})
+        if club["lakeId"] == old["lakeId"] and (old_point.get("verified") or "(checked by hand)" in old_point.get("precision", "")):
+            # Checked by the owner on the spot (e.g. Breisach's slip, #200;
+            # WSV Offenbach-Bürgel, #244) or put on its water by hand (the
+            # Alster clubs, #279): never replaced by a freshly computed point.
+            club["launchPoint"] = dict(old["launchPoint"])
+            kept += 1
+        elif club["lakeId"].startswith("near-") and not old["lakeId"].startswith("near-"):
             club["lakeId"] = old["lakeId"]
             club["launchPoint"] = dict(old["launchPoint"])
             if old["lakeId"] not in have and old["lakeId"] in old_waters:
