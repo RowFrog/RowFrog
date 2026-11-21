@@ -62,7 +62,8 @@ final class SwipeTests: XCTestCase {
         let first = shown(app)
         app.swipeLeft()
         let second = waitForShown(app, notToBe: first)
-        XCTAssertNotEqual(first, second, "A swipe to the left did not change the club")
+        // The page tree tells whether the page moved but the dots did not follow, or the page stayed.
+        XCTAssertNotEqual(first, second, "A swipe to the left did not change the club; the app shows:\n\(app.debugDescription)")
         app.swipeRight()
         XCTAssertEqual(waitForShown(app, toBe: first), first, "A swipe back did not return to the first club")
     }
