@@ -526,6 +526,10 @@ def test_written_files_go_online_while_the_run_goes_on(tmp_path, monkeypatch, ca
         time.sleep(0.05)
     assert log.read_text() == "clubs/a/forecast\n--\n"
     # Unchanged files are not sent again; a second change goes in the next batch.
+    # The timer is stopped first: if it ticked between the two writes of lakes/b/view
+    # (a slow CI runner, 21 Nov 2026), they went in two batches and the test failed.
+    publish.UPLOADER.stop.set()
+    publish.UPLOADER.thread.join()
     publish.write(out / "clubs" / "a" / "forecast", {"x": 1})
     publish.write(out / "lakes" / "b" / "view", {"y": 2})
     publish.write(out / "lakes" / "b" / "view", {"y": 3})
