@@ -322,38 +322,37 @@ struct RootView: View {
         let barBottom = insets.top + InlineClubTitle.barHeight(statusBar: insets.top, topButtons: topButtons)
         let top = topButtons ? barBottom + PageTopButtons.gapBelow : insets.top
         let margins = EdgeInsets(top: top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
-        return TabView(selection: $selection) {
-            ForEach(saved) { club in
-                // Each page in its own navigation stack with an empty bar: only so that iOS 26
-                // draws its soft scroll edge as deep as a bar (under the top buttons, as in
-                // Mail), and iOS 18 its frosted bar once the page is scrolled. The buttons and
-                // the small name stay the overlays below, so they keep still while the pages
-                // swipe. One stack around the whole TabView gave no soft edge at all (iOS 27).
-                NavigationStack {
-                    LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
-                                     savedIDs: saved.map(\.id))
-                        .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
-                        .environment(\.isCurrentPage, club.id == selection)
-                        .environment(\.openBoatSettings, openBoatSettings)
-                        .environment(\.pageMargins, margins)
-                        .environment(\.pageBarBottom, barBottom)
-                        .environment(\.pageInToolbar, true)
-                        .navigationBarTitleDisplayMode(.inline)
-                        // An empty bar gets no depth on iOS 27 (the soft edge covered only the
-                        // clock): an invisible item the size of a top button gives it a bar's.
-                        .toolbar {
-                            ToolbarItem(placement: .topBarLeading) {
-                                Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
-                            }
-                            .ownGlass()
+        // Our own pager, not a paged TabView: with a navigation stack in each page, fast swipes in
+        // the paged TabView made UIKit lay out one page's bar with another page's item and abort
+        // ("top item belongs to a different navigation bar", build 1024, 21 Nov 2026).
+        return ClubPager(clubs: saved, selection: $selection) { club in
+            // Each page in its own navigation stack with an empty bar: only so that iOS 26
+            // draws its soft scroll edge as deep as a bar (under the top buttons, as in
+            // Mail), and iOS 18 its frosted bar once the page is scrolled. The buttons and
+            // the small name stay the overlays below, so they keep still while the pages
+            // swipe. One stack around the whole pager gave no soft edge at all (iOS 27).
+            NavigationStack {
+                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
+                                 savedIDs: saved.map(\.id))
+                    .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
+                    .environment(\.isCurrentPage, club.id == selection)
+                    .environment(\.openBoatSettings, openBoatSettings)
+                    .environment(\.pageMargins, margins)
+                    .environment(\.pageBarBottom, barBottom)
+                    .environment(\.pageInToolbar, true)
+                    .navigationBarTitleDisplayMode(.inline)
+                    // An empty bar gets no depth on iOS 27 (the soft edge covered only the
+                    // clock): an invisible item the size of a top button gives it a bar's.
+                    .toolbar {
+                        ToolbarItem(placement: .topBarLeading) {
+                            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
                         }
-                        // The club's picture lies behind the whole TabView.
-                        .containerBackground(.clear, for: .navigation)
-                }
-                .tag(club.id)
+                        .ownGlass()
+                    }
+                    // The club's picture lies behind the whole pager.
+                    .containerBackground(.clear, for: .navigation)
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay(alignment: .top) {
             let scroll = PageScroll.shared

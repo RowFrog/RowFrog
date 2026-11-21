@@ -214,8 +214,9 @@ jobs:
             -only-testing:RowFrogTests
       - name: Run the UI tests (taps in the app)
         # A hung UI test step once held the newest-Xcode job for 35 minutes
-        # (#255). Four tap tests take up to about 18 minutes on the Intel runners.
-        timeout-minutes: 30
+        # (#255). Four tap tests take up to about 18 minutes on the Intel runners,
+        # the swipe tests (SwipeTests, up to 8 minutes of quick swipes) a few more.
+        timeout-minutes: 40
         # The UI test runner on the Intel runners sometimes dies before any
         # test starts ("never finished bootstrapping", main after #238). Only
         # that case is tried once more, on a freshly booted simulator; a test
