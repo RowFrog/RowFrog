@@ -28,3 +28,6 @@ ios/BuildNumber.local.xcconfig
 
 # Screenshot sets from scripts/local/screenshots.sh, kept on the Mac only (never in git).
 /screenshots/
+
+# Generated from backend/uv.lock by scripts/export_pins.sh (CI writes it at run time).
+backend/requirements-publish.txt

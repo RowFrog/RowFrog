@@ -1,5 +1,0 @@
-# Lint tool for the CI backend job (ci.yml): pip install -r backend/requirements-dev.txt.
-# Its version comes from backend/uv.lock through the constraints file, so a new
-# ruff can't fail CI out of the blue; Dependabot raises it with the monthly update.
--c requirements-publish.txt
-ruff

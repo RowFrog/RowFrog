@@ -1,0 +1,15 @@
+name: Backend pins
+description: >-
+  Writes backend/requirements-publish.txt from backend/uv.lock (scripts/export_pins.sh),
+  so the next step can install exactly the locked versions with
+  pip install -c backend/requirements-publish.txt. The file is not kept in git:
+  uv.lock is the one place for the versions, and a Dependabot PR only changes the lock.
+runs:
+  using: composite
+  steps:
+    # uv's version: the newest that every system has (Mac: MacPorts), see docs/handbook.md,
+    # "Same versions everywhere". The monthly dependency check raises it.
+    - shell: bash
+      run: |
+        pip install -q uv==0.13.4
+        "$GITHUB_WORKSPACE/scripts/export_pins.sh"

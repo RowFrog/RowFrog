@@ -25,25 +25,22 @@ jobs:
         with:
           python-version-file: .python-version
           cache: pip
-          cache-dependency-path: backend/requirements-publish.txt
+          cache-dependency-path: backend/uv.lock
       # backend/uv.lock is the one place for the backend's versions: it must fit
-      # pyproject.toml, hold a build for GitHub's Linux, the Pi and the Mac
-      # (pyproject.toml, required-environments), and requirements-publish.txt
-      # must be its export. uv's version is pinned here; the monthly dependency
-      # check raises it.
-      - name: Lock is current and matches requirements-publish.txt
-        working-directory: .
-        run: |
-          pip install -q uv==0.13.9
-          (cd backend && uv lock --check)
-          scripts/export_pins.sh --check
-      # With the satellite extra (rasterio, eccodes, numpy) and the pinned
+      # pyproject.toml and hold a build for GitHub's Linux, the Pi and the Mac
+      # (pyproject.toml, required-environments). backend-pins writes
+      # requirements-publish.txt from it (not in git) and pins uv's version.
+      - uses: ./.github/actions/backend-pins
+      - name: Lock is current (fits pyproject.toml)
+        run: uv lock --check
+      # With the satellite extra (rasterio, eccodes, numpy) and the locked
       # versions, as the publishing job installs them, so the tests see exactly
       # what publishes (and a Dependabot bump is tested before it is merged).
+      # The dev extra brings pytest and ruff.
       - run: pip install -c requirements-publish.txt -e ".[dev,satellite]"
       # Names used before they are set, unused imports, syntax errors (rules in pyproject.toml).
       - name: Lint (ruff)
-        run: pip install -r requirements-dev.txt && ruff check . ../scripts
+        run: ruff check . ../scripts
       - run: pytest -q --cov=rowfrog --cov-report=json:coverage.json
       - name: Coverage in the run summary
         if: always()

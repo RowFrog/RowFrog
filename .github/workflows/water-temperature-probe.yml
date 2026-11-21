@@ -31,6 +31,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version-file: .python-version
+      - uses: ./.github/actions/backend-pins
       - run: pip install -c backend/requirements-publish.txt -e "backend[satellite]"
       - run: python3 scripts/water_temperature_backtest.py
         env:
