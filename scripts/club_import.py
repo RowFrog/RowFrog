@@ -297,7 +297,9 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
     """Puts in the addresses and launch points the owner checked by hand on
     the satellite view (hand-checked.json) and drops the entries listed under
     "remove" (associations, clubs of other sports), then waters no club is
-    left on. "sameAs" copies another club's checked values. The water stays
+    left on. "sameAs" copies another club's checked values; an entry may also
+    give the point's "precision" text and "verified" (checked on the spot by
+    the owner, e.g. Breisach and Offenbach-Bürgel). The water stays
     as water-fixes.json and extra-sites.json have it. Returns how many clubs
     changed or went."""
     data = json.loads(HAND_CHECKED.read_text(encoding="utf-8")) if HAND_CHECKED.exists() else {}
@@ -321,7 +323,8 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
                 club["address"] = entry["address"]
             lat, lon = entry["launchPoint"]
             club["launchPoint"] = {"lat": round(lat, 5), "lon": round(lon, 5),
-                                   "precision": f"launch point checked by hand on the satellite view ({entry['checked']})", "verified": False}
+                                   "precision": entry.get("precision", f"launch point checked by hand on the satellite view ({entry['checked']})"),
+                                   "verified": entry.get("verified", False)}
         changed += 1
     used = {c["lakeId"] for c in clubs}
     waters[:] = [w for w in waters if w["id"] in used]

@@ -106,3 +106,16 @@ def test_owner_checked_launch_points_survive_an_import(tmp_path):
     assert club_import.keep_earlier_fixes(path, [], clubs) == 1
     assert clubs[0]["launchPoint"] == point
 
+
+
+def test_a_point_checked_on_the_spot_keeps_its_text_and_stays_verified(tmp_path, monkeypatch):
+    checked = tmp_path / "hand-checked.json"
+    checked.write_text(json.dumps({"de": {"breisach": {"launchPoint": [48.01977, 7.58695], "checked": "2026-10-29",
+                                                       "precision": "slip below the boathouse (checked by the owner)", "verified": True}}}),
+                       encoding="utf-8")
+    monkeypatch.setattr(club_import, "HAND_CHECKED", checked)
+    clubs = [{"id": "breisach", "lakeId": "river-rhein",
+              "launchPoint": {"lat": 48.0197, "lon": 7.58886, "precision": "on the Rhein", "verified": False}}]
+    assert club_import.apply_hand_checked("de", [{"id": "river-rhein"}], clubs) == 1
+    assert clubs[0]["launchPoint"] == {"lat": 48.01977, "lon": 7.58695,
+                                       "precision": "slip below the boathouse (checked by the owner)", "verified": True}
