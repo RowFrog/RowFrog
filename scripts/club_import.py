@@ -346,7 +346,14 @@ def keep_earlier_fixes(path: Path, waters: list[dict], clubs: list[dict]) -> int
         old = old_clubs.get(club["id"])
         if old is None:
             continue
-        if club["lakeId"].startswith("near-") and not old["lakeId"].startswith("near-"):
+        old_point = old.get("launchPoint", {})
+        if club["lakeId"] == old["lakeId"] and (old_point.get("verified") or "(checked by hand)" in old_point.get("precision", "")):
+            # Checked by the owner on the spot (e.g. Breisach's slip, #200;
+            # WSV Offenbach-Bürgel, #244) or put on its water by hand (the
+            # Alster clubs, #279): never replaced by a freshly computed point.
+            club["launchPoint"] = dict(old["launchPoint"])
+            kept += 1
+        elif club["lakeId"].startswith("near-") and not old["lakeId"].startswith("near-"):
             club["lakeId"] = old["lakeId"]
             club["launchPoint"] = dict(old["launchPoint"])
             if old["lakeId"] not in have and old["lakeId"] in old_waters:

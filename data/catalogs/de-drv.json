@@ -1899,8 +1899,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58501,
-        "lon": 10.03234,
+        "lat": 53.58481,
+        "lon": 10.03239,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -2525,10 +2525,10 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 48.0197,
-        "lon": 7.58886,
-        "precision": "on the Rhein (checked by hand), first matched to Europaweiher",
-        "verified": false
+        "lat": 48.01977,
+        "lon": 7.58695,
+        "precision": "slip below the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -7294,8 +7294,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58499,
-        "lon": 10.03136,
+        "lat": 53.58478,
+        "lon": 10.03137,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -8664,8 +8664,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.5821,
-        "lon": 10.02151,
+        "lat": 53.5822,
+        "lon": 10.02146,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -12511,8 +12511,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58555,
-        "lon": 9.99095,
+        "lat": 53.58526,
+        "lon": 9.99094,
         "precision": "on the Alster (checked by hand), first matched to Isebekkanal",
         "verified": false
       }
@@ -13496,10 +13496,10 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11983,
-        "lon": 8.77862,
-        "precision": "geocoded club address, 111 m from the Main",
-        "verified": false
+        "lat": 50.11953,
+        "lon": 8.77803,
+        "precision": "launch spot at the boathouse on the Main (checked by the owner)",
+        "verified": true
       }
     },
     {

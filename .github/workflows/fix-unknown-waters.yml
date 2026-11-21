@@ -45,8 +45,8 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git config user.name "RowFrog"
+            git config user.email "344322998+RowFrog@users.noreply.github.com"
             git commit -m "Launch points of hand-checked waters moved to the shore"
             git pull --rebase
             git push
