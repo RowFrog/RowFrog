@@ -11,5 +11,5 @@ runs:
     # "Same versions everywhere". The monthly dependency check raises it.
     - shell: bash
       run: |
-        pip install -q "uv==$(cat "$GITHUB_WORKSPACE/.uv-version" 2>/dev/null || echo 0.13.4)"
+        pip install -q "uv==$(cat "$GITHUB_WORKSPACE/.uv-version")"
         "$GITHUB_WORKSPACE/scripts/export_pins.sh"

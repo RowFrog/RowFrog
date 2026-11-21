@@ -136,11 +136,18 @@ jobs:
               echo "Started from run $run of $branch"; break
             fi
           done
-      - uses: actions/setup-python@v7
-        with:
-          python-version-file: .python-version
-      - uses: ./.github/actions/backend-pins
-      - run: pip install -c backend/requirements-publish.txt -e backend pillow
+      # Python from uv: setup-python has no Mac build of security-only patches
+      # such as 3.12.15 (scripts/check_pins_available.py).
+      - name: Python from .python-version (uv)
+        run: |
+          curl -LsSf "https://astral.sh/uv/$(cat .uv-version)/install.sh" | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv venv -q --managed-python --python "$(cat .python-version)" "$RUNNER_TEMP/venv"
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+          echo "VIRTUAL_ENV=$RUNNER_TEMP/venv" >> "$GITHUB_ENV"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          scripts/export_pins.sh   # backend/requirements-publish.txt from uv.lock (not in git)
+      - run: uv pip install -q -c backend/requirements-publish.txt -e backend pillow
       - name: Start the backend with live data
         run: |
           # Open-Meteo's answers as recorded on Linux (job open-meteo-tape), where there are any.
