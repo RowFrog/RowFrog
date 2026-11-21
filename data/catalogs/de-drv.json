@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-11-21",
   "source": "Club data: Deutscher Ruderverband e.V. (rudern.de). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -368,8 +368,8 @@
       "name": "Geeste",
       "country": "de",
       "center": {
-        "lat": 53.55221,
-        "lon": 8.59275
+        "lat": 53.55986,
+        "lon": 8.59366
       },
       "kind": "river"
     },
@@ -558,8 +558,8 @@
       "name": "Herrenteich",
       "country": "de",
       "center": {
-        "lat": 53.83498,
-        "lon": 10.48327
+        "lat": 53.83006,
+        "lon": 10.48695
       },
       "kind": "lake"
     },
@@ -948,8 +948,8 @@
       "name": "Obereider",
       "country": "de",
       "center": {
-        "lat": 54.30828,
-        "lon": 9.67601
+        "lat": 54.30029,
+        "lon": 9.66501
       },
       "kind": "river"
     },
@@ -998,8 +998,8 @@
       "name": "Oste",
       "country": "de",
       "center": {
-        "lat": 53.69633,
-        "lon": 9.17443
+        "lat": 53.68869,
+        "lon": 9.15951
       },
       "kind": "river"
     },
@@ -1008,8 +1008,8 @@
       "name": "Otto-Maigler-See",
       "country": "de",
       "center": {
-        "lat": 50.87937,
-        "lon": 6.84475
+        "lat": 50.88074,
+        "lon": 6.87657
       },
       "kind": "lake"
     },
@@ -1078,8 +1078,8 @@
       "name": "Rems",
       "country": "de",
       "center": {
-        "lat": 48.82482,
-        "lon": 9.33139
+        "lat": 48.8248,
+        "lon": 9.33132
       },
       "kind": "river"
     },
@@ -1328,8 +1328,8 @@
       "name": "Strelasund",
       "country": "de",
       "center": {
-        "lat": 54.32252,
-        "lon": 13.08816
+        "lat": 54.32243,
+        "lon": 13.08607
       },
       "kind": "lake"
     },
@@ -1348,8 +1348,8 @@
       "name": "Süderelbe",
       "country": "de",
       "center": {
-        "lat": 53.55017,
-        "lon": 10.00132
+        "lat": 53.47078,
+        "lon": 10.00168
       },
       "kind": "river"
     },
@@ -1578,8 +1578,8 @@
       "name": "Zschornewitzer See",
       "country": "de",
       "center": {
-        "lat": 51.7078,
-        "lon": 12.38489
+        "lat": 51.71133,
+        "lon": 12.38894
       },
       "kind": "lake"
     }
@@ -1899,8 +1899,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58481,
-        "lon": 10.03239,
+        "lat": 53.58501,
+        "lon": 10.03234,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -2525,10 +2525,10 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 48.01977,
-        "lon": 7.58695,
-        "precision": "slip below the boathouse, which the club rows out from (checked by the owner)",
-        "verified": true
+        "lat": 48.0197,
+        "lon": 7.58886,
+        "precision": "on the Rhein (checked by hand), first matched to Europaweiher",
+        "verified": false
       }
     },
     {
@@ -3674,6 +3674,34 @@
         "lat": 50.09854,
         "lon": 8.56221,
         "precision": "shore of the Main nearest the earlier point (geocoded club address, 111 m from the Main), 55 m away",
+        "verified": false
+      }
+    },
+    {
+      "drvId": "11619",
+      "name": "Frankfurter Rudergesellschaft Sachsenhausen v. 1879 e.V.",
+      "shortName": "Frankfurter RG Sachsenhausen",
+      "abbreviation": "FRGS",
+      "website": "https://www.rudern-in-frankfurt.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Veranstaltungsorganisation"
+      ],
+      "id": "frankfurter-rudergesellschaft-sachsenhausen-v-1879",
+      "address": "Mainwasenweg 35, 60599 Frankfurt am Main",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-main",
+      "launchPoint": {
+        "lat": 50.10517,
+        "lon": 8.71532,
+        "precision": "geocoded club address, 130 m from the Main",
         "verified": false
       }
     },
@@ -4957,6 +4985,37 @@
       }
     },
     {
+      "drvId": "12018",
+      "name": "Ludwigshafener Ruderverein von 1878 (Rheingönheim)",
+      "shortName": "Ludwigshafener RV (Rheingönheim)",
+      "abbreviation": "LRV",
+      "website": "https://www.ludwigshafener-rv.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Jugendausbildung (14 Jahre und jünger)",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Marathonrudern",
+        "Veranstaltungsorganisation"
+      ],
+      "id": "ludwigshafener-ruderverein-von-1878-rheingoenheim",
+      "address": "Großwiesenstraße 5, 67065 Ludwigshafen am Rhein-Rheingönheim",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 49.43886,
+        "lon": 8.46145,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    },
+    {
       "drvId": "12413",
       "name": "Lübecker Frauen-Ruder- Gesellschaft von 1907 e.V.",
       "shortName": "Lübecker Frauen-RG",
@@ -5064,6 +5123,68 @@
         "lon": 10.41289,
         "precision": "shore of the Ilmenau nearest the town-level address, 367 m away (water checked by hand)",
         "verified": false
+      }
+    },
+    {
+      "drvId": "11836",
+      "name": "Lüneburger Ruder-Club Wiking v.1875 e.V. (Elbe-Seitenkanal)",
+      "shortName": "LRC Wiking v.1875 (Elbe-Seitenkanal)",
+      "abbreviation": "LRCW",
+      "website": "https://www.rc-wiking.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Jugendausbildung (14 Jahre und jünger)",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Hochschulrudern",
+        "Schulrudern"
+      ],
+      "id": "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal",
+      "address": "Elso-Klöver-Straße, 21337 Lüneburg",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-elbe-seitenkanal",
+      "launchPoint": {
+        "lat": 53.24811,
+        "lon": 10.48567,
+        "precision": "shore of the Elbe-Seitenkanal nearest the earlier point (shore of the Elbe-Seitenkanal at the boathouse, Elso-Klöver-Straße (checked by the owner)), 20 m away",
+        "verified": false
+      }
+    },
+    {
+      "drvId": "11836",
+      "name": "Lüneburger Ruder-Club Wiking v.1875 e.V. (Lösegraben)",
+      "shortName": "LRC Wiking v.1875 (Lösegraben)",
+      "abbreviation": "LRCW",
+      "website": "https://www.rc-wiking.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Jugendausbildung (14 Jahre und jünger)",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Hochschulrudern",
+        "Schulrudern"
+      ],
+      "id": "lueneburger-ruder-club-wiking-v1875-loesegraben",
+      "address": "Am Schifferwall 6, 21335 Lüneburg",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-ilmenau",
+      "launchPoint": {
+        "lat": 53.25401,
+        "lon": 10.41387,
+        "precision": "shore of the Ilmenau nearest the earlier point (shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)), 12 m away",
+        "verified": true
       }
     },
     {
@@ -6094,9 +6215,9 @@
       "country": "de",
       "lakeId": "templiner-see",
       "launchPoint": {
-        "lat": 52.37293,
-        "lon": 13.01528,
-        "precision": "shore point of Templiner See nearest the geocoded club address, 28 m away",
+        "lat": 52.37294,
+        "lon": 13.01526,
+        "precision": "shore point of Templiner See nearest the geocoded club address, 27 m away",
         "verified": false
       }
     },
@@ -6141,6 +6262,31 @@
         "lat": 52.41926,
         "lon": 13.58717,
         "precision": "shore of the Langer See near Köpenick, Wendenschloßstr. 420 (the import placed it at a rain basin in Hohenschönhausen; the club also rows in Gatow on the Havel), 46 m away (water checked by hand)",
+        "verified": false
+      }
+    },
+    {
+      "drvId": "11220",
+      "name": "Pro Sport Berlin 24 e.V. (Gatow)",
+      "shortName": "Pro Sport Berlin 24 e.V. (Gatow)",
+      "abbreviation": "PSB 24",
+      "website": "https://www.pro-sport-berlin24.de",
+      "sports": [
+        "Wanderrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Erwachsenenausbildung",
+        "Freizeitrudern",
+        "Marathonrudern"
+      ],
+      "id": "pro-sport-berlin-24-gatow",
+      "address": "Kladower Damm 45, 14089 Berlin",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "havel-4578498",
+      "launchPoint": {
+        "lat": 52.47915,
+        "lon": 13.18366,
+        "precision": "shore of the Havel near the Gatow site, Kladower Damm 45, 83 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7148,8 +7294,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58478,
-        "lon": 10.03137,
+        "lat": 53.58499,
+        "lon": 10.03136,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -7448,9 +7594,9 @@
       "country": "de",
       "lakeId": "havel",
       "launchPoint": {
-        "lat": 52.58143,
-        "lon": 13.22021,
-        "precision": "shore point of Havel nearest the geocoded boathouse, 240 m away",
+        "lat": 52.58165,
+        "lon": 13.22015,
+        "precision": "shore point of Havel nearest the geocoded boathouse, 241 m away",
         "verified": false
       }
     },
@@ -8518,8 +8664,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.5822,
-        "lon": 10.02146,
+        "lat": 53.5821,
+        "lon": 10.02151,
         "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
@@ -8624,9 +8770,9 @@
       "country": "de",
       "lakeId": "schiedersee",
       "launchPoint": {
-        "lat": 51.92247,
-        "lon": 9.16538,
-        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 95 m away",
+        "lat": 51.9225,
+        "lon": 9.16551,
+        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 94 m away",
         "verified": false
       }
     },
@@ -12365,8 +12511,8 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.58526,
-        "lon": 9.99094,
+        "lat": 53.58555,
+        "lon": 9.99095,
         "precision": "on the Alster (checked by hand), first matched to Isebekkanal",
         "verified": false
       }
@@ -13350,10 +13496,10 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11953,
-        "lon": 8.77803,
-        "precision": "launch spot at the boathouse on the Main (checked by the owner)",
-        "verified": true
+        "lat": 50.11983,
+        "lon": 8.77862,
+        "precision": "geocoded club address, 111 m from the Main",
+        "verified": false
       }
     },
     {
@@ -13989,124 +14135,6 @@
         "lat": 47.76005,
         "lon": 9.17268,
         "precision": "shore point of Bodensee nearest the geocoded boathouse, 48 m away",
-        "verified": false
-      }
-    },
-    {
-      "drvId": "11220",
-      "name": "Pro Sport Berlin 24 e.V. (Gatow)",
-      "shortName": "Pro Sport Berlin 24 e.V. (Gatow)",
-      "abbreviation": "PSB 24",
-      "website": "https://www.pro-sport-berlin24.de",
-      "sports": [
-        "Wanderrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Erwachsenenausbildung",
-        "Freizeitrudern",
-        "Marathonrudern"
-      ],
-      "id": "pro-sport-berlin-24-gatow",
-      "address": "Kladower Damm 45, 14089 Berlin",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "havel-4578498",
-      "launchPoint": {
-        "lat": 52.47915,
-        "lon": 13.18366,
-        "precision": "shore of the Havel near the Gatow site, Kladower Damm 45, 83 m away (water checked by hand)",
-        "verified": false
-      }
-    },
-    {
-      "drvId": "11836",
-      "name": "Lüneburger Ruder-Club Wiking v.1875 e.V. (Elbe-Seitenkanal)",
-      "shortName": "LRC Wiking v.1875 (Elbe-Seitenkanal)",
-      "abbreviation": "LRCW",
-      "website": "https://www.rc-wiking.de",
-      "sports": [
-        "Wanderrudern",
-        "Wettkampfrudern",
-        "Ergometerrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Jugendausbildung (14 Jahre und jünger)",
-        "Erwachsenenausbildung",
-        "Leistungssport",
-        "Mastersrudern",
-        "Freizeitrudern",
-        "Hochschulrudern",
-        "Schulrudern"
-      ],
-      "id": "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal",
-      "address": "Elso-Klöver-Straße, 21337 Lüneburg",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "river-elbe-seitenkanal",
-      "launchPoint": {
-        "lat": 53.24811,
-        "lon": 10.48567,
-        "precision": "shore of the Elbe-Seitenkanal nearest the earlier point (shore of the Elbe-Seitenkanal at the boathouse, Elso-Klöver-Straße (checked by the owner)), 20 m away",
-        "verified": false
-      }
-    },
-    {
-      "drvId": "11836",
-      "name": "Lüneburger Ruder-Club Wiking v.1875 e.V. (Lösegraben)",
-      "shortName": "LRC Wiking v.1875 (Lösegraben)",
-      "abbreviation": "LRCW",
-      "website": "https://www.rc-wiking.de",
-      "sports": [
-        "Wanderrudern",
-        "Wettkampfrudern",
-        "Ergometerrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Jugendausbildung (14 Jahre und jünger)",
-        "Erwachsenenausbildung",
-        "Leistungssport",
-        "Mastersrudern",
-        "Freizeitrudern",
-        "Hochschulrudern",
-        "Schulrudern"
-      ],
-      "id": "lueneburger-ruder-club-wiking-v1875-loesegraben",
-      "address": "Am Schifferwall 6, 21335 Lüneburg",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "river-ilmenau",
-      "launchPoint": {
-        "lat": 53.25401,
-        "lon": 10.41387,
-        "precision": "shore of the Ilmenau nearest the earlier point (shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)), 12 m away",
-        "verified": true
-      }
-    },
-    {
-      "drvId": "12018",
-      "name": "Ludwigshafener Ruderverein von 1878 (Rheingönheim)",
-      "shortName": "Ludwigshafener RV (Rheingönheim)",
-      "abbreviation": "LRV",
-      "website": "https://www.ludwigshafener-rv.de",
-      "sports": [
-        "Wanderrudern",
-        "Wettkampfrudern",
-        "Ergometerrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Jugendausbildung (14 Jahre und jünger)",
-        "Erwachsenenausbildung",
-        "Leistungssport",
-        "Mastersrudern",
-        "Freizeitrudern",
-        "Marathonrudern",
-        "Veranstaltungsorganisation"
-      ],
-      "id": "ludwigshafener-ruderverein-von-1878-rheingoenheim",
-      "address": "Großwiesenstraße 5, 67065 Ludwigshafen am Rhein-Rheingönheim",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "river-rhein",
-      "launchPoint": {
-        "lat": 49.43886,
-        "lon": 8.46145,
-        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     }
