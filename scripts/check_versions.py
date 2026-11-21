@@ -54,10 +54,13 @@ def check_python(env: Path, extras: list[str]) -> list[tuple[bool, str]]:
         cmd += ["--extra", extra]
     run = subprocess.run(cmd, cwd=TOP / "backend", capture_output=True, text=True,
                          env={**os.environ, "UV_PROJECT_ENVIRONMENT": str(env)})
-    if run.returncode == 0:
+    changes = [ln.strip() for ln in (run.stdout + run.stderr).splitlines() if ln.strip()[:2] in ("+ ", "- ")]
+    # The backend itself (rowfrog, installed from backend/ by the Pi's publisher
+    # and the Mac) is the project, not a locked package: not a difference.
+    changes = [c for c in changes if "(from file://" not in c]
+    if run.returncode == 0 or (run.returncode != 0 and not changes and "(from file://" in run.stdout + run.stderr):
         rows.append((True, f"Python packages match backend/uv.lock (extras: {', '.join(extras) or 'none'})"))
     else:
-        changes = [ln.strip() for ln in (run.stdout + run.stderr).splitlines() if ln.strip()[:2] in ("+ ", "- ")]
         rows.append((False, "Python packages differ from backend/uv.lock: " + ("; ".join(changes[:12]) or run.stderr.strip()[-300:])))
     return rows
 
