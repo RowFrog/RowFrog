@@ -16,10 +16,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from rowfrog import cloudflare_usage, limits, usage
+from rowfrog import cloudflare_usage, limits, source_status, usage
 
 
 def main() -> int:
+    # What the requests say about each service (sources-status.json, only where SOURCES_STATUS is set: the Pi).
+    source_status.start("budget-check")
     out = Path(sys.argv[1])
     today = datetime.now(timezone.utc).date()
     rows = usage.budget(days=35)
