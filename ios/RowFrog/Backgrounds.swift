@@ -74,12 +74,9 @@ enum BackgroundLibrary {
         if thumbnail {
             image = scaled(image, maxSide: 360)
         } else {
-            // Decoded once here, off the main thread, into a plain bitmap. A picture
-            // read from a JPEG file is only decoded when drawn, and iOS may let go of
-            // that decoded copy; the app switcher's card, taken while swiping up from
-            // inside the app, then showed black where the picture was, while the
-            // frosted cards (blurred copies, already bitmaps) still showed it
-            // (owner's iPhone, 21 Nov 2026). Assumption, to be checked on a device.
+            // Decoded once here, off the main thread, so the first frame doesn't decode
+            // the JPEG while drawing. (Tried for the app switcher's black card, 21 Nov
+            // 2026; that one came from the emptied cache, fixed by InUse below.)
             image = image.preparingForDisplay() ?? image
         }
         cache.setObject(image, forKey: key)
