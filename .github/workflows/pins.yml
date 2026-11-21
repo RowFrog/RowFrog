@@ -1,0 +1,35 @@
+name: Pins installable everywhere
+
+# Owner rule (21 Nov 2026): pin and install only versions that GitHub, the Pi
+# and the Mac all offer. Fails a PR that sets .python-version, .nvmrc or
+# .uv-version to a version one of them can't install
+# (scripts/check_pins_available.py). The monthly dependency check runs it by
+# hand (workflow_dispatch) before proposing new pins.
+on:
+  pull_request:
+    paths:
+      - .python-version
+      - .nvmrc
+      - .uv-version
+      - scripts/check_pins_available.py
+      - .github/workflows/pins.yml
+  push:
+    branches: [main]
+    paths:
+      - .python-version
+      - .nvmrc
+      - .uv-version
+      - scripts/check_pins_available.py
+      - .github/workflows/pins.yml
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+      - run: pip install -q "uv==$(cat .uv-version)"
+      - run: python3 scripts/check_pins_available.py --summary "$GITHUB_STEP_SUMMARY"
