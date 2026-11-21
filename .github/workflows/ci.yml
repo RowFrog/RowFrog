@@ -29,12 +29,11 @@ jobs:
       # backend/uv.lock is the one place for the backend's versions: it must fit
       # pyproject.toml, hold a build for GitHub's Linux, the Pi and the Mac
       # (pyproject.toml, required-environments), and requirements-publish.txt
-      # must be its export. uv's version is pinned here; the monthly dependency
-      # check raises it.
+      # must be its export. uv's version is in .uv-version (the Mac's MacPorts uv).
       - name: Lock is current and matches requirements-publish.txt
         working-directory: .
         run: |
-          pip install -q uv==0.13.9
+          pip install -q "uv==$(cat .uv-version)"
           (cd backend && uv lock --check)
           scripts/export_pins.sh --check
       # With the satellite extra (rasterio, eccodes, numpy) and the pinned
