@@ -42,17 +42,29 @@ final class SwipeTests: XCTestCase {
         from.press(forDuration: 0.01, thenDragTo: to, withVelocity: .fast, thenHoldForDuration: 0)
     }
 
-    /// A swipe goes to the next club, and back.
+    /// Waits up to 10 s for the club shown to become (or stop being) `club`: on the Intel
+    /// runners a gesture can take several seconds to arrive (CI on 21 Nov 2026).
+    private func waitForShown(_ app: XCUIApplication, toBe club: String? = nil, notToBe other: String? = nil) -> String {
+        let end = Date().addingTimeInterval(10)
+        var now = shown(app)
+        while Date() < end {
+            if let club, now == club { break }
+            if let other, now != other { break }
+            Thread.sleep(forTimeInterval: 0.5)
+            now = shown(app)
+        }
+        return now
+    }
+
+    /// A swipe goes to the next club, and back (the system's own swipe, as a rower's thumb).
     func testSwipeChangesTheClub() {
         let app = launch()
         let first = shown(app)
-        swipe(app, left: true)
-        Thread.sleep(forTimeInterval: 1.5)
-        let second = shown(app)
+        app.swipeLeft()
+        let second = waitForShown(app, notToBe: first)
         XCTAssertNotEqual(first, second, "A swipe to the left did not change the club")
-        swipe(app, left: false)
-        Thread.sleep(forTimeInterval: 1.5)
-        XCTAssertEqual(shown(app), first, "A swipe back did not return to the first club")
+        app.swipeRight()
+        XCTAssertEqual(waitForShown(app, toBe: first), first, "A swipe back did not return to the first club")
     }
 
     /// Bursts of three quick swipes, then half a second's pause (the iPhone aborted about
