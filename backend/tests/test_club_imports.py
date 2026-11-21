@@ -1,5 +1,6 @@
 """The parsing in the club import scripts (scripts/), without network."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -94,3 +95,22 @@ def test_hand_checked_points_and_removals_survive_an_import(tmp_path, monkeypatc
     assert clubs[1]["launchPoint"] == lp and clubs[1]["address"] == "Ufer 1, 10000 A"
     assert club_import.apply_hand_checked("de", waters, clubs) == 2, "a second run changes the same clubs, nothing new"
     assert [c["id"] for c in clubs] == ["club", "school"]
+
+
+def test_owner_checked_launch_points_survive_an_import(tmp_path):
+    point = {"lat": 48.01977, "lon": 7.58695, "precision": "slip below the boathouse (checked by the owner)", "verified": True}
+    path = tmp_path / "de-drv.json"
+    path.write_text(json.dumps({"lakes": [], "clubs": [{"id": "breisach", "lakeId": "river-rhein", "launchPoint": point}]}), encoding="utf-8")
+    clubs = [{"id": "breisach", "lakeId": "river-rhein",
+              "launchPoint": {"lat": 48.0197, "lon": 7.58886, "precision": "on the Rhein", "verified": False}}]
+    assert club_import.keep_earlier_fixes(path, [], clubs) == 1
+    assert clubs[0]["launchPoint"] == point
+
+
+def test_new_outlines_no_water_uses_are_removed(tmp_path, monkeypatch):
+    kept, unused, older = tmp_path / "see.geojson", tmp_path / "teich.geojson", tmp_path / "alt.geojson"
+    for f in (kept, unused, older):
+        f.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(club_import, "NEW_OUTLINES", {kept, unused})
+    assert club_import.drop_unused_outlines([{"id": "see"}]) == 1
+    assert kept.exists() and not unused.exists() and older.exists(), "files from earlier runs stay"
