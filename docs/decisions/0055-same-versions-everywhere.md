@@ -1,4 +1,4 @@
-# 0054. One lock file per kind of software; every system installs from it
+# 0055. One lock file per kind of software; every system installs from it
 
 - Date: 2026-11-20
 - Status: step 1 of 6 (owner, thread "Keep software versions the same everywhere", 20 Nov 2026: option A 23:40 CET (22:40 UTC); monthly bumps with 7-day cooldown, security at once 23:40 CET; exact Python patch 23:46 CET; majors and Python 3.14 23:49 CET, each major with the owner's OK; research doc https://claude.ai/artifact/28e1gY5aonPHkRnmVExeg6)
