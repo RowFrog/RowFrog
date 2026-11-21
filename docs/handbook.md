@@ -407,6 +407,8 @@ One version of each tool and package on GitHub, the Mac and the Pi, each kept in
 | Node | `.nvmrc` | GitHub: `actions/setup-node` with `node-version-file: .nvmrc`; Mac: MacPorts `nodejs22` (compare by hand until update.sh checks it) |
 | uv | `ci.yml` (`pip install uv==…`) | Mac and Pi: their own uv, at least 0.13 |
 
+Check a system: `python3 scripts/check_versions.py --env <venv> --extras <extras> --node --npm` prints `same` or `DIFF` per item (Python version, every locked package via `uv sync --locked --check`, Node, `node_modules`) and exits 1 on a difference. The Website workflow runs the Node/npm part on every run (run summary); the Pi gate and forecast run install exactly the lock and fall back to the last good commit if that fails (`scripts/local/pi`).
+
 Change a backend version: `cd backend && uv lock --upgrade-package <name>`, then `scripts/export_pins.sh`, commit both. Python, Node and uv are raised by the monthly dependency check (3rd of each month), Python only when every locked package has a build for all three systems.
 
 ## Weekly Mac cleanup (owner, 12 Nov 2026)

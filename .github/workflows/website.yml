@@ -64,6 +64,8 @@ jobs:
           # Playwright's exact version comes from package-lock.json (repository root).
           npm run setup && npx --no -- playwright install --with-deps chromium
           node --test web/tests/browser/*.test.mjs
+      - name: Same versions as pinned (Node from .nvmrc, npm tools from package-lock.json)
+        run: python3 scripts/check_versions.py --node --npm --summary "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
           name: website
