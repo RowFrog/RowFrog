@@ -427,8 +427,12 @@ def test_a_file_that_only_differs_in_build_time_is_left_as_published(tmp_path):
 
 def test_nothing_is_handed_on_without_the_setting(monkeypatch, capsys):
     monkeypatch.delenv("PUBLISH_CLUBS_DONE", raising=False)
+    flushed = []
+    monkeypatch.setattr(publish.source_status, "flush", lambda: flushed.append(True))
     publish.clubs_written()
     assert capsys.readouterr().out == ""
+    # The Pi no longer sets it (speed-up #4): the sources' status is still written at this point.
+    assert flushed == [True]
 
 
 def test_the_club_forecasts_are_handed_on_once_written(monkeypatch, tmp_path, capsys):
