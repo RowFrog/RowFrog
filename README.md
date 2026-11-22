@@ -85,7 +85,9 @@ GitHub issue, so no GitHub account is needed.
    (`docs/decisions/0053`). Tapping "All values" under the sun line opens Current
    conditions inside the tile; tapping "Fewer values" closes it. Each club
    page starts closed and keeps its choice until the app restarts. Closed, a hidden value that counts for the light
-   (thunderstorm, or ice when it matters) shows as one line under the sun line.
+   (thunderstorm, or ice when it matters) shows as one line under the sun line;
+the ice line shows only when ice is reported or the water is 3 °C or colder
+(`docs/decisions/0061`).
 2. The official warnings card, only while a warning is issued (or the check
    failed).
 3. Lake view (River or Canal view for river and canal clubs).
@@ -143,8 +145,11 @@ when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
 (`ios/RowFrog/Limits.swift`). The light at the launch point also counts the water
 within 1 km of it (on rivers, 1 km up and down the stretch): when that water
-is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m",
-and the top tile shows that worst wind, wave or visibility value, in its
+is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m".
+When the launch point itself has a reason for the same thing (fog, wind, gusts,
+waves, heavy rain, thunderstorm, hail), the two become one line in the worse
+colour with both values, e.g. "Fog: 0.7 km at the launch point, only 0.3 km
+within 1 km" (`docs/decisions/0061`), and the top tile shows that worst wind, wave or visibility value, in its
 colour and marked "Nearby", in place of the launch point's own. The website
 does the same.
 
