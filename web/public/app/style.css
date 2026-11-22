@@ -534,8 +534,9 @@ body.wide-bar .top-title .head-side > * { pointer-events: auto; }
    area beside the list, never the list, and reaches 10 px below the line of buttons. Stacked layers, each blurred
    more and masked to a shorter band, make the blur grow towards the top; the parent itself has no opacity, filter or
    mask, so every layer still sees the cards behind it (any of those would make it a backdrop root). On the Home
-   Screen the clock sits on a solid strip in the same colour (theme-color, paintClockStrip in backgrounds.js), so
-   the edge starts at full strength and runs on from it without a step. */
+   Screen the page runs on under the clock (black-translucent, owner's pick B, 22 Nov 2026), as in the app, so the
+   edge covers the clock too and there is no strip and no step. iOS then draws the clock in white: a light veil
+   behind it (html::after) keeps it readable on a light page. */
 body.edge-page::before { display: none; }
 .top-title.edge::before { display: none; }
 /* The small name in its own glass capsule (InlineClubTitle); the buttons keep their places. */
@@ -543,7 +544,12 @@ body.edge-page::before { display: none; }
 .soft-edge { position: fixed; top: 0; left: var(--area-left); width: var(--area-width); z-index: 9; pointer-events: none;
   height: calc(var(--safe-top) + 44px + 10px); --edge-tint: var(--bg); --edge-top: 80%; }
 body.wide-bar .soft-edge { height: calc(var(--head-mid, 22px) + 22px + 10px); }
-@media (display-mode: standalone) { .soft-edge { --edge-top: 100%; } }
+@media (display-mode: standalone) {
+  html::after { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 11; pointer-events: none;
+    background: linear-gradient(rgba(0, 0, 0, .3), rgba(0, 0, 0, .1)); }
+  :root[data-theme="dark"]::after { background: linear-gradient(rgba(0, 0, 0, .18), rgba(0, 0, 0, 0)); }
+}
+@media (display-mode: standalone) and (prefers-color-scheme: dark) { :root:not([data-theme="light"])::after { background: linear-gradient(rgba(0, 0, 0, .18), rgba(0, 0, 0, 0)); } }
 body.has-picture .soft-edge { --edge-tint: var(--picture-top, color-mix(in srgb, var(--bg) 66%, transparent)); }
 .soft-edge > i { position: absolute; inset: 0; opacity: 0; transition: opacity .2s ease-in-out;
   backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));

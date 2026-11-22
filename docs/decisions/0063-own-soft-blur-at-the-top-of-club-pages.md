@@ -12,6 +12,7 @@
 - It lies over the page column only, never over the list beside it, and shows only while the page is scrolled.
 - The same on iOS 18, 26 and 27, iPhone and iPad, upright and on its side, list shown or slid away.
 - Low Power Mode keeps its plain strip.
+- Home Screen web app (owner's pick B, 22 Nov 2026, 18:59 CET (17:59 UTC), card "Pick how the Home Screen clock strip meets the blur"): no solid strip behind the clock any more. The page runs on under the clock (`apple-mobile-web-app-status-bar-style` black-translucent) as in the app, so the soft edge covers the clock too and there is no step. iOS then always draws the clock in white, so a light dark veil sits behind it (`html::after` in standalone mode, lighter in dark mode). Turned down: A, keep the strip with a longer solid tint below it.
 
 ## Why
 
@@ -27,5 +28,5 @@
 
 ## Open
 
-- The Home Screen web app: how its solid strip behind the clock meets the blur (owner question, 22 Nov 18:55 CET).
+- On a real Home Screen: whether the white clock stays readable over light pictures, and whether existing Home Screen icons pick up the new status bar style without being added again.
 - Checked on the owner's iPhone and iPad before merging.
