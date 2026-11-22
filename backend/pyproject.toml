@@ -34,7 +34,9 @@ testpaths = ["tests"]
 # they are set, unused imports and syntax errors. Style is left alone.
 [tool.ruff]
 line-length = 140
-# The jobs run Python 3.12 (scripts use 3.12 f-strings).
+# The jobs run Python 3.14 (.python-version). The target stays at 3.12 on purpose:
+# the Pi runs backend/rowfrog/source_status.py and its issue job on Debian's
+# Python 3.13, so no syntax newer than that may slip in.
 target-version = "py312"
 
 [tool.ruff.lint]
