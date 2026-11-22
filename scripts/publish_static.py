@@ -56,7 +56,7 @@ import subprocess
 import sys
 import tempfile
 import threading
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -1384,6 +1384,19 @@ def parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
     return [(first, lakes_of(first, set(used_lakes))), (rest, lakes_of(rest, due_lakes))]
 
 
+def radar_started(points: dict[str, tuple[float, float]]) -> Future | None:
+    """Starts loading the radar of these clubs (dwd_radar.nowcasts) in a thread of its own and
+    gives its future, or None without clubs. Only DWD's answers are waited for, so this runs
+    beside the Open-Meteo and warning loads of the same part; the requests stay the same."""
+    if not points:
+        return None
+    pool = ThreadPoolExecutor(1, thread_name_prefix="radar")
+    try:
+        return pool.submit(asyncio.run, dwd_radar.nowcasts(points))
+    finally:
+        pool.shutdown(wait=False)
+
+
 def clubs_written() -> None:
     """Runs PUBLISH_CLUBS_DONE (a command, if set) once a part's club forecasts are
     written (see parts()), so they can go online before the slow lake views (the Raspberry Pi uploads them
@@ -1473,17 +1486,19 @@ def publish(args, now: datetime, state: "State") -> int:
     viewed: set[str] = set()
     for part, part_lakes in parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
         # A part is loaded, built and (with PUBLISH_UPLOAD) put online before the next one starts.
+        # The radar line on the widget, for the clubs people use: 10 DWD requests a club, loaded
+        # while the weather and warnings below load (the run used to wait 8-37 s for it on its own).
+        radar_points = {c.id: (c.launch_point.lat, c.launch_point.lon) for c in part if c.id in used_clubs}
+        radar_job = radar_started(radar_points)
         club_weather(state, part, used_clubs, with_usage, now)
         club_outlooks(state, part, used_clubs, now)
         model_pairs = model_weather(state, part, now)
         local_warnings(state, part, now)
-        # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
-        radar_points = {c.id: (c.launch_point.lat, c.launch_point.lon) for c in part if c.id in used_clubs}
-        radar = asyncio.run(dwd_radar.nowcasts(radar_points)) if radar_points else {}
-        if radar_points:
-            print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
         # Lake weather before the clubs, so a club's light can count the water near its launch point.
         ready_lakes = lake_weather(state, part_lakes, used_lakes, now)
+        radar = radar_job.result() if radar_job else {}
+        if radar_points:
+            print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
         lake_count += len([i for i in part_lakes if i not in viewed])
         part_failed = []
         for club, body, problem in club_forecasts(part):
