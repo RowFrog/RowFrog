@@ -453,9 +453,30 @@ test("fog within 1 km shows on the top tile and in the Why line (app #409)", asy
   await settles(async () => {
     assert.match(await tile.innerText(), /0\.3 km/);
     assert.ok(await tile.locator(".cause-red").count(), "the value takes the light's colour");
-    assert.match(await page.locator(".card.now ul.reasons").innerText(), /Fog within 1 km of the launch point: visibility 0\.3 km\./);
+    // The sample hours have fog at the launch point too, so it is the one joined line (owner's pick A, 22 Nov 2026).
+    assert.match(await page.locator(".card.now ul.reasons").innerText(), /at the launch point, only 0\.3 km within 1 km\./);
   });
   if (process.env.RF_SHOT_NEAR) await page.locator(".card.now").screenshot({ path: process.env.RF_SHOT_NEAR });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("fog at the launch point and within 1 km is one line in the worse colour (owner's pick A, 22 Nov 2026)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const near = { light: "red", windMs: 1, gustMs: 2, waveM: 0, visM: 300, rainMm: 0, other: "red", otherCause: "fog" };
+  const hours = forecast.hours.map((x, i) => i < 48 ? { ...x, nearby: near, light: "red", visibilityM: 700,
+    reasons: [{ condition: "nearby_water", light: "red", topic: "fog", value: 300 }, { condition: "fog", light: "amber" }] } : x);
+  await context.route((url) => url.pathname.endsWith("/v1/clubs/mrc-1880/forecast"),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...forecast, hours }) }));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.waitForFunction(() => document.querySelector(".card.now ul.reasons")?.innerText.includes("at the launch point"), null, { timeout: 20000 });
+  await settles(async () => {
+    const lines = page.locator(".card.now ul.reasons li.red, .card.now ul.reasons li.orange");
+    assert.equal(await lines.count(), 1);
+    assert.match(await lines.first().innerText(), /Fog: visibility 0\.7 km at the launch point, only 0\.3 km within 1 km\./);
+    assert.equal(await lines.first().getAttribute("class"), "red");
+  });
+  if (process.env.RF_SHOT_FOG) await page.locator(".card.now").screenshot({ path: process.env.RF_SHOT_FOG });
   assert.deepEqual(errors, []);
   await context.close();
 });

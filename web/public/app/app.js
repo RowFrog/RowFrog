@@ -21,7 +21,7 @@ import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
+  waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownReasons, shownWind, shownWaveHeightM, shownVisibilityM,
   forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState, daylightAt,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
@@ -503,7 +503,7 @@ function paintRow(row, raw) {
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
       ${stale ? `<small class="orange">${icon("clock-alert")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
-      <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
+      <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", shownReasons(hour).map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line lead" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")}<span>${h(coldWaterText(kit)[0])}</span></small>` : ""}
       ${headline ? warningListLine(headline) : ""}
       ${sun ? `<small class="sub lead sun-line" role="img" aria-label="${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}">${icon(sun.up ? "sunset" : "sunrise")}<span>${h(time(sun.up ? sun.sunset : sun.sunrise))}</span></small>` : ""}
@@ -1610,7 +1610,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const boat = t("For %@", boatInSentence(selectedBoat()));
-  const reasons = hour.reasons ?? [];
+  const reasons = shownReasons(hour);
   const ice = iceValue(forecast);
   const warnings = forecast.warnings;
   const sun = sunState(forecast, at ?? new Date());
