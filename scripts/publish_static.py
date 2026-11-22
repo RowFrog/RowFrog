@@ -1402,18 +1402,17 @@ def clubs_written() -> None:
     written (see parts()), so they can go online before the slow lake views (the Raspberry Pi uploads them
     there; pi/run-publish.sh). Its failure is only logged; the run goes on."""
     command = os.environ.get("PUBLISH_CLUBS_DONE")
-    if not command:
-        return
-    sys.stdout.flush()
-    args: list[str] = []
-    try:
-        args = shlex.split(command)
-        result = subprocess.run(args, timeout=600)
-        source_status.note_command(args, result.returncode)
-        print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
-    except (OSError, ValueError, subprocess.SubprocessError) as e:
-        source_status.note_command(args, error=e)
-        print(f"Club forecasts not handed on early: {e!r}", flush=True)
+    if command:  # the Pi no longer sets it (speed-up #4, Nov 2026): PUBLISH_UPLOAD has sent the files already
+        sys.stdout.flush()
+        args: list[str] = []
+        try:
+            args = shlex.split(command)
+            result = subprocess.run(args, timeout=600)
+            source_status.note_command(args, result.returncode)
+            print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
+        except (OSError, ValueError, subprocess.SubprocessError) as e:
+            source_status.note_command(args, error=e)
+            print(f"Club forecasts not handed on early: {e!r}", flush=True)
     # The club forecasts are online: the sources they came from answered (or not) already,
     # so the Pi's monitor sees it now and not only after the lake views (up to 50 minutes).
     source_status.flush()

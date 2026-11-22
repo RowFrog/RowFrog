@@ -86,10 +86,8 @@ if [ -z "${CLUBS:-}" ]; then
   fi
 fi
 echo "Clubs: $CLUBS"
-# Once the club forecasts are written, publish_static.py runs this (before the
-# lake views, which take 30-50 minutes in some runs), so the apps get them at
-# once. `copy`, not `sync`: nothing is deleted here; the full sync below does that.
-export PUBLISH_CLUBS_DONE="rclone copy $SITE/v1/clubs r2:$BUCKET/v1/clubs --checksum --fast-list --transfers 8 --stats 0 --log-level NOTICE"
+# Each file goes online a few seconds after it is written (PUBLISH_UPLOAD); the early
+# copy of all club files (PUBLISH_CLUBS_DONE) is no longer set (Pi speed-up #4, Nov 2026).
 export PUBLISH_UPLOAD="rclone copy $SITE/v1 r2:$BUCKET/v1 --files-from-raw {files} --no-check-dest --transfers 8 --stats 0 --log-level NOTICE"
 cd "$REPO"
 "$VENV/bin/python" scripts/publish_static.py "$SITE/v1" --clubs "$CLUBS" --state "$STATE/publish.pickle"
