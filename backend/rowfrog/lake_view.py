@@ -29,7 +29,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Sequence
 
-try:  # only the publishing job has numpy (satellite extra); without it the plain loop is used
+try:  # only the publishing job has numpy (satellite extra); without it the plain loops are used
     import numpy as np
 except ImportError:  # pragma: no cover
     np = None
@@ -41,7 +41,7 @@ from .score import HAIL_CODES, HourConditions, Light, Thresholds, assess
 from .sources.dwd_warnings import Warning
 from .sources.open_meteo import ForecastHour
 from .sun import sun_days
-from .waves import EARTH_RADIUS_M, _ray_hits, significant_wave_height
+from .waves import EARTH_RADIUS_M, G, _ray_hits, significant_wave_height
 
 TARGET_CELLS = 1000
 MIN_CELL_M = 40.0
@@ -591,13 +591,34 @@ def lake_hours(
     water_temp_c: float | None = None,
     thresholds: Thresholds = Thresholds(),
 ) -> list[LakeHour]:
-    """One LakeHour per forecast hour; `weather` holds one hourly list per forecast point."""
+    """One LakeHour per forecast hour; `weather` holds one hourly list per forecast point.
+
+    The cells are worked out for all hours at once with numpy (_cells_numpy); without numpy,
+    hour by hour and cell by cell (_lake_hours_loop). Both give the very same numbers:
+    tests/test_lake_view.py compares them."""
+    return _lake_hours(grid, weather, warnings, water_temp_c, thresholds, _cells_loop if np is None else _cells_numpy)
+
+
+def _lake_hours_loop(
+    grid: Grid,
+    weather: Sequence[Sequence[ForecastHour]],
+    warnings: Sequence[Warning] = (),
+    water_temp_c: float | None = None,
+    thresholds: Thresholds = Thresholds(),
+) -> list[LakeHour]:
+    """lake_hours without numpy: hour by hour, cell by cell."""
+    return _lake_hours(grid, weather, warnings, water_temp_c, thresholds, _cells_loop)
+
+
+def _lake_hours(grid, weather, warnings, water_temp_c, thresholds, cells) -> list[LakeHour]:
     if not weather or not weather[0]:
         return []
     centre_lon = sum(p[0] for p in grid.samples) / len(grid.samples)
     centre_lat = sum(p[1] for p in grid.samples) / len(grid.samples)
     first, last = weather[0][0].time, weather[0][-1].time
     days = sun_days(first, last, centre_lat, centre_lon)
+    # Cold water lowers the wind limits for the cells too.
+    lights, waves, zone_lights, zone_waves = cells(grid, weather, thresholds.for_water(water_temp_c))
     hours = []
     for h in range(len(weather[0])):
         at_points = [w[h] for w in weather]
@@ -630,13 +651,23 @@ def lake_hours(
             ).light
             for w in at_points
         ]
+        hours.append(
+            LakeHour(
+                when, wide.reasons, lights[h], waves[h], at_points, zone_lights[h], zone_waves[h], point_other,
+                weather_warning_topic(list(warnings), when, end),
+            )
+        )
+    return hours
+
+
+def _cells_loop(grid: Grid, weather: Sequence[Sequence[ForecastHour]], t: Thresholds):
+    """Per hour the cells' lights and waves and each zone's worst of them, one cell at a time."""
+    out = [], [], [], []
+    for h in range(len(weather[0])):
         lights, waves = [], []
-        n_zones = len(grid.zones)
-        zone_lights = [Light.GREEN] * n_zones
-        zone_waves = [0.0] * n_zones
-        # Cold water lowers the wind limits for the cells too.
-        cell_thresholds = thresholds.for_water(water_temp_c)
-        columns = _HourColumns(at_points)
+        zone_lights = [Light.GREEN] * len(grid.zones)
+        zone_waves = [0.0] * len(grid.zones)
+        columns = _HourColumns([w[h] for w in weather])
         for i, table in enumerate(grid.fetch):
             speed, gust, direction, visibility, rain, cape, code = columns.cell(grid, i)
             speed = speed or 0.0
@@ -653,20 +684,143 @@ def lake_hours(
                     precipitation_mm=rain,
                     weather_code=code,
                 ),
-                cell_thresholds,
+                t,
             ).light
             lights.append(light)
             waves.append(wave)
             z = grid.zone_of[i]
             zone_lights[z] = max(zone_lights[z], light)
             zone_waves[z] = max(zone_waves[z], wave)
-        hours.append(
-            LakeHour(
-                when, wide.reasons, lights, waves, at_points, zone_lights, zone_waves, point_other,
-                weather_warning_topic(list(warnings), when, end),
-            )
-        )
-    return hours
+        for part, value in zip(out, (lights, waves, zone_lights, zone_waves)):
+            part.append(value)
+    return out
+
+
+_LIGHTS = (Light.GREEN, Light.AMBER, Light.RED)
+# A blended visibility this far above the fog limit (on the log scale) is clear of it whatever
+# exp() rounds to, so math.exp is only needed near the limit.
+_LOG_MARGIN = 1e-6
+# Waves: where the fully developed height is not clearly above the fetch-limited one, the cell
+# takes significant_wave_height itself (Python's `**` may round apart from numpy's `x * x`).
+_WAVE_MARGIN = 1e-9
+
+
+def _cells_numpy(grid: Grid, weather: Sequence[Sequence[ForecastHour]], t: Thresholds):
+    """_cells_loop for every hour at once, with numpy. The same numbers as the loop: sums in the
+    same order with Python's rounding (_python_sum); atan2, exp and the wave formula with math."""
+    hours = len(weather[0])
+    nan = math.nan
+
+    def table(get) -> "np.ndarray":  # points × hours, None as NaN
+        return np.array([[nan if (v := get(w[h])) is None else v for h in range(hours)] for w in weather], dtype=float)
+
+    rows = [[w[h] for h in range(hours)] for w in weather]
+    speed = table(lambda p: p.wind_speed_ms)
+    gust = table(lambda p: p.wind_gust_ms)
+    dirs = table(lambda p: p.wind_from_deg)
+    vis = table(lambda p: p.visibility_m)
+    rain = table(lambda p: p.precipitation_mm)
+    cape = table(lambda p: p.cape_jkg)
+    hail = np.array([[p.weather_code in HAIL_CODES for p in r] for r in rows], dtype=bool)
+    sin = np.array([[math.sin(math.radians(p.wind_from_deg)) if p.wind_from_deg is not None else nan for p in r] for r in rows])
+    cos = np.array([[math.cos(math.radians(p.wind_from_deg)) if p.wind_from_deg is not None else nan for p in r] for r in rows])
+    speed0 = np.nan_to_num(speed, nan=0.0)
+    log_vis = np.array([[math.log(max(p.visibility_m, 1.0)) if p.visibility_m is not None else nan for p in r] for r in rows])
+
+    n = len(grid.fetch)
+    c_speed = np.empty((n, hours))
+    c_gust = np.empty((n, hours))
+    c_rain = np.empty((n, hours))
+    c_cape = np.empty((n, hours))
+    c_hail = np.empty((n, hours), dtype=bool)
+    c_vis = np.full((n, hours), np.inf)  # inf: no fog check (no value, or clearly above the limit)
+    c_dir = np.full((n, hours), nan)  # NaN: no direction, so no waves
+    fog_limit = math.log(max(t.visibility_amber_m, 1.0)) + _LOG_MARGIN
+
+    # Cells taking one point as it is (no weights, or one), then cells grouped by how many they blend.
+    single: list[tuple[int, int]] = []
+    groups: dict[int, list[tuple[int, list[tuple[int, float]]]]] = {}
+    for i in range(n):
+        weights = grid.weights[i] if i < len(grid.weights) else None
+        if not weights or len(weights) == 1:
+            single.append((i, next(iter(weights)) if weights else grid.nearest[i]))
+        else:
+            groups.setdefault(len(weights), []).append((i, list(weights.items())))
+    if single:
+        cells = np.array([i for i, _ in single])
+        src = np.array([j for _, j in single])
+        c_speed[cells], c_gust[cells], c_rain[cells], c_cape[cells] = speed[src], gust[src], rain[src], cape[src]
+        c_hail[cells], c_dir[cells] = hail[src], dirs[src]
+        c_vis[cells] = np.where(np.isnan(vis[src]), np.inf, vis[src])
+    for k, group in groups.items():
+        cells = np.array([i for i, _ in group])
+        idx = np.array([[j for j, _ in w] for _, w in group])  # cells × k
+        wts = np.array([[x for _, x in w] for _, w in group])
+        near = np.array([grid.nearest[i] for i, _ in group])
+
+        def missing(values):  # cells × hours: a point of the cell has no value
+            return np.isnan(values[idx]).any(axis=1)
+
+        def mix(values):  # as _HourColumns.cell's mix(): the nearest point's value where one is missing
+            picked = values[idx]  # cells × k × hours
+            mixed = _python_sum([wts[:, m, None] * picked[:, m] for m in range(k)])
+            return np.where(np.isnan(picked).any(axis=1), values[near], mixed)
+
+        c_speed[cells], c_gust[cells], c_rain[cells] = mix(speed), mix(gust), mix(rain)
+        c_cape[cells], c_hail[cells] = cape[near], hail[near]
+        # Direction (interpolate.blend_direction) and visibility (blend_visibility) as in _HourColumns.cell.
+        no_dir = missing(dirs)
+        u = _python_sum([(wts[:, m, None] * speed0[idx[:, m]]) * sin[idx[:, m]] for m in range(k)])
+        v = _python_sum([(wts[:, m, None] * speed0[idx[:, m]]) * cos[idx[:, m]] for m in range(k)])
+        top = idx[np.arange(len(group)), np.argmax(wts, axis=1)]  # max(weights, key=weights.get): the first largest
+        calm = (np.abs(u) < 1e-9) & (np.abs(v) < 1e-9)
+        out = np.where(no_dir, dirs[near], np.where(calm, dirs[top], nan))
+        arrows = ~(calm | no_dir)
+        out[arrows] = [math.degrees(math.atan2(a, b)) % 360 for a, b in zip(u[arrows].tolist(), v[arrows].tolist())]
+        c_dir[cells] = out
+        no_vis = missing(vis)
+        lv = _python_sum([wts[:, m, None] * log_vis[idx[:, m]] for m in range(k)])
+        blended = np.full(lv.shape, np.inf)
+        for r, h in zip(*np.nonzero(~no_vis & (lv <= fog_limit))):
+            blended[r, h] = math.exp(lv[r, h])
+        c_vis[cells] = np.where(no_vis, np.where(np.isnan(vis[near]), np.inf, vis[near]), blended)
+
+    s = np.nan_to_num(c_speed, nan=0.0)  # `speed or 0.0`
+    g = np.nan_to_num(c_gust, nan=0.0)
+    # Waves: significant_wave_height(speed, _interpolated_fetch(table, direction)).
+    fetch = np.array(grid.fetch, dtype=float).reshape(n, DIRECTIONS)
+    has_dir = ~np.isnan(c_dir)
+    pos = np.where(has_dir, c_dir, 0.0) % 360 / (360 / DIRECTIONS)
+    lo = pos.astype(np.int64)
+    frac = pos - lo
+    rows_i = np.arange(n)[:, None]
+    f = fetch[rows_i, lo % DIRECTIONS] * (1 - frac) + fetch[rows_i, (lo + 1) % DIRECTIONS] * frac
+    with np.errstate(invalid="ignore"):
+        limited = 0.0016 * s * np.sqrt(f / G)
+    developed = 0.2433 * (s * s) / G
+    calm = ~has_dir | (s <= 0) | (f <= 0)
+    wave = np.where(calm, 0.0, limited)
+    for r, h in zip(*np.nonzero(~calm & (developed <= limited * (1 + _WAVE_MARGIN)))):
+        wave[r, h] = significant_wave_height(float(s[r, h]), float(f[r, h]))
+
+    def rising(value, amber, red):
+        return np.where(value > red, 2, np.where(value >= amber, 1, 0))
+
+    storm = np.where(np.nan_to_num(c_cape, nan=0.0) >= CAPE_AMBER_JKG, 1, 0)
+    storm = np.where((np.nan_to_num(c_cape, nan=0.0) >= CAPE_RED_JKG) & (np.nan_to_num(c_rain, nan=0.0) >= CONVECTIVE_RAIN_MM), 2, storm)
+    fog = np.where(c_vis < t.visibility_red_m, 2, np.where(c_vis <= t.visibility_amber_m, 1, 0))
+    with np.errstate(invalid="ignore"):
+        rain_light = np.where(c_hail, 2, np.where(c_rain >= t.rain_amber_mm, 1, 0))
+    light = np.maximum.reduce([
+        rising(s, t.wind_amber_ms, t.wind_red_ms), rising(g, t.gust_amber_ms, t.gust_red_ms),
+        rising(wave, t.wave_amber_m, t.wave_red_m), storm, fog, rain_light,
+    ])
+    zone_of = np.array(grid.zone_of)
+    zones = [zone_of == z for z in range(len(grid.zones))]
+    zone_light = [[_LIGHTS[v] for v in row] for row in np.array([light[m].max(axis=0, initial=0) for m in zones]).T.tolist()]
+    zone_wave = np.array([wave[m].max(axis=0, initial=0.0) for m in zones]).T.tolist()
+    lights = [[_LIGHTS[v] for v in row] for row in light.T.tolist()]
+    return lights, wave.T.tolist(), zone_light, zone_wave
 
 
 # The Steg light also counts the water this close to the launch point (owner's option C, 6 Nov 2026).
