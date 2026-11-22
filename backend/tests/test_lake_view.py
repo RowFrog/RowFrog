@@ -197,6 +197,69 @@ def test_lake_hours_read_each_cell_as_cell_weather_does():
             assert lake_view._storm_light(cape, rain) == _thunderstorm(w)
 
 
+def test_lake_hours_with_numpy_are_the_plain_loop_bit_for_bit():
+    # The numpy cells (Pi speed-up, 22 Nov 2026) must give exactly the loop's lights and waves:
+    # also with missing values, arrows that cancel, light wind (fully developed waves), whole-number
+    # values as Open-Meteo sends them, visibility right at the fog limits and cold water.
+    import random
+
+    import pytest
+
+    if lake_view.np is None:
+        pytest.skip("numpy is in the satellite extra")
+    rnd = random.Random(22)
+
+    def maybe(x):
+        return None if rnd.random() < 0.05 else x
+
+    for target, narrow in ((200, False), (60, False), (200, True)):
+        grid = lake_view.build_grid(LAKE, target_cells=target, narrow=narrow)
+        hours = 12
+        weather = [
+            [
+                ForecastHour(
+                    START + timedelta(hours=h), 12.0,
+                    maybe(rnd.choice([0.0, 0, 3, 0.4, rnd.uniform(0, 1), rnd.uniform(0, 14)])),
+                    maybe(rnd.choice([0, rnd.uniform(0, 20)])),
+                    maybe(rnd.choice([0.0, 180.0, 350.0, 10.0, 360, 270, rnd.uniform(0, 360)])), 50.0, 10.0,
+                    maybe(rnd.choice([80.0, 500.0, 1000.0, 1000, 999.9999, 1000.0001, 20_000.0, rnd.uniform(50, 30_000)])),
+                    maybe(rnd.choice([0.0, 1.5, 4.0, 6.0])), maybe(rnd.choice([0, rnd.uniform(0, 1500)])), True,
+                    weather_code=rnd.choice([None, 3, 61, 96, 99]),
+                )
+                for h in range(hours)
+            ]
+            for _ in grid.samples
+        ]
+        for water in (None, 8.0):
+            fast = lake_view.lake_hours(grid, weather, water_temp_c=water)
+            loop = lake_view._lake_hours_loop(grid, weather, water_temp_c=water)
+            for a, b in zip(fast, loop, strict=True):
+                assert repr((a.lights, a.waves_m, a.zone_lights, a.zone_max_wave_m)) == repr(
+                    (b.lights, b.waves_m, b.zone_lights, b.zone_max_wave_m)
+                )
+                assert a == b
+
+
+def test_lake_view_json_has_plain_json_types_only():
+    # lake_view_json leaves FastAPI's jsonable_encoder out (Pi speed-up, 22 Nov 2026): the view
+    # must already be what it would give, with no tuples, enums or dates left in it.
+    from fastapi.encoders import jsonable_encoder
+
+    grid = lake_view.build_grid(LAKE, target_cells=200)
+    weather = [[hour(at=START + timedelta(hours=h), visibility=300.0 if h else 20_000.0) for h in range(3)] for _ in grid.samples]
+    body, problem = api.lake_view_json(("starnberger-see", grid, weather, [], 8.0, START))
+    assert problem is None
+
+    def plain(x):
+        if isinstance(x, dict):
+            return all(type(k) is str and plain(v) for k, v in x.items())
+        if type(x) is list:
+            return all(plain(v) for v in x)
+        return x is None or type(x) in (str, int, float, bool)
+
+    assert plain(body) and jsonable_encoder(body) == body
+
+
 def test_nearby_water_counts_only_the_water_near_the_launch_point():
     # Option C (owner, 6 Nov 2026): the launch point's light also counts the water within 1 km.
     grid = lake_view.build_grid(LAKE, target_cells=200)

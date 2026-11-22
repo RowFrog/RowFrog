@@ -16,7 +16,6 @@ from datetime import date, datetime, timedelta, timezone
 
 import httpx
 from fastapi import FastAPI, HTTPException
-from fastapi.encoders import jsonable_encoder
 
 from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, _thunderstorm, rowing_forecast
@@ -1224,9 +1223,14 @@ async def lake_view_inputs(lake_id: str) -> tuple:
 def lake_view_json(inputs: tuple) -> tuple[dict | None, str | None]:
     """build_lake_view's JSON as the API would send it, or what went wrong; for a worker process."""
     try:
-        return jsonable_encoder(build_lake_view(*inputs)), None
+        # build_lake_view gives plain JSON types already (tests/test_lake_view.py checks it), so
+        # jsonable_encoder, a third of a view's time, is left out.
+        return build_lake_view(*inputs), None
     except Exception as e:  # one broken lake must not stop the others
         return None, f"{type(e).__name__}: {e}"
+
+
+_LIGHT_DIGIT = {light: str(int(light)) for light in Light}
 
 
 def build_lake_view(
@@ -1276,7 +1280,7 @@ def build_lake_view(
                     "reasons": _reasons_json(h.lake_wide, h.warning_topic),
                 },
                 # One digit per water cell: 0 green, 1 amber, 2 red.
-                "lights": "".join(str(int(light)) for light in h.lights),
+                "lights": "".join(map(_LIGHT_DIGIT.__getitem__, h.lights)),
                 "wavesCm": [round(w * 100) for w in h.waves_m],
                 # "other": the light from fog, thunderstorms, heavy rain and hail at the point,
                 # 0 green to 2 red; "visM", "storm" (thunderstorm light), "rainMm" and "hail"
