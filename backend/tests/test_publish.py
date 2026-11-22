@@ -806,3 +806,70 @@ def test_club_inputs_are_compared_with_their_last_build(monkeypatch):
     assert (publish.RUN.same_inputs, publish.RUN.compared_inputs) == (1, 2)
     assert publish.RUN.changed_inputs == {"hour": 1, "water_model_c": 1}
     assert publish.inputs_line() == "  club inputs: 1 of 2 the same as when last built (changed: hour 1, water_model_c 1)"
+
+
+def _small_state(path):
+    state = publish.State(path)
+    hour = open_meteo.ForecastHour(
+        time=utc(16, 12), temperature_c=5, wind_speed_ms=2, wind_gust_ms=4, wind_from_deg=0, cloud_cover_pct=90,
+        cloud_cover_low_pct=None, visibility_m=20000, precipitation_mm=0.0, cape_jkg=0, is_day=True, weather_code=3,
+    )
+    state.clubs["a"] = (utc(16, 11), [hour])
+    state.lakes["see"] = (utc(16, 11), 1, [[hour]])
+    return state
+
+
+def test_the_state_is_two_packed_files_and_unchanged_weather_is_not_written_again(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "STATE_WRITES", [])
+    path = tmp_path / "publish.pickle"
+    state = _small_state(path)
+    state.save()
+    assert [name for name, _ in publish.STATE_WRITES] == ["weather", "rest"]
+    assert path.read_bytes()[:2] == b"\x1f\x8b" and (tmp_path / "publish-weather.pickle").exists()
+    state.save()  # nothing changed: nothing written
+    assert len(publish.STATE_WRITES) == 2
+    again = publish.State(path)
+    assert again.clubs["a"][1][0].temperature_c == 5 and again.lakes["see"][2][0][0].weather_code == 3
+    again.warn_cells["a"] = (utc(16, 12), 7)  # only the small rest changed
+    again.save()
+    assert [name for name, _ in publish.STATE_WRITES[2:]] == ["rest"]
+    again.clubs["b"] = again.clubs["a"]
+    again.save()
+    assert [name for name, _ in publish.STATE_WRITES[3:]] == ["weather", "rest"]
+    assert "b" in publish.State(path).clubs
+
+
+def test_a_state_of_the_single_file_before_is_read_and_then_split(tmp_path):
+    import pickle
+
+    path = tmp_path / "publish.pickle"
+    old = _small_state(None)
+    path.write_bytes(pickle.dumps({
+        "clubs": old.clubs, "lakes": old.lakes, "ice_map": (None, {}), "ice_temps": {}, "outlooks": {},
+        "warn_cells": {"a": (utc(16, 11), 7)}, "rain_at_hour_start": True,
+    }))
+    state = publish.State(path)
+    assert "a" in state.clubs and state.warn_cells["a"][1] == 7
+    state.save()
+    split = publish.State(path)
+    assert "a" in split.clubs and split.warn_cells["a"][1] == 7 and (tmp_path / "publish-weather.pickle").exists()
+
+
+def test_a_save_cut_off_halfway_leaves_the_last_whole_file(tmp_path, monkeypatch):
+    import pytest
+
+    path = tmp_path / "publish.pickle"
+    state = _small_state(path)
+    state.save()
+    before = path.read_bytes()
+    state.warn_cells["a"] = (utc(16, 12), 7)
+
+    def power_cut(fd):
+        raise OSError("power cut")
+
+    monkeypatch.setattr(publish.os, "fsync", power_cut)
+    with pytest.raises(OSError):
+        state.save()
+    assert path.read_bytes() == before  # the half-written copy is only the temporary file
+    monkeypatch.undo()
+    assert "a" in publish.State(path).clubs
