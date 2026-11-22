@@ -75,4 +75,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 56 | 2026-11-21 | [Where a pass took no picture, the satellite picture is grey and the "i" is filled](0056-satellite-gap-grey-with-filled-info.md) |
 | 57 | 2026-11-22 | [Dependabot may be the author of its own commits on main](0057-dependabot-may-author-its-commits.md) |
 | 58 | 2026-11-22 | [The app runs on Python 3.14.8](0058-app-python-3-14-8.md) |
-| 61 | 2026-11-22 | [In columns the warnings card spans the page, and warnings for the same place and time are one block](0061-warnings-tile-in-columns.md) |
+| 62 | 2026-11-22 | [In columns the warnings card spans the page, and warnings for the same place and time are one block](0062-warnings-tile-in-columns.md) |

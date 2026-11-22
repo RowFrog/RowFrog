@@ -1,4 +1,4 @@
-# 0061. In columns the warnings card spans the page, and warnings for the same place and time are one block
+# 0062. In columns the warnings card spans the page, and warnings for the same place and time are one block
 
 - Date: 2026-11-22
 - Status: decided (owner, thread "Lay out warnings tile in wide views", 22 Nov 2026: "I like C" 17:13 CET (16:13 UTC) after checking the links, "Go ahead" 17:15 CET (16:15 UTC); mock-ups https://claude.ai/artifact/UH6J5zf4aA9Kmz9H2oLdU2)
