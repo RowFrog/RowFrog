@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   isStale, shownLight, currentHour, nextHours, beaufort, windValue, compass, searchClubs, fold, town, overlayBox,
-  sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState,
+  sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState, shownReasons,
   applyBoat, applyBoatToHour, coldWaterKit, place, twilight, applyLimitsToHour, limitsFor, riverForBoat, GROUPS,
 } from "../public/app/logic.js";
 
@@ -81,6 +81,13 @@ test("water and ice: the estimate only without a station, ice only when it matte
   assert.equal(iceOff(null, new Date("2026-01-10")), false);
   assert.equal(iceValue({ ice: { status: "edges" } }), "Shore ice possible");
   assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 12 } }), null);
+  // Owner's pick A, 22 Nov 2026: only at or below the backend's open-water mark (3 °C), or when ice is reported.
+  assert.equal(iceValue({ ice: { status: "open", basis: "measured" }, waterTemperature: { celsius: 7.9 } }), null);
+  assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 3.1 } }), null);
+  assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 3 } }), "No ice");
+  assert.equal(iceValue({ ice: { status: "edges" }, waterTemperature: { celsius: 10 } }), "Shore ice possible");
+  assert.equal(iceValue({ waterTemperature: { celsius: 2 } }), "No data yet");
+  assert.equal(iceValue({ waterTemperature: { celsius: 5 } }), null);
 });
 
 test("the sun is up between sunrise and sunset, else the next sunrise", () => {
@@ -279,4 +286,13 @@ test("a night that ends the table is whole when the sun rises in the next hour",
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), days), true, "17–07: finished up to sunrise");
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T03:00:00Z"), days), false, "cut off in the dark: 17–");
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), []), false);
+});
+
+test("fog at the launch point and within 1 km is one line (owner's pick A, 22 Nov 2026)", () => {
+  const near = { condition: "nearby_water", light: "red", topic: "fog", value: 300 };
+  const cool = { condition: "cool_water", light: "amber" };
+  assert.deepEqual(shownReasons({ reasons: [near, { condition: "fog", light: "amber" }, cool] }), [near, cool]);
+  assert.deepEqual(shownReasons({ reasons: [near, cool] }), [near, cool]);
+  assert.deepEqual(shownReasons({ reasons: [{ condition: "fog", light: "amber" }] }), [{ condition: "fog", light: "amber" }]);
+  assert.deepEqual(shownReasons({}), []);
 });

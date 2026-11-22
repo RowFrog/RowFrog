@@ -315,7 +315,7 @@ private struct LocationSummaryRow: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                         } else {
-                            Text(tr("Why: %@", now.reasons.map(\.label).joined(separator: ", ")))
+                            Text(tr("Why: %@", now.shownReasons.map(\.label).joined(separator: ", ")))
                                 .font(.caption)
                                 .lineLimit(2)
                         }
