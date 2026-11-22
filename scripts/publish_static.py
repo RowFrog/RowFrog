@@ -190,13 +190,14 @@ def view_is_empty(body: dict) -> bool:
     return not (wind and waves)
 
 
-def count_club_water(club: locations.Club, body: dict, now: datetime) -> None:
+def count_club_water(club: locations.Club, body: dict, now: datetime, lakes: dict[str, locations.Lake] | None = None) -> None:
     """Counts the club forecasts without a measured water temperature (with or
     without a station) and those whose reading is older than gkd.MAX_AGE."""
     RUN.forecasts += 1
     water = body.get("waterTemperature")
     if water is None:
-        lake = locations.load().lakes.get(club.lake_id)
+        # Reading the catalog again for every club cost about 0.3 s of Pi CPU per club.
+        lake = (lakes if lakes is not None else locations.load().lakes).get(club.lake_id)
         station = water_stations.for_club(club, lake) if lake else None
         RUN.no_water["station without reading" if station else "no station"] += 1
     elif now - datetime.fromisoformat(water["measuredAt"]) > gkd.MAX_AGE:
@@ -1397,7 +1398,8 @@ def publish(args, now: datetime, state: "State") -> int:
 
     check_model_run(state, now)
     write(args.out / "status" / "model-runs", {"model": "dwd_icon_d2", "runs": state.model_runs})
-    every = list(locations.load().clubs.values())
+    catalog = locations.load()
+    every = list(catalog.clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
@@ -1436,7 +1438,7 @@ def publish(args, now: datetime, state: "State") -> int:
             if with_usage:
                 body["refresh"] = refresh_block(club.id in used_clubs)
             write(args.out / "clubs" / club.id / "forecast", body)
-            count_club_water(club, body, now)
+            count_club_water(club, body, now, catalog.lakes)
         print(f"Wrote {len(part) - len(part_failed)} of {len(part)} forecasts to {args.out}")
         failed += part_failed
         model_count += len(model_pairs)
