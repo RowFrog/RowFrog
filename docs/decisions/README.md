@@ -74,3 +74,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 55 | 2026-11-20 | [One lock file per kind of software; every system installs from it](0055-same-versions-everywhere.md) |
 | 56 | 2026-11-21 | [Where a pass took no picture, the satellite picture is grey and the "i" is filled](0056-satellite-gap-grey-with-filled-info.md) |
 | 57 | 2026-11-22 | [Dependabot may be the author of its own commits on main](0057-dependabot-may-author-its-commits.md) |
+| 58 | 2026-11-22 | [The app runs on Python 3.14.8](0058-app-python-3-14-8.md) |

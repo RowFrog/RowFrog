@@ -136,8 +136,8 @@ jobs:
               echo "Started from run $run of $branch"; break
             fi
           done
-      # Python from uv: setup-python has no Mac build of security-only patches
-      # such as 3.12.15 (scripts/check_pins_available.py).
+      # Python from uv, exactly as on the Mac (update.sh); setup-python had no
+      # Mac build of 3.12's security-only patches (scripts/check_pins_available.py).
       - name: Python from .python-version (uv)
         run: |
           curl -LsSf "https://astral.sh/uv/$(cat .uv-version)/install.sh" | sh
