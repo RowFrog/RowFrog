@@ -760,3 +760,22 @@ def test_club_forecasts_built_on_several_cores_match_the_api(monkeypatch):
     finally:
         for club in clubs:
             api.prepared.weather.pop(club.id, None)
+
+
+def test_the_radar_loads_beside_the_weather(monkeypatch):
+    # Pi speed-up #5, Nov 2026: the radar is loaded in a thread while the weather loads.
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+
+    async def nowcasts(points):
+        started.set()
+        assert release.wait(5), "the publishing process went on meanwhile"
+        return {club_id: {"steps": []} for club_id in points}
+
+    monkeypatch.setattr(publish.dwd_radar, "nowcasts", nowcasts)
+    job = publish.radar_started({"mrc-1880": (47.9, 11.3)})
+    assert started.wait(5) and not job.done()
+    release.set()  # the "weather" is loaded; now the radar is picked up
+    assert job.result(5) == {"mrc-1880": {"steps": []}}
+    assert publish.radar_started({}) is None
