@@ -783,3 +783,26 @@ def test_the_radar_loads_beside_the_weather(monkeypatch):
     release.set()  # the "weather" is loaded; now the radar is picked up
     assert job.result(5) == {"mrc-1880": {"steps": []}}
     assert publish.radar_started({}) is None
+
+
+def test_club_inputs_are_compared_with_their_last_build(monkeypatch):
+    # Measuring for club forecast reuse (Nov 2026): nothing is kept yet, only counted.
+    from rowfrog import api
+
+    monkeypatch.setattr(publish, "RUN", publish.RunCounts())
+    now = datetime(2026, 11, 22, 12, 10, tzinfo=timezone.utc)
+    inputs = api.ClubInputs(
+        weather=[1.0, 2.0], outlook=None, station=None, water=None, water_history=[], warnings_block={"active": []},
+        warnings=[], estimate=None, water_model_c=8.5, ice_estimate=None, air_days=None, gauge=None, readings=None,
+        level_lake=None, levels=None,
+    )
+    kept = {}
+    publish.count_inputs(kept, "a", publish.input_prints(inputs, now))
+    assert publish.RUN.compared_inputs == 0, "nothing to compare with the first time"
+    publish.count_inputs(kept, "a", publish.input_prints(inputs, now + timedelta(minutes=30)))
+    assert (publish.RUN.same_inputs, publish.RUN.compared_inputs) == (1, 1), "same hour, same inputs"
+    other = api.ClubInputs(**{**inputs.__dict__, "water_model_c": 8.6})
+    publish.count_inputs(kept, "a", publish.input_prints(other, now + timedelta(hours=1)))
+    assert (publish.RUN.same_inputs, publish.RUN.compared_inputs) == (1, 2)
+    assert publish.RUN.changed_inputs == {"hour": 1, "water_model_c": 1}
+    assert publish.inputs_line() == "  club inputs: 1 of 2 the same as when last built (changed: hour 1, water_model_c 1)"

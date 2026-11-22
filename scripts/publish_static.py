@@ -44,6 +44,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import dataclasses
+import hashlib
 import json
 import logging
 import math
@@ -159,6 +161,11 @@ class RunCounts:
         self.old_water = 0  # club forecasts with a water reading older than gkd.MAX_AGE
         self.sleet_clubs: set[str] = set()  # clubs asked for rain and snowfall (sleet.py)
         self.sleet_calls = 0.0  # what that cost in Open-Meteo calls, also inside open_meteo.calls_counted
+        # Club forecast reuse, measured only (Nov 2026): clubs whose inputs were all the same as in the
+        # last run, how many were compared, and which inputs changed how often (see input_prints).
+        self.same_inputs = 0
+        self.compared_inputs = 0
+        self.changed_inputs: dict[str, int] = {}
 
 
 RUN = RunCounts()
@@ -297,6 +304,8 @@ class State:
         self.model_runs: list[dict[str, str]] = []
         # Per club, the model run its saved forecast came from ({"started", "available"}).
         self.club_runs: dict[str, dict[str, str]] = {}
+        # Per club, a fingerprint of each of its forecast's inputs in the last run (input_prints).
+        self.club_inputs: dict[str, dict[str, str]] = {}
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
@@ -313,6 +322,7 @@ class State:
                 self.maps_run = saved.get("maps_run")
                 self.model_runs = saved.get("model_runs", [])
                 self.club_runs = saved.get("club_runs", {})
+                self.club_inputs = saved.get("club_inputs", {})
                 api.prepared.last_water.update(saved.get("water", {}))
                 api.prepared.last_levels.update(saved.get("levels", {}))
                 api.prepared.last_warnings.update(saved.get("warnings", {}))
@@ -340,6 +350,7 @@ class State:
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
             "club_runs": self.club_runs,
+            "club_inputs": self.club_inputs,
             "rain_at_hour_start": True,  # decision 0043
         }
         self.path.write_bytes(pickle.dumps(body))
@@ -1286,11 +1297,43 @@ def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> in
     return views
 
 
+def input_prints(inputs: api.ClubInputs, now: datetime) -> dict[str, str]:
+    """A short fingerprint of each input a club forecast is built from, and of the hour it starts
+    at (forecasts begin at the current hour). Only measured for now: if a club's prints are all
+    the same as at its last build, its forecast could be kept instead of built again."""
+    prints = {"hour": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H")}
+    for field in dataclasses.fields(inputs):
+        blob = pickle.dumps(getattr(inputs, field.name), protocol=5)
+        prints[field.name] = hashlib.blake2b(blob, digest_size=8).hexdigest()
+    return prints
+
+
+def count_inputs(kept: dict[str, dict[str, str]], club_id: str, prints: dict[str, str]) -> None:
+    """Compares a club's input prints with those of its last build (in `kept`) and keeps the new ones."""
+    last = kept.get(club_id)
+    kept[club_id] = prints
+    if last is None:
+        return
+    RUN.compared_inputs += 1
+    changed = [k for k in prints if last.get(k) != prints[k]]
+    if not changed:
+        RUN.same_inputs += 1
+    for k in changed:
+        RUN.changed_inputs[k] = RUN.changed_inputs.get(k, 0) + 1
+
+
+def inputs_line() -> str:
+    """How many club forecasts had the same inputs as when last built, and what changed how often."""
+    changed = ", ".join(f"{k} {n}" for k, n in sorted(RUN.changed_inputs.items(), key=lambda kv: (-kv[1], kv[0])))
+    return (f"  club inputs: {RUN.same_inputs} of {RUN.compared_inputs} the same as when last built"
+            f"{' (changed: ' + changed + ')' if changed else ''}")
+
+
 # The fewest clubs for which club_forecasts starts worker processes.
 CLUB_POOL_FROM = 30
 
 
-def club_forecasts(part: list[locations.Club], workers: int | None = None):
+def club_forecasts(part: list[locations.Club], workers: int | None = None, kept: dict[str, dict[str, str]] | None = None):
     """(club, body, problem) for every club of the part, lake by lake. The inputs are loaded
     here, one club after another (network, shared caches); each lake's clubs are then built in
     one of `workers` processes while the next lake's inputs load. CLUB_WORKERS=1 builds them
@@ -1311,7 +1354,13 @@ def club_forecasts(part: list[locations.Club], workers: int | None = None):
                 results[club.id] = (None, "no forecast loaded")
                 continue
             try:
-                task.append((club.id, *asyncio.run(api.club_inputs(club))))
+                inputs, at = asyncio.run(api.club_inputs(club))
+                task.append((club.id, inputs, at))
+                if kept is not None:
+                    try:
+                        count_inputs(kept, club.id, input_prints(inputs, at))
+                    except Exception as e:  # measuring only: never stops the forecast
+                        print(f"  club inputs {club.id}: {type(e).__name__}: {e}")
             except HTTPException as e:
                 results[club.id] = (None, f"HTTP {e.status_code} {str(e.detail)[:120]}")
             except Exception as e:
@@ -1500,7 +1549,7 @@ def publish(args, now: datetime, state: "State") -> int:
             print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
         lake_count += len([i for i in part_lakes if i not in viewed])
         part_failed = []
-        for club, body, problem in club_forecasts(part):
+        for club, body, problem in club_forecasts(part, kept=state.club_inputs):
             if problem:
                 part_failed.append(f"{club.id}: {problem}")
                 continue
@@ -1539,6 +1588,7 @@ def publish(args, now: datetime, state: "State") -> int:
         f" ({RUN.no_water['no station']} have no station, {RUN.no_water['station without reading']} a station without"
         f" a reading), {RUN.old_water} with a water reading older than {gkd.MAX_AGE.total_seconds() / 3600:.0f} h"
     )
+    print(inputs_line())
     for line in water_lines():
         print(" ", line)
     log_station_water(state, now)
