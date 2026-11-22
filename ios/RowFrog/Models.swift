@@ -492,6 +492,46 @@ extension ForecastHour {
         guard nearbyCondition == .visibility, let vis = nearby?.visM else { return visibilityM }
         return min(visibilityM ?? vis, vis)
     }
+
+    /// The reasons as lines: where the water within 1 km sets the light for the same
+    /// thing as the launch point itself (fog at the Steg amber, within 1 km red), the
+    /// Steg's own reason goes into the nearby one, so each thing has one line in the
+    /// worse colour (owner's pick A, 22 Nov 2026). The light itself is unchanged.
+    var shownReasons: [Reason] {
+        guard let topic = reasons.first(where: { $0.condition == "nearby_water" })?.topic else { return reasons }
+        return reasons.filter { $0.condition != topic }
+    }
+
+    /// For a "nearby_water" reason whose thing the launch point also has as a reason:
+    /// one sentence with both places ("Fog: visibility 0.7 km at the launch point, only
+    /// 0.3 km within 1 km."); nil otherwise, or when a value is missing.
+    func nearbyWithLaunchPoint(_ reason: Reason) -> String? {
+        guard reason.condition == "nearby_water", let topic = reason.topic,
+              let own = reasons.first(where: { $0.condition == topic }) else { return nil }
+        let text: String?
+        switch topic {
+        case "fog":
+            text = visibilityM.flatMap { at in reason.value.map {
+                tr("Fog: visibility %@ at the launch point, only %@ within 1 km.", Format.distance(at), Format.distance($0)) } }
+        case "wind":
+            text = windSpeedMs.flatMap { at in reason.value.map {
+                tr("Wind %@ at the launch point, up to %@ within 1 km.", Format.wind(at), Format.wind($0)) } }
+        case "gusts":
+            text = windGustMs.flatMap { at in reason.value.map {
+                tr("Gusts %@ at the launch point, up to %@ within 1 km.", Format.wind(at), Format.wind($0)) } }
+        case "waves":
+            text = waveHeightM.flatMap { at in reason.value.map {
+                tr("Waves %@ at the launch point, up to %@ within 1 km.", Format.waves(at), Format.waves($0)) } }
+        case "heavy_rain":
+            text = precipitationMm.flatMap { at in reason.value.map {
+                tr("Heavy rain: %@ in the hour at the launch point, up to %@ within 1 km.", Format.rain(at), Format.rain($0)) } }
+        case "thunderstorm": text = tr("Thunderstorms are possible at the launch point and within 1 km of it.")
+        case "hail": text = tr("Hail is forecast at the launch point and within 1 km of it.")
+        default: text = nil
+        }
+        guard let text else { return nil }
+        return own.mine == true ? text + " " + tr("You set this limit yourself.") : text
+    }
 }
 
 struct WaterTemperature: Codable, Hashable {
@@ -704,10 +744,12 @@ extension ClubForecast {
     }
 
     /// The ice value for the top tile and the widgets, only when it matters:
-    /// the estimate says more than open water, or the water is cold enough to freeze.
+    /// the estimate says more than open water, or the water is at or below the
+    /// backend's open-water mark (3 °C), so the line never says "too warm for ice"
+    /// (owner's pick A, 22 Nov 2026; was below 8 °C).
     var iceValue: String? {
         if let ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
-        if let c = waterTemperature?.celsius, c < 8 { return ice.map(\.title) ?? tr("No data yet") }
+        if let c = waterTemperature?.celsius, c <= IceSeason.openWaterC { return ice.map(\.title) ?? tr("No data yet") }
         return nil
     }
 }
@@ -863,6 +905,7 @@ struct ClubForecast: Codable, Hashable {
     /// count down is at the sun itself, on the sun line or the Sunset tile (owner's pick E,
     /// 20 Nov 2026).
     func explanation(_ reason: Reason, in hour: ForecastHour, now: Date = .now) -> String {
+        if let both = hour.nearbyWithLaunchPoint(reason) { return both }
         guard DaylightRule.reasonNames.contains(reason.condition), let days = daylight, !days.isEmpty else { return reason.explanation }
         if reason.condition == "sunset_soon" { return tr("Be back ashore by sunset.") }
         let parts = DaylightRule.parts(from: hour.time, days: days)
@@ -944,6 +987,8 @@ struct IceEstimate: Codable, Hashable {
 /// The months the backend works out ice for (ICE_MONTHS in backend/rowfrog/ice.py).
 enum IceSeason {
     static let months: Set<Int> = [11, 12, 1, 2, 3, 4]
+    /// Measured water above this is open water (OPEN_WATER_C in backend/rowfrog/ice.py).
+    static let openWaterC = 3.0
 
     /// Out of season: the backend said so, or sent nothing in a month without ice.
     static func isOff(_ ice: IceEstimate?, at date: Date = .now) -> Bool {

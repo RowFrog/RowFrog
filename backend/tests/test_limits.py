@@ -77,3 +77,52 @@ def test_cloudflare_errors_raise():
 
     with pytest.raises(ValueError):
         cloudflare_usage.parse({"errors": [{"message": "not authorized"}], "data": None})
+
+
+def test_r2_operations_count_against_the_monthly_free_plan():
+    from rowfrog import cloudflare_usage
+
+    def day(i):
+        return (TODAY - timedelta(days=i)).isoformat()
+
+    answer = {"data": {"viewer": {"accounts": [{"r2OperationsAdaptiveGroups": [
+        *({"dimensions": {"date": day(i), "actionType": "PutObject"}, "sum": {"requests": 45_000}} for i in range(8)),
+        *({"dimensions": {"date": day(i), "actionType": "ListObjects"}, "sum": {"requests": 100}} for i in range(8)),
+        *({"dimensions": {"date": day(i), "actionType": "GetObject"}, "sum": {"requests": 2_000}} for i in range(8)),
+        *({"dimensions": {"date": day(i), "actionType": "DeleteObject"}, "sum": {"requests": 9_999}} for i in range(8)),
+    ]}]}}}
+    r2 = cloudflare_usage.parse_r2(answer)
+    writes = {r["day"]: r["calls"] for r in r2 if r["service"] == "cloudflare-r2-writes"}
+    reads = {r["day"]: r["calls"] for r in r2 if r["service"] == "cloudflare-r2-reads"}
+    assert writes[day(1)] == 45_100  # puts and listings are class A; deletes are free
+    assert reads[day(1)] == 2_000
+    findings = limits.check(_rows(lambda i: 3000) + _rows(lambda i: 100, service="copernicus") + r2, TODAY)
+    month = [f for f in findings if f.service == "cloudflare-r2-writes"]
+    assert month and month[0].level in ("warn", "alert") and "1,000,000 a month" in month[0].text
+    assert [f.level for f in findings if f.service == "cloudflare-r2-reads"] == ["ok"]
+
+
+def test_r2_errors_raise():
+    import pytest
+
+    from rowfrog import cloudflare_usage
+
+    with pytest.raises(ValueError):
+        cloudflare_usage.parse_r2({"errors": [{"message": "not authorized"}], "data": None})
+
+
+def test_published_sizes(tmp_path):
+    from rowfrog import published_sizes
+
+    for club, n in (("a", 100), ("b", 300)):
+        (tmp_path / "clubs" / club).mkdir(parents=True)
+        (tmp_path / "clubs" / club / "forecast").write_text("{" + '"x":1,' * n + '"y":0}')
+    (tmp_path / "lakes" / "l1").mkdir(parents=True)
+    (tmp_path / "lakes" / "l1" / "view").write_text("{}")
+    rows = {r["kind"]: r for r in published_sizes.measure(tmp_path)}
+    assert rows["Club forecast"]["files"] == 2
+    assert rows["Club forecast"]["median_gzip_kb"] < rows["Club forecast"]["median_kb"]
+    assert rows["Lake view"]["files"] == 1 and "Lake list" not in rows
+    text = published_sizes.report(list(rows.values()))
+    assert "## Download sizes" in text and "| Club forecast | 2 |" in text
+    assert published_sizes.report([]) == ""

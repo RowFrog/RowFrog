@@ -2020,7 +2020,7 @@ extension ConditionDetail {
                 source: Condition.ice.explanation
             )
         }
-        let warm = (d.water?.celsius ?? 0) >= 8
+        let warm = (d.water?.celsius ?? 0) > IceSeason.openWaterC
         return ConditionDetail(
             value: warm ? tr("No ice") : tr("No data yet"),
             note: warm ? tr("Water %@, too warm for ice", Format.temperature(d.water?.celsius, digits: 1)) : tr("Check the lake yourself"),

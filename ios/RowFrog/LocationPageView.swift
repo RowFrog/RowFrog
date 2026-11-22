@@ -609,7 +609,7 @@ private struct NowCard: View {
                             Label(tr("All within the limits."), systemImage: "checkmark.circle")
                         }
                     } else {
-                        ForEach(hour.reasons, id: \.self) { reason in
+                        ForEach(hour.shownReasons, id: \.self) { reason in
                             // Without a station the water is estimated, and the advice says so.
                             Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
                                   ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour, now: at ?? .now), systemImage: reason.symbol)
@@ -629,7 +629,7 @@ private struct NowCard: View {
                     }
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
+                .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.shownReasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
                 if at == nil { warningsLine }
             }
             .font(.subheadline)
