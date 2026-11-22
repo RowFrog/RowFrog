@@ -45,9 +45,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import dataclasses
+import gzip
 import hashlib
 import json
 import logging
+import lzma
 import math
 import multiprocessing
 import os
@@ -58,6 +60,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -306,9 +309,13 @@ class State:
         self.club_runs: dict[str, dict[str, str]] = {}
         # Per club, a fingerprint of each of its forecast's inputs in the last run (input_prints).
         self.club_inputs: dict[str, dict[str, str]] = {}
+        # Fingerprints of what save() last wrote (or load found), so an unchanged part is not written again.
+        self._written: dict[str, str] = {}
         if path and path.exists():
             try:
-                saved = pickle.loads(path.read_bytes())
+                started = time.perf_counter()
+                saved = self._load(path)
+                STATE_SECONDS["load"] += time.perf_counter() - started
                 if not saved.get("rain_at_hour_start"):
                     # Saved before decision 0043: move their rain to the hour it fell once, as parse now does.
                     for key in ("clubs", "lakes", "outlooks", "models"):
@@ -330,17 +337,46 @@ class State:
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
 
-    def save(self) -> None:
+    def weather_path(self) -> Path:
+        """The weather parts (clubs, lakes, ice temperatures, outlooks, models, club runs) live in their own file next to the state file."""
+        assert self.path
+        return self.path.with_name(f"{self.path.stem}-weather{self.path.suffix}")
+
+    def _load(self, path: Path) -> dict:
+        """The saved state as one dict: today's two files, or the single file of before."""
+        saved = _unpack(path.read_bytes())
+        if saved.get("format") == STATE_FORMAT:
+            weather = _unpack(self.weather_path().read_bytes())
+            self._written = {"weather": saved.get("weather_print", ""), "rest": _print(saved)}
+            saved = {**saved, **weather}
+        return saved
+
+    def save(self, weather: bool = True) -> None:
+        """`weather=False`: only the small rest can have changed since the last save (as after the weather
+        maps), so the weather parts are not even packed up to compare."""
+        started = time.perf_counter()
+        self._save(weather)
+        STATE_SECONDS["save"] += time.perf_counter() - started
+
+    def _save(self, with_weather: bool) -> None:
+        """Writes the state for the next run. The weather parts (about 95 % of the bytes) change only in
+        runs that load weather, so their file is written only when they changed; the small rest every run
+        it changed. Each file goes to a temporary name first and is then renamed, so a power cut during a
+        save leaves the last complete file, never half a one."""
         if not self.path:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        body = {
+        weather = {
             "clubs": self.clubs,
             "lakes": self.lakes,
-            "ice_map": self.ice_map,
             "ice_temps": api.prepared.ice_temps,
             "outlooks": self.outlooks,
             "models": self.models,
+            "club_runs": self.club_runs,
+        }
+        rest = {
+            "format": STATE_FORMAT,
+            "ice_map": self.ice_map,
             "water_satellite": self.water_satellite,
             "water_logged": self.water_logged,
             "water": api.prepared.last_water,
@@ -349,11 +385,78 @@ class State:
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
-            "club_runs": self.club_runs,
             "club_inputs": self.club_inputs,
             "rain_at_hour_start": True,  # decision 0043
         }
-        self.path.write_bytes(pickle.dumps(body))
+        if with_weather or "weather" not in self._written or not self.weather_path().exists():
+            blob = pickle.dumps(weather, protocol=5)
+            weather_print = hashlib.blake2b(blob, digest_size=16).hexdigest()
+        else:
+            weather_print = self._written["weather"]
+        if weather_print != self._written.get("weather") or not self.weather_path().exists():
+            _write_whole(self.weather_path(), _pack(blob))
+            STATE_WRITES.append(("weather", self.weather_path().stat().st_size))
+            self._written["weather"] = weather_print
+        rest["weather_print"] = weather_print
+        rest_print = _print(rest)
+        if rest_print != self._written.get("rest"):
+            _write_whole(self.path, _pack(pickle.dumps(rest, protocol=5)))
+            STATE_WRITES.append(("rest", self.path.stat().st_size))
+            self._written["rest"] = rest_print
+
+
+# The state file's layout: 2 = the small rest in --state, the weather parts in <stem>-weather<suffix>.
+STATE_FORMAT = 2
+# How the state files are packed: "gzip1" (default), "lzma0" or "none"; reading takes any of them.
+STATE_PACK = os.environ.get("STATE_PACK", "gzip1")
+# What this run's saves wrote: (file, bytes), for the run log.
+STATE_WRITES: list[tuple[str, int]] = []
+STATE_SECONDS = {"load": 0.0, "save": 0.0}
+
+
+def state_line() -> str:
+    """One line on what the state cost this run: time to read and write it, and the files written."""
+    wrote = ", ".join(f"{name} {size / 1e6:.2f} MB" for name, size in STATE_WRITES) or "nothing"
+    return (f"  state: read {STATE_SECONDS['load']:.2f} s, saves {STATE_SECONDS['save']:.2f} s, wrote {wrote}"
+            f" (packed {STATE_PACK})")
+
+
+def _print(body: dict) -> str:
+    return hashlib.blake2b(pickle.dumps(body, protocol=5), digest_size=16).hexdigest()
+
+
+def _pack(blob: bytes) -> bytes:
+    if STATE_PACK == "gzip1":
+        return gzip.compress(blob, compresslevel=1, mtime=0)
+    if STATE_PACK == "lzma0":
+        return lzma.compress(blob, preset=0)
+    return blob
+
+
+def _unpack(data: bytes) -> dict:
+    if data[:2] == b"\x1f\x8b":
+        data = gzip.decompress(data)
+    elif data[:6] == b"\xfd7zXZ\x00":
+        data = lzma.decompress(data)
+    return pickle.loads(data)
+
+
+def _write_whole(path: Path, data: bytes) -> None:
+    """Writes `data` to a temporary file next to `path`, flushes it to the card and renames it over `path`."""
+    tmp = path.with_name(f".{path.name}.tmp")
+    with open(tmp, "wb") as f:
+        f.write(data)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+    try:
+        fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
 
 
 def _rain_to_hour_start(value):
@@ -1596,7 +1699,8 @@ def publish(args, now: datetime, state: "State") -> int:
     state.save()
 
     weather_maps(state, args.out, every, now)
-    state.save()
+    state.save(weather=False)  # the maps change only maps_run
+    print(state_line())
 
     publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
     # River sections and clubs without an outline only when used: about 340
