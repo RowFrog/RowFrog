@@ -5,7 +5,7 @@ import { baseMap, siteConfig, darkMode, darkStreetUrl, OSM } from "./basemap.js"
 import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
+  store, getJSON, h, time, dayTime, duration, wind, windRange, windPair, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
   dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit, dayLabel,
   CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain, wavesNumber, distanceNumber, unitSymbol, markIcon,
 } from "./shared.js";
@@ -654,7 +654,7 @@ function zoneTable(view, hour, stale) {
     <thead><tr class="zt-icons"><th rowspan="2" class="zt-map">${icon("map")}</th><th colspan="2" class="zt-wind">${icon(CONDITION_ICONS.wind)}</th><th>${icon(CONDITION_ICONS.waves)}</th><th>${icon(CONDITION_ICONS.visibility)}</th></tr>
     <tr class="zt-units"><th class="zt-arrow">${icon("compass")}</th><th>${h(windUnit())}</th><th>${h(unitSymbol("waves"))}</th><th>${h(unitSymbol("distance"))}</th></tr></thead>
     <tbody>${rows.map((r) => `<tr><td class="zt-name">${dot(r.light, 10, stale)}<strong>${h(r.name)}</strong></td>
-      ${arrowCell(r.values)}${numCell(r.values.wind.speedMs != null ? windRange(r.values.wind.speedMs, r.values.wind.gustMs) : "–", r.values.wind.light)}
+      ${arrowCell(r.values)}${numCell(r.values.wind.speedMs != null ? windPair(r.values.wind.speedMs, r.values.wind.gustMs) : "–", r.values.wind.light)}
       ${numCell(wavesNumber(r.values.waves.m), r.values.waves.light)}
       ${numCell(distanceNumber(r.values.visibility?.m), r.values.visibility?.light ?? "green")}</tr>${extras(r)}`).join("")}</tbody></table>`;
   // The lines show the table's arrow as a character, short enough not to be cut at large text sizes.

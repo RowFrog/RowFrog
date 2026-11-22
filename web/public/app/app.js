@@ -12,7 +12,7 @@ import { followTextSize } from "./textsize.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, timeLeft,
-  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
+  degrees, temperature, windUnit, windNumber, wind, windRange, windPair, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card as cardHtml, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
@@ -2170,7 +2170,7 @@ function hourlyCard(forecast, now, stale) {
       <span>${h(running ? t("Now") : coarser + time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
-      <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>
+      <span class="num">${h(windPair(x.windSpeedMs, x.windGustMs))}</span>
       <span class="num">${h(wavesNumber(x.waveHeightM))}</span>
       <span class="num ${(x.precipitationMm ?? 0) >= 0.1 ? "blue" : ""}">${h(rainNumber(x.precipitationMm))}</span>
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
@@ -2218,7 +2218,7 @@ function nightLine(hours, list, later, forecast) {
     <span class="range">${h(`${start}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
     <span class="num ${n.frost ? "blue" : ""}">${n.frost ? icon("snowflake") : ""}${h(num(inUnit("temperature", n.lowestC)))}</span>
     <span class="num sub">${h(num(inUnit("temperature", n.lowestFeelsLikeC)))}</span>
-    <span class="num">${h(windRange(n.windMs, n.gustMs))}</span>
+    <span class="num">${h(windPair(n.windMs, n.gustMs))}</span>
     <span class="num">${h(wavesNumber(n.wavesM))}</span>
     <span class="num ${rainy ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
     <span class="num ${fog}">${h(distanceNumber(n.visibilityM))}</span>

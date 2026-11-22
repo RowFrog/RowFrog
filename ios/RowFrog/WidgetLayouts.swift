@@ -576,19 +576,20 @@ extension RowingWidgetView {
             case let .hour(hour): return text(hour)
             case let .night(night, _):
                 switch self {
-                case .wind: return "\(Format.windNumber(night.strongestWindMs))–\(Format.windNumber(night.strongestGustMs))"
+                case .wind: return Format.windSpan(night.strongestWindMs, night.strongestGustMs)
                 case .waves: return Format.wavesNumber(night.highestWavesM)
                 case .visibility: return Format.distanceNumber(night.poorestVisibilityM)
                 }
             }
         }
 
-        /// The number alone; the legend names the unit. Wind as mean–gust.
+        /// The number alone; the legend names the unit. Wind as mean–gust, one number when both
+        /// round the same (decision 0060).
         func text(_ hour: ForecastHour) -> String {
             switch self {
             case .wind:
                 let wind = hour.shownWind
-                return "\(Format.windNumber(wind.speed))–\(Format.windNumber(wind.gust))"
+                return Format.windSpan(wind.speed, wind.gust)
             case .waves: return Format.wavesNumber(hour.shownWaveHeightM)
             case .visibility: return Format.distanceNumber(hour.shownVisibilityM)
             }

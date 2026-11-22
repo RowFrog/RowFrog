@@ -74,4 +74,22 @@ final class UnitsTests: XCTestCase {
             }
         }
     }
+
+    /// Decision 0060 (owner, 22 Nov 2026): mean and gust that round the same show once
+    /// ("1 m/s", not "1–1 m/s"); hour tables keep both. web/tests/windspan.test.mjs checks the same.
+    func testWindShowsOnceWhenMeanAndGustRoundTheSame() {
+        XCTAssertEqual(Format.windRange(0.8, 1.3), Format.wind(1.3))
+        XCTAssertEqual(Format.windSpan(0.8, 1.3), Format.windNumber(1.3))
+        XCTAssertEqual(Format.windSpan(2, 5), "\(Format.windNumber(2))–\(Format.windNumber(5))")
+        XCTAssertEqual(Format.windSpan(3, nil), Format.windNumber(3))
+        XCTAssertEqual(Format.windSpan(nil, 4), "–")
+        XCTAssertEqual(Format.windRange(nil, 4), "–")
+        for step in 0...200 {
+            let ms = Double(step) / 10
+            for extra in [0, 0.2, 0.4, 0.6, 1.5, 3] {
+                let same = Format.windNumber(ms) == Format.windNumber(ms + extra)
+                XCTAssertEqual(Format.windSpan(ms, ms + extra).contains("–"), !same, "\(ms) / \(ms + extra)")
+            }
+        }
+    }
 }

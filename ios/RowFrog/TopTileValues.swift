@@ -3,7 +3,8 @@ import SwiftUI
 // Split off LocationPageView.swift (owner's large-file rule, 4 Nov 2026): the
 // top tile's wind and value views, unchanged except for the "Nearby" mark.
 
-/// Wind now as mean–gust with an arrow pointing where the wind blows.
+/// Wind now as mean–gust ("1" when both round the same, decision 0060) with an arrow
+/// pointing where the wind blows.
 struct WindView: View {
     let hour: ForecastHour
     var size: CGFloat
@@ -20,7 +21,7 @@ struct WindView: View {
                 .foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 let wind = hour.shownWind
-                Text(wind.speed.map { "\(Format.windNumber($0))–\(Format.windNumber(wind.gust))" } ?? "–")
+                Text(Format.windSpan(wind.speed, wind.gust))
                     .valueFont(size: size)
                     .causeTinted()
                 if let from = hour.windFromDeg {
