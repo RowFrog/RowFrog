@@ -186,8 +186,13 @@ the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
 which cover rivers and canals too. While one is issued it gets its own card
-under the top tile, with the warnings grouped under "Now" and "Later";
-otherwise the top tile's status line says there is none and when it was
+under the top tile, with the warnings grouped under "Now" and "Later".
+Warnings from the same service for the same place and time are one block: the
+time, the note about the light and the links once, with each warning's own
+text (lake warnings stay apart). In columns (iPad, iPhone on its side, wide
+website) the card spans the page and the blocks sit side by side
+(`docs/decisions/0062`, shared rule in `testdata/states/warning-groups.json`).
+Otherwise the top tile's status line says there is none and when it was
 checked, or that DWD could not be reached. When a check fails, the last good
 one stands in for up to 3 hours, without the warnings that have ended since,
 and the card says when it was checked; the website does the same. A warning that starts later or
