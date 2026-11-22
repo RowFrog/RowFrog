@@ -374,7 +374,7 @@ After each job that fetches from outside (forecast run, model check, GKD log, bu
 
 - **GitHub mode** (GitHub is the code home): the PR is the record of each merge.
 - **Fallback mode** (merging on the Pi or the Mac while GitHub is out): every merge commit adds its hand-in note as `docs/handins/<n>-<slug>.md`, text only, no screenshots.
-- Author and committer of every commit are RowFrog. A merge made with GitHub's merge button may show the committer "GitHub".
+- Author and committer of every commit are RowFrog. A merge made with GitHub's merge button may show the committer "GitHub". Dependabot's own updates may keep `dependabot[bot]` as author (decision 0057).
 
 ## Before launch
 
