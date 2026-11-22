@@ -299,7 +299,7 @@ async function mapCard(page, layerId, detail, hidden) {
     time.mapHours = hours;
   }
   const mapDate = () => new Date(start + time.shownMapHour * 3600000);
-  const current = () => (layer.links === "none" ? list.length - 1 : frameIndex(layer, list, mapDate()));
+  const currentFrame = () => (layer.links === "none" ? list.length - 1 : frameIndex(layer, list, mapDate()));
   // The rain map shows DWD's radar while it covers the time (an hour back to two ahead), at the first hour the latest picture.
   const panelDate = () => (layerId === "rain" && data.isNow && time.shownMapHour === 0 ? Date.now() : mapDate().getTime());
   const showsRadar = () => layerId === "rain" && radarCovers(panelDate());
@@ -327,7 +327,7 @@ async function mapCard(page, layerId, detail, hidden) {
     } else {
       radar?.remove();
     }
-    const i = current();
+    const i = currentFrame();
     const chain = box.querySelector("#chain");
     if (chain) {
       chain.className = `chain ${time.linked ? "on" : ""}`;
@@ -363,7 +363,7 @@ async function mapCard(page, layerId, detail, hidden) {
   wm.setLayer(layerId).then(update);
   // MapLinkTip as a bubble on the chain (rule R2); the box is drawn after the page's tips were paced.
   paceTips(box.closest("main"));
-  wireControls(page, box, list, x, current);
+  wireControls(page, box, list, x, currentFrame);
 }
 
 /** Play, slider and repeat under a value page's map (MapTimeControls in the app), through `list`. */
@@ -453,7 +453,7 @@ async function openFull(page, layerId, detail, hidden) {
   };
   panel.querySelector("#wm-done").addEventListener("click", close);
   panel.addEventListener("keydown", (e) => e.key === "Escape" && close());
-  const go = (i) => {
+  const goTo = (i) => {
     index = i;
     own = list[i];
     if (follows()) time.setMap(Math.round(x(list[i])));
@@ -490,7 +490,7 @@ async function openFull(page, layerId, detail, hidden) {
     p.querySelector("#wm-slider")?.addEventListener("input", (e) => {
       clearInterval(playing);
       playing = null;
-      go(Number(e.target.value));
+      goTo(Number(e.target.value));
     });
     p.querySelector("#wm-play")?.addEventListener("click", () => {
       if (playing) {
@@ -502,14 +502,14 @@ async function openFull(page, layerId, detail, hidden) {
       const from = index;
       let rounds = 0;
       playing = setInterval(() => {
-        if (index < list.length - 1) go(index + 1);
+        if (index < list.length - 1) goTo(index + 1);
         else if (store.mapLoop && rounds < 2) {
           rounds++;
-          go(0);
+          goTo(0);
         } else {
           clearInterval(playing);
           playing = null;
-          go(store.mapLoop ? from : index);
+          goTo(store.mapLoop ? from : index);
         }
       }, 700);
       render();

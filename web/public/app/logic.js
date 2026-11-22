@@ -240,9 +240,9 @@ export const endsAtSunrise = (end, days) => days.some((d) => d.sunrise >= end &&
 
 /** What a night's line shows, each for its column: the worst of the night. */
 export function nightSummary(hours) {
-  const values = (key) => hours.map((x) => x[key]).filter((v) => v != null);
-  const min = (key) => (values(key).length ? Math.min(...values(key)) : null);
-  const max = (key) => (values(key).length ? Math.max(...values(key)) : null);
+  const values = (field) => hours.map((x) => x[field]).filter((v) => v != null);
+  const min = (field) => (values(field).length ? Math.min(...values(field)) : null);
+  const max = (field) => (values(field).length ? Math.max(...values(field)) : null);
   const rain = values("precipitationMm");
   const lowest = min("temperatureC");
   const fogs = hours.map((x) => lightFor(x, ["fog"])).filter(Boolean);

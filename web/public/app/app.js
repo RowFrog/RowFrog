@@ -14,7 +14,7 @@ import {
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, timeLeft,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
-  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
+  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card as cardHtml, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon, closeX, keptForecast } from "./shared.js";
 import {
@@ -239,9 +239,9 @@ const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boat
  * beside the page is slid away and the cog, on the right the boat (owner, 4 Nov 2026: as
  * before on wide windows). Narrow windows have none: their cog and boat sit in the bottom bar.
  */
-function pageButtons(side, withTip = false) {
+function pageButtons(side, boatsTip = false) {
   if (!sideList.matches) return "";
-  if (side === "right") return `<span class="head-side end">${boatButton()}${withTip ? boatsElsewhereTip() : ""}</span>`;
+  if (side === "right") return `<span class="head-side end">${boatButton()}${boatsTip ? boatsElsewhereTip() : ""}</span>`;
   return `<span class="head-side">
     ${sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
     <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
@@ -648,7 +648,7 @@ function keepAboveKeyboard(bar) {
   const vv = window.visualViewport;
   if (!vv) return;
   let frame = 0;
-  const place = () => {
+  const position = () => {
     frame = 0;
     if (!bar.isConnected) {
       vv.removeEventListener("resize", queue);
@@ -666,11 +666,11 @@ function keepAboveKeyboard(bar) {
     bar.classList.toggle("over-keyboard", open);
     document.documentElement.style.setProperty("--kb", `${open ? keyboard : 0}px`);
   };
-  const queue = () => { frame ||= requestAnimationFrame(place); };
+  const queue = () => { frame ||= requestAnimationFrame(position); };
   vv.addEventListener("resize", queue);
   vv.addEventListener("scroll", queue);
   window.addEventListener("scroll", queue, { passive: true });
-  place();
+  position();
 }
 
 // ---- Club page (LocationPageView) ------------------------------------------------------------
@@ -819,7 +819,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
     </div>`;
   root.querySelector("nav.bottom").outerHTML = bottomBar(id);
   wireBottomBar(raw);
-  wireClubPage(id, club, raw, forecast, hour);
+  wireClubPage(id, club, raw, forecast);
   placeClubTips(root.querySelector("main"), { topCardTip, valuesBubble, gripBubble });
   wireTips(root.querySelector("main"));
   balanceCards();
@@ -1477,7 +1477,7 @@ function forecastLines(club, forecast, status) {
   }
 }
 
-function wireClubPage(id, club, raw, forecast, hour) {
+function wireClubPage(id, club, raw, forecast) {
   wireLaunchOpen(club);
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
@@ -1544,18 +1544,18 @@ function wireSwipe(id) {
     if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy) && !e.target.closest(".hourly, .map, .side")) go(dx < 0 ? 1 : -1);
     start = null;
   };
-  const key = (e) => {
+  const onKey = (e) => {
     if (document.querySelector("dialog[open]") || e.target.closest?.("input, select")) return;
     if (e.key === "ArrowRight") go(1);
     if (e.key === "ArrowLeft") go(-1);
   };
   document.addEventListener("touchstart", down, { passive: true });
   document.addEventListener("touchend", up);
-  document.addEventListener("keydown", key);
+  document.addEventListener("keydown", onKey);
   swipeOff = () => {
     document.removeEventListener("touchstart", down);
     document.removeEventListener("touchend", up);
-    document.removeEventListener("keydown", key);
+    document.removeEventListener("keydown", onKey);
     swipeOff = null;
   };
 }
@@ -1858,7 +1858,7 @@ function followWarningsClock(render, alive) {
 
 function warningsCard(warnings, club, checkedAt, earlier = false) {
   const title = t("Official warnings");
-  return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false, earlier), { cls: "warnings" });
+  return cardHtml(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false, earlier), { cls: "warnings" });
 }
 
 /** False outside Germany, where DWD does not warn: then "no warning" must not be said. Older files lack `local`. */
@@ -1894,21 +1894,21 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
       ? t("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
       : t("Warnings could not be loaded. Check %@ or the shore lights before going out.", warnings.local?.service ?? "DWD"))}</p>`;
   }
-  const place = town(club?.address);
+  const townName = town(club?.address);
   if (!localChecked(warnings)) {
     const lakeRows = (warnings.items ?? []).filter((w) => w.kind === "lake").map(warningRow).join("");
-    const where = place ?? t("this place");
+    const where = townName ?? t("this place");
     const note = warnings.lakeArea
       ? t("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", warnings.lakeArea, where)
       : t("Lake and weather warnings for %@ are not checked yet.", where);
     return `${lakeRows}${notCheckedNote(warnings.local)}${lightsInfo(warnings, guideOpen)}<p class="sub small">${h(note)}</p>`;
   }
-  const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
+  const placeText = townName ? t("weather warnings for %@", townName) : t("weather warnings for this place");
   const service = warnings.local?.service ?? "";
   const coverage = !warningsIsDWD(warnings)
     ? warnings.lakeArea
-      ? t("Covers the DWD lake warning for %@ and the warnings of %@ for %@.", warnings.lakeArea, service, place ?? t("this place"))
-      : t("Covers the warnings of %@ for %@. Lake warnings for this water are not published for apps.", service, place ?? t("this place"))
+      ? t("Covers the DWD lake warning for %@ and the warnings of %@ for %@.", warnings.lakeArea, service, townName ?? t("this place"))
+      : t("Covers the warnings of %@ for %@. Lake warnings for this water are not published for apps.", service, townName ?? t("this place"))
     : warnings.lakeArea
       ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
       : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
@@ -2009,7 +2009,7 @@ function conditionsCard(forecast, hour, radar = null, radarState = null) {
   const head = `<div class="cc-head">${skySymbol(hour, "large", kind)}<div><strong>${h(t(SKY_TITLES[kind]))}</strong>
     <small class="sub">${h(t("%@ · feels like %@", degrees(hour.temperatureC), degrees(hour.apparentTemperatureC)))}</small></div></div>`;
   const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarState)).join("");
-  return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
+  return cardHtml(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
 }
 
 function conditionTile(condition, forecast, hour, radar = null, radarState = null, parts = false) {
@@ -2029,9 +2029,9 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
   const cause = causeClass(causeOf(condition, hour), condition === "waterTemperature" && !!coldWaterKit(water?.celsius ?? estimate, currentLimits()));
   const sets = causeOf(condition, hour) ? `, ${t("Sets the light: %@", lightTitle(causeOf(condition, hour)))}` : "";
   // `mark`: rain read from the radar starts its line with the radar's symbol.
-  const tile = (value, detail, graphic = "", off = false, mark = "") => parts ? { value, detail } : `<button class="tile ${off ? "off" : ""}${cause}" data-tile="${condition}">
+  const tile = (value, detail, tileGraphic = "", off = false, tileMark = "") => parts ? { value, detail } : `<button class="tile ${off ? "off" : ""}${cause}" data-tile="${condition}">
     ${header(titles[condition][1])}
-    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small${condition === "precipitation" ? ' class="may-wrap"' : ""}>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
+    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small${condition === "precipitation" ? ' class="may-wrap"' : ""}>${tileMark}${h(detail)}</small></span><span class="graphic">${tileGraphic}</span></span></button>`;
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
@@ -2105,7 +2105,7 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       const at = new Date(hour.time) > new Date() ? new Date(hour.time) : new Date();
       const sun = sunState(forecast, at);
       if (!sun) return tile("–", "");
-      const graphic = sunPath(sun.sunrise, sun.sunset, at);
+      const sunGraphic = sunPath(sun.sunrise, sun.sunset, at);
       // In the last hour before sunset the minutes left take the sunrise's place, in the light's
       // colour; the closed tile's sun line counts too (owner's pick E, 20 Nov 2026; ConditionTile.sunTile).
       const lastHour = sun.up && daylightAt(at.getTime(), sunDaysOf(forecast)) === "amber";
@@ -2113,8 +2113,8 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
         ? `<small class="${cause.trim()}">${h(t("%@ left", timeLeft(at, sun.sunset)))}</small>`
         : `<small>${h(t("Sunrise %@", time(sun.sunrise)))}</small>`;
       return sun.up
-        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong>${below}</span><span class="graphic">${graphic}</span></span></button>`
-        : `<button class="tile${cause}" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
+        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong>${below}</span><span class="graphic">${sunGraphic}</span></span></button>`
+        : `<button class="tile${cause}" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${sunGraphic}</span></span></button>`;
     }
     default:
       return "";
@@ -2182,7 +2182,7 @@ function hourlyCard(forecast, now, stale) {
     return nightLine(part.night, list, later(part.night[0]), forecast) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
   }).join("");
   const fold = foldsHourly() && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
-  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}<div class="hrows">${rows}</div></div>${fold}`,
+  return cardHtml(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}<div class="hrows">${rows}</div></div>${fold}`,
     { legend: "hourly", cls: `hourly-card ${fold ? "folds" : ""}` });
 }
 
@@ -2202,9 +2202,9 @@ function nightLine(hours, list, later, forecast) {
   const cut = hours[hours.length - 1] === list[list.length - 1] && !endsAtSunrise(Date.parse(n.end), sunDaysOf(forecast));
   const to = cut ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
-  const rain = (n.rainMm ?? 0) >= 0.1;
+  const rainy = (n.rainMm ?? 0) >= 0.1;
   const label = [t("Night from %@ to %@", time(n.start), time(n.end)), t("lowest %@", degrees(n.lowestC)), n.frost ? t("frost") : "",
-    n.gustMs != null ? t("gusts up to %@", wind(n.gustMs)) : "", rain ? t("%@ rain", rainNumber(n.rainMm) + " " + unitSymbol("rain")) : t("dry"),
+    n.gustMs != null ? t("gusts up to %@", wind(n.gustMs)) : "", rainy ? t("%@ rain", rainNumber(n.rainMm) + " " + unitSymbol("rain")) : t("dry"),
     fog ? t("fog, visibility down to %@", distance(n.visibilityM)) : "", coarser.slice(2)].filter(Boolean).join(", ");
   return `<button class="hrow nightline ${later}" type="button" aria-expanded="false" aria-label="${h(label)}" title="${h(t("Shows the night hours"))}">
     <span class="range">${h(`${start}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
@@ -2212,7 +2212,7 @@ function nightLine(hours, list, later, forecast) {
     <span class="num sub">${h(num(inUnit("temperature", n.lowestFeelsLikeC)))}</span>
     <span class="num">${h(windRange(n.windMs, n.gustMs))}</span>
     <span class="num">${h(wavesNumber(n.wavesM))}</span>
-    <span class="num ${rain ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
+    <span class="num ${rainy ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
     <span class="num ${fog}">${h(distanceNumber(n.visibilityM))}</span>
     ${coarser ? `<span class="coarser">${h(coarser)}</span>` : ""}
   </button>`;
@@ -2274,7 +2274,7 @@ function clubAddress(club) {
 
 /** The launch point on a map, with what it stands for (LaunchPointMapCard), when it is not in the header. */
 function launchPointCard(club) {
-  return card(t("Launch point"), "map-pin-ellipse", launchPointBody(club, "launch-map"));
+  return cardHtml(t("Launch point"), "map-pin-ellipse", launchPointBody(club, "launch-map"));
 }
 
 /** The map, the note on what it is for, and the coordinates with Open in Maps (LaunchPointDetails). */
@@ -2308,15 +2308,15 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) menu.open = false;
 });
 
-async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
+async function showLaunchMap(club, mapBox = root.querySelector("#launch-map")) {
   // The club's OpenStreetMap place, as the app's "In Apple Maps as …" line (osmplace.js); also without the map.
   loadCatalog().catch(() => []).then((lakes) => {
-    const slot = place?.parentElement?.querySelector(".osm-slot");
+    const slot = mapBox?.parentElement?.querySelector(".osm-slot");
     const known = lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id);
     if (slot) slot.innerHTML = osmPlaceCard(known?.mapPlace, MAPS_APPS[store.mapsApp]);
   });
   const L = await loadLeaflet().catch(() => null);
-  const box = place;
+  const box = mapBox;
   if (!L || !box) return;
   const { lat, lon } = club.launchPoint;
   const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([lat, lon], 14);
@@ -2483,7 +2483,7 @@ const browserLanguage = () => (resolve("auto") === "de" ? "Deutsch" : "English")
  * 5 Nov 2026, app #355): Light/Dark, the language and the time and date formats follow the browser; the
  * website's own choices for them show only with the developer options.
  */
-function settingsTopicBody(topic, accepted) {
+function settingsTopicBody(topic) {
   const dev = store.developerOptions;
   switch (topic) {
     case "appearance": return `
@@ -2572,11 +2572,11 @@ function settingsTopicBody(topic, accepted) {
         <a class="row-setting" href="/impressum/"><span>${icon("landmark")} ${h(t("Legal notice"))}</span>${icon("chevron-right")}</a>
         <a class="row-setting" href="/credits/"><span>${icon("database")} ${h(t("Data sources"))}</span>${icon("chevron-right")}</a>
       </section>
-      ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
+      ${cardHtml(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         <button id="factory" class="quiet">${icon("rotate-ccw")} ${h(t("Reset to factory settings"))}</button>
         <p class="small sub">${h(t("Appearance, units, language, background pictures and the order of the club page cards go back to how the website came, and your own pictures are deleted. The boat for the rowing light is Small boats again and every boat's limits go back to the standard ones. Your clubs, home base, own boats and routes stay."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
-      ${card(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
+      ${cardHtml(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
         <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}`;
     case "developer": return `
       <section class="card group">
@@ -2628,7 +2628,7 @@ function renderSettings(topic = null) {
   root.innerHTML = topic
     ? `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t(named[1]))}</strong><span class="nav-side"></span></header>
     ${testing()}
-    <main class="page settings-topic">${settingsTopicBody(topic, accepted)}
+    <main class="page settings-topic">${settingsTopicBody(topic)}
     </main>`
     : `<header class="nav">${closeX(`class="link close-x"`, back)}<strong class="nav-title">${h(t("Settings"))}</strong><span class="nav-side"></span></header>
     ${testing()}
@@ -2781,7 +2781,7 @@ function wireSettingsSearch(main) {
   const results = main.querySelector("#settings-results");
   const box = document.createElement("div");
   const entries = SETTINGS_TOPICS.filter(([id]) => id !== "developer" || store.developerOptions).flatMap(([id, title, name, colour]) => {
-    box.innerHTML = settingsTopicBody(id, null);
+    box.innerHTML = settingsTopicBody(id);
     return [...box.querySelectorAll(":scope > section.card")].map((card) => {
       const parts = [card];
       const before = card.previousElementSibling;

@@ -326,9 +326,9 @@ const BUILDERS = {
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
     // Fitted to the readings and the forecast, with room around them, the
     // life-jacket and very-cold lines always in view (ConditionDetail.waterTemperature).
-    const span = [...history.map((p) => p.celsius), ...days.map(([, v]) => v), ...(estimate != null ? [estimate] : []),
+    const spread = [...history.map((p) => p.celsius), ...days.map(([, v]) => v), ...(estimate != null ? [estimate] : []),
       currentLimits().value("lifeJacket"), COLD.waterC];
-    const yDomain = [degreesIn(Math.floor(Math.min(...span) - 2)), degreesIn(Math.ceil(Math.max(...span) + 2))];
+    const yDomain = [degreesIn(Math.floor(Math.min(...spread) - 2)), degreesIn(Math.ceil(Math.max(...spread) + 2))];
     const chartLimits = [
       limitLine("lifeJacket", COLOURS.kit, t("Cold-water shock: life jacket"), degreesIn),
       { value: degreesIn(COLD.waterC), colour: COLOURS.deep, label: t("Very cold") },

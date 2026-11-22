@@ -253,7 +253,7 @@ export const mapLimits = () => boatLimits(mapBoat());
  * view: app.js, which owns the boat menu, fills this in. `open` calls `picked` once a boat is picked
  * there, so those screens redraw in place (owner's pick B, 5 Nov 2026).
  */
-export const boatControl = { html: () => "", open: (anchor, picked) => {} };
+export const boatControl = { html: () => "", open: (_anchor, _picked) => {} };
 
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
 export function limitText(limit, value) {
@@ -495,7 +495,7 @@ class SafeHTML {
 }
 
 /** Marks trusted markup (icon(), footerLinks()) so html`` keeps it as it is. Never for names or other data. */
-export const raw = (markup) => new SafeHTML(String(markup ?? ""));
+export const raw = (text) => new SafeHTML(String(text ?? ""));
 
 /**
  * Builds markup and escapes every value by default (code review finding 9):
@@ -1008,12 +1008,12 @@ export function sunPath(sunrise, sunset, at, width = 64, height = 32) {
   const noon = (rise + down) / 2;
   const lineWidth = height >= 48 ? 3 : 2;
   // Sun height through the day, 0 at sunrise and sunset; noon touches the top, midnight the bottom.
-  const sunHeight = (h) => Math.cos((2 * Math.PI * (h - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
+  const sunHeight = (hr) => Math.cos((2 * Math.PI * (hr - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
   const top = sunHeight(noon);
   const bottom = sunHeight(noon + 12);
   const inset = lineWidth * 2 + 2;
-  const y = (h) => ((top - sunHeight(h)) / (top - bottom)) * (height - 2 * inset) + inset;
-  const x = (h) => (h / 24) * width;
+  const y = (hr) => ((top - sunHeight(hr)) / (top - bottom)) * (height - 2 * inset) + inset;
+  const x = (hr) => (hr / 24) * width;
   const points = Array.from({ length: 97 }, (_, i) => `${x(i / 4).toFixed(1)},${y(i / 4).toFixed(1)}`).join(" ");
   const horizon = y(rise);
   const now = clockHours(at);
@@ -1138,7 +1138,7 @@ export const TILE_ORDER = ["temperature", "feelsLike", "wind", "waves", "waterTe
 
 /** Each condition's icon key, title, unit and explanation. */
 export function conditionTexts() {
-  const r = (c, title, unit, text) => [c, title, unit, text];
+  const r = (c, title, unitText, text) => [c, title, unitText, text];
   return {
     temperature: r("temperature", t("Air temperature"), unitSymbol("temperature"), t("Air temperature at 2 m.")),
     feelsLike: r("feelsLike", t("Feels like"), unitSymbol("temperature"), t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),

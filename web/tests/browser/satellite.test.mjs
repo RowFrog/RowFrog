@@ -154,12 +154,12 @@ for (const [language, labels] of [["de", ["Neuestes", "Fast klar", "Klarstes"]],
       await page.goto(`${base}/app/#/club/${club.id}`);
       // The page may draw again once the language has loaded: the picks are read in one go, once in their language.
       const picks = await page.waitForFunction((want) => {
-        const picks = [...document.querySelectorAll("#satellite [data-kind]")].map((b) => {
+        const found = [...document.querySelectorAll("#satellite [data-kind]")].map((b) => {
           const range = document.createRange();
           range.selectNodeContents(b);
           return { text: b.textContent, height: Math.round(b.getBoundingClientRect().height), cut: b.scrollWidth > b.clientWidth, lines: range.getClientRects().length };
         });
-        return picks.map((p) => p.text).join() === want.join() && picks;
+        return found.map((p) => p.text).join() === want.join() && found;
       }, labels, { timeout: 10000 }).then((h) => h.jsonValue())
         .catch(() => page.locator("#satellite [data-kind]").evaluateAll((buttons) => buttons.map((b) => ({ text: b.textContent }))));
       assert.deepEqual(picks.map((p) => p.text), labels);

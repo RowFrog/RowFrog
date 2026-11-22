@@ -133,8 +133,8 @@ const gridKey = (index, tile, value) => `${index.run}|${tile}|${value}`;
 
 /** One value of one tile for every hour, as bytes (raw deflate, as Apple's zlib packing writes it). */
 async function loadGrid(index, tile, value) {
-  const key = gridKey(index, tile, value);
-  if (cache.grids.has(key) || cache.failed.has(key)) return cache.grids.get(key);
+  const cacheKey = gridKey(index, tile, value);
+  if (cache.grids.has(cacheKey) || cache.failed.has(cacheKey)) return cache.grids.get(cacheKey);
   try {
     const response = await fetch(`${API}/maps/${tile}/${value}`, { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -146,12 +146,12 @@ async function loadGrid(index, tile, value) {
       rows: arrows ? index.rows / index.arrowStep : index.rows,
       encoding: index.values[value], bytes,
     };
-    cache.grids.set(key, grid);
+    cache.grids.set(cacheKey, grid);
     // Older runs' files are not needed any more.
     for (const old of cache.grids.keys()) if (!old.startsWith(`${index.run}|`)) cache.grids.delete(old);
     return grid;
   } catch {
-    cache.failed.add(key);
+    cache.failed.add(cacheKey);
     return null;
   }
 }
@@ -210,8 +210,8 @@ export function cover(index, area, limit = 9) {
 }
 
 /** The hour coloured, one pixel per grid point; the canvas smooths it when drawn larger. */
-function hourImage(layer, grid, hour, key) {
-  const id = `${key}|${hour}`;
+function hourImage(layer, grid, hour, cacheKey) {
+  const id = `${cacheKey}|${hour}`;
   if (cache.images.has(id)) return cache.images.get(id);
   const { columns, rows, encoding, bytes } = grid;
   const table = Array.from({ length: 256 }, (_, byte) => {
@@ -297,8 +297,8 @@ export function landWind(p, time) {
   const top = mercY(tile.north);
   return ({ lat, lon }) => {
     if (!contains(tile, { lat, lon })) return null;
-    const wind = windSample(directions, speeds, hour, (lon - tile.west) / (tile.east - tile.west), (top - mercY(lat)) / (top - mercY(tile.south)));
-    return wind && { towardDeg: (wind.towards + 360) % 360, speedMs: wind.speed };
+    const sample = windSample(directions, speeds, hour, (lon - tile.west) / (tile.east - tile.west), (top - mercY(lat)) / (top - mercY(tile.south)));
+    return sample && { towardDeg: (sample.towards + 360) % 360, speedMs: sample.speed };
   };
 }
 

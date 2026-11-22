@@ -92,7 +92,7 @@ export function splitClubPins(L, map, entries) {
       title: e.own ? t("Launch point") : "", keyboard: false, zIndexOffset: -1000, interactive: false,
     }),
   }));
-  const update = () => {
+  const refresh = () => {
     for (const pair of pairs) {
       const a = map.latLngToContainerPoint([pair.launch.lat, pair.launch.lon]);
       const b = map.latLngToContainerPoint([pair.clubhouse.lat, pair.clubhouse.lon]);
@@ -106,8 +106,8 @@ export function splitClubPins(L, map, entries) {
     }
   };
   if (pairs.length) {
-    map.on("zoomend", update);
-    update();
+    map.on("zoomend", refresh);
+    refresh();
   }
 }
 
@@ -322,9 +322,9 @@ export async function miniBase(canvas, f) {
   const credit = dark ? "© MapTiler © OpenStreetMap" : "© OpenStreetMap";
   // The zoom whose tiles are at least as sharp as the screen (MapTiler's @2x tiles are sharp already).
   const z = Math.max(0, Math.min(18, Math.ceil(Math.log2((256 * f.scale * (dark ? 1 : ratio)) / tile))));
-  const key = `${url}|${z}|${f.w}x${f.h}|${f.left.toFixed(4)},${f.top.toFixed(4)}|${ratio}`;
-  if (canvas.baseKey === key) return credit;
-  canvas.baseKey = key;
+  const cacheKey = `${url}|${z}|${f.w}x${f.h}|${f.left.toFixed(4)},${f.top.toFixed(4)}|${ratio}`;
+  if (canvas.baseKey === cacheKey) return credit;
+  canvas.baseKey = cacheKey;
   const n = 2 ** z;
   const span = 256 / n;
   const size = span * f.scale;
@@ -337,7 +337,7 @@ export async function miniBase(canvas, f) {
     }
   }
   const tiles = await Promise.all(wanted.map((want) => loadTile(want.src)));
-  if (canvas.baseKey !== key) return credit;
+  if (canvas.baseKey !== cacheKey) return credit;
   if (!tiles.some(Boolean)) {
     style.backgroundImage = "";
     canvas.baseKey = "";
@@ -351,7 +351,7 @@ export async function miniBase(canvas, f) {
   pctx.imageSmoothingQuality = "high";
   wanted.forEach((want, i) => { if (tiles[i]) pctx.drawImage(tiles[i], want.x, want.y, size + 0.5, size + 0.5); });
   const blob = await new Promise((resolve) => plate.toBlob(resolve));
-  if (canvas.baseKey !== key || !blob) return credit;
+  if (canvas.baseKey !== cacheKey || !blob) return credit;
   if (canvas.baseUrl) URL.revokeObjectURL(canvas.baseUrl);
   canvas.baseUrl = URL.createObjectURL(blob);
   style.backgroundImage = `url("${canvas.baseUrl}")`;
@@ -1295,7 +1295,6 @@ function planningPanel(hour) {
   const plan = found?.plan;
   const stop = boatStop(plan);
   const isLoop = RouteEdit.isLoop(page.points);
-  const saved = store.routes.filter((r) => r.lakeId === page.lakeId);
   let summary;
   if (plan) {
     const rough = roughest(plan);
