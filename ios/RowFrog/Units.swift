@@ -328,10 +328,19 @@ extension Format {
         return "\(windNumber(ms)) \(settings.windUnit.symbol)"
     }
 
-    /// Mean wind and strongest gust, "3–5 m/s".
+    /// Mean wind and strongest gust, "3–5 m/s"; one number, "1 m/s", when both round
+    /// the same (owner, 22 Nov 2026, decision 0060).
     static func windRange(_ speed: Double?, _ gust: Double?) -> String {
         guard speed != nil else { return "–" }
-        return "\(windNumber(speed))–\(windNumber(gust)) \(settings.windUnit.symbol)"
+        return "\(windSpan(speed, gust)) \(settings.windUnit.symbol)"
+    }
+
+    /// The numbers alone, "3–5", or "1" when mean and gust round the same. Hour tables
+    /// keep both numbers so the column always reads mean–gust (decision 0060).
+    static func windSpan(_ speed: Double?, _ gust: Double?) -> String {
+        guard speed != nil else { return "–" }
+        let mean = windNumber(speed), strongest = windNumber(gust)
+        return gust == nil || mean == strongest ? mean : "\(mean)–\(strongest)"
     }
 
     static func wavesNumber(_ m: Double?) -> String {

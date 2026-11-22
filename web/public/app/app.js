@@ -12,7 +12,7 @@ import { followTextSize } from "./textsize.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, timeLeft,
-  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
+  degrees, temperature, windUnit, windNumber, wind, windRange, windPair, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card as cardHtml, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
@@ -22,7 +22,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownReasons, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState, daylightAt,
+  forecastStatus, coarserModel, endsAtSunrise, loadable, shoreLightsState, daylightAt, warningGroups,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1077,7 +1077,11 @@ function balanceCards() {
   const allowed = columnsFor();
   box.dataset.columns = allowed;
   const n = allowed === 1 ? 1 : Math.max(2, Math.min(allowed, cards.length));
-  if (page) page.style.maxWidth = n > 1 ? pageMaxFor(n) : "";
+  if (page) {
+    page.style.maxWidth = n > 1 ? pageMaxFor(n) : "";
+    // The warnings card spans all columns and puts its blocks side by side (style.css, .warn-blocks).
+    page.dataset.cols = n;
+  }
   const changed = columnCount !== 0 && allowed !== columnCount;
   columnCount = allowed;
   box.classList.toggle("two", n > 1);
@@ -1904,7 +1908,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   }
   const townName = town(club?.address);
   if (!localChecked(warnings)) {
-    const lakeRows = (warnings.items ?? []).filter((w) => w.kind === "lake").map(warningRow).join("");
+    const lakeRows = warningBlocks((warnings.items ?? []).filter((w) => w.kind === "lake"));
     const where = townName ?? t("this place");
     const note = warnings.lakeArea
       ? t("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", warnings.lakeArea, where)
@@ -1932,35 +1936,86 @@ function warningsBody(warnings, club, checkedAt, guideOpen, earlier = false) {
   const now = other.filter((w) => warningActive(w));
   const later = other.filter((w) => !warningActive(w)).sort((a, b) => new Date(a.onset ?? 0) - new Date(b.onset ?? 0));
   const label = (text) => `<p class="warn-group">${h(text)}</p>`;
+  // Warnings for the same place and time are one block, and in columns the blocks sit side by
+  // side (warningBlocks); the lake warning stays its own block, first.
+  const labels = now.length && later.length;
+  const blocks = labels ? `${warningBlocks(lake)}${label(t("Now"))}${warningBlocks(now)}` : warningBlocks([...lake, ...now]);
   // One order in every state (decision 0052): the warnings, then the shore lights, then what was checked.
-  return `${lake.map(warningRow).join("")}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
-    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}${guide}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
+  return `${blocks}${later.length ? label(t("Later")) : ""}${warningBlocks(later)}${guide}<p class="sub small">${h(earlier ? `${coverage} ${t("Checked %@.", time(checkedAt))}` : coverage)}</p>`;
+}
+
+/**
+ * The blocks of one section (WarningBlocks in WarningsCard.swift, owner's option C, 22 Nov 2026).
+ * Stacked in one column; from two page columns (data-cols, set by balanceCards) side by side, at most
+ * one per page column, sharing the width; a block alone lays itself out in two halves (style.css).
+ */
+function warningBlocks(list) {
+  const groups = warningGroups(list);
+  if (!groups.length) return "";
+  return `<div class="warn-blocks" data-n="${Math.min(groups.length, 3)}">${groups.map(warningBlock).join("")}</div>`;
 }
 
 const SEVERITY = { extreme: "var(--extreme)", severe: "var(--red)", moderate: "var(--orange)" };
 
-function warningRow(w) {
-  const colour = SEVERITY[w.severity] ?? "var(--yellow)";
-  const english = lang() === "en" && w.english;
+const SEVERITY_RANK = ["extreme", "severe", "moderate", "minor"];
+const rankOf = (w) => (SEVERITY_RANK.includes(w.severity) ? SEVERITY_RANK.indexOf(w.severity) : 4);
+
+/** When the warning is in force. */
+function warningPeriod(w) {
   const period = w.onset && w.expires ? t("%@ until %@", dayTime(w.onset), dayTime(w.expires))
     : w.onset ? t("From %@", dayTime(w.onset)) : w.expires ? t("Until %@", dayTime(w.expires)) : "";
-  const text = (headline, description, instruction) => `<p class="headline">${h(headline)}</p>
-    ${period ? `<p class="small">${icon("clock")} ${h(period)}</p>` : ""}
-    <p>${h(description)}</p>${instruction ? `<p class="sub small">${h(instruction)}</p>` : ""}`;
-  return `<div class="warning" style="--w:${colour}">
-    <p class="sub small strong"><span style="color:${colour}">${icon(w.kind === "lake" ? "siren" : "triangle-alert")}</span>
-      ${h(`${w.kind === "lake" ? t("Lake warning") : t("Weather warning")} · ${w.area ?? ""}`)}
-      ${w.sample ? `<span class="tag">${h(t("SAMPLE"))}</span>` : ""}</p>
-    ${english ? text(w.english.headline, w.english.description ?? (isDWD(w)
-        ? t("DWD publishes the details of this warning in German only; see the original below.")
-        : t("The details of this warning are in German only; see the original below.")), w.english.instruction)
-      + `<div class="original" lang="de"><p class="strong">${h(isDWD(w) ? t("Original from DWD (German)") : t("Original from %@ (German)", serviceShort(w.source)))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>`
-      : text(w.headline, w.description, w.instruction)}
-    ${warningInfoOnly(w) ? `<p class="sub small info-line">${icon("info")} <span>${h(warningSlippery(w)
-      ? t("Not part of the rowing light. The jetty and boat area may be slippery.")
-      : t("Not part of the rowing light: it is not about the water."))}</span></p>` : ""}
-    ${sourceLinks(w)}
-  </div>`;
+  return period ? `<p class="small">${icon("clock")} ${h(period)}</p>` : "";
+}
+
+/** Frost, black ice and the like are shown but do not change the rowing light. */
+function warningNote(w) {
+  return warningInfoOnly(w) ? `<p class="sub small info-line">${icon("info")} <span>${h(warningSlippery(w)
+    ? t("Not part of the rowing light. The jetty and boat area may be slippery.")
+    : t("Not part of the rowing light: it is not about the water."))}</span></p>` : "";
+}
+
+/**
+ * The warning's own words, as { main, advice }: headline (with its time when `withPeriod`) and
+ * description; the service's advice and, in English, the German original.
+ */
+function warningText(w, withPeriod) {
+  const english = lang() === "en" && w.english;
+  const headline = english ? w.english.headline : w.headline;
+  const description = english ? w.english.description ?? (isDWD(w)
+    ? t("DWD publishes the details of this warning in German only; see the original below.")
+    : t("The details of this warning are in German only; see the original below.")) : w.description;
+  const instruction = english ? w.english.instruction : w.instruction;
+  const main = `<p class="headline">${h(headline)}</p>${withPeriod ? warningPeriod(w) : ""}<p>${h(description)}</p>`;
+  const advice = (instruction ? `<p class="sub small">${h(instruction)}</p>` : "")
+    + (english ? `<div class="original" lang="de"><p class="strong">${h(isDWD(w) ? t("Original from DWD (German)") : t("Original from %@ (German)", serviceShort(w.source)))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>` : "");
+  return { main, advice };
+}
+
+/**
+ * One block (WarningBlock in the app): the coloured bar, what and where, the time, the texts, the
+ * note about the rowing light and the links. A single warning keeps its text in .w-main and its
+ * advice, note and links in .w-side, which sit side by side when the block is alone in columns;
+ * merged warnings show the time once and their texts in .w-item, side by side there too.
+ */
+function warningBlock(group) {
+  const first = group[0];
+  const worst = group.reduce((a, b) => (rankOf(b) < rankOf(a) ? b : a));
+  const colour = SEVERITY[worst.severity] ?? "var(--yellow)";
+  const meta = `<p class="sub small strong"><span style="color:${colour}">${icon(first.kind === "lake" ? "siren" : "triangle-alert")}</span>
+      ${h(`${first.kind === "lake" ? t("Lake warning") : t("Weather warning")} · ${first.area ?? ""}`)}
+      ${group.some((w) => w.sample) ? `<span class="tag">${h(t("SAMPLE"))}</span>` : ""}</p>`;
+  if (group.length === 1) {
+    const text = warningText(first, true);
+    return `<div class="warning" style="--w:${colour}">${meta}<div class="w-body">
+      <div class="w-main">${text.main}</div><div class="w-side">${text.advice}${warningNote(first)}${sourceLinks(first)}</div></div></div>`;
+  }
+  const shared = group.every((w) => warningInfoOnly(w) === warningInfoOnly(first) && warningSlippery(w) === warningSlippery(first));
+  const items = group.map((w) => {
+    const text = warningText(w, false);
+    return `<div class="w-item">${text.main}${text.advice}${shared ? "" : warningNote(w)}</div>`;
+  }).join("");
+  return `<div class="warning merged" style="--w:${colour};--k:${Math.min(group.length, 3)}">${meta}${warningPeriod(first)}
+    <div class="w-body">${items}</div>${shared ? warningNote(first) : ""}${sourceLinks(first)}</div>`;
 }
 
 // DWD's WarnWetter app (App Store id 986420993); it has no web links to open it at a place.
@@ -2170,7 +2225,7 @@ function hourlyCard(forecast, now, stale) {
       <span>${h(running ? t("Now") : coarser + time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
-      <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>
+      <span class="num">${h(windPair(x.windSpeedMs, x.windGustMs))}</span>
       <span class="num">${h(wavesNumber(x.waveHeightM))}</span>
       <span class="num ${(x.precipitationMm ?? 0) >= 0.1 ? "blue" : ""}">${h(rainNumber(x.precipitationMm))}</span>
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
@@ -2218,7 +2273,7 @@ function nightLine(hours, list, later, forecast) {
     <span class="range">${h(`${start}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
     <span class="num ${n.frost ? "blue" : ""}">${n.frost ? icon("snowflake") : ""}${h(num(inUnit("temperature", n.lowestC)))}</span>
     <span class="num sub">${h(num(inUnit("temperature", n.lowestFeelsLikeC)))}</span>
-    <span class="num">${h(windRange(n.windMs, n.gustMs))}</span>
+    <span class="num">${h(windPair(n.windMs, n.gustMs))}</span>
     <span class="num">${h(wavesNumber(n.wavesM))}</span>
     <span class="num ${rainy ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
     <span class="num ${fog}">${h(distanceNumber(n.visibilityM))}</span>

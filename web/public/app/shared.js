@@ -618,7 +618,14 @@ export const temperature = (c, digits = 0) => (c == null ? "–" : `${num(inUnit
 export const windUnit = () => unitSymbol("wind");
 export const windNumber = (ms) => (ms == null ? "–" : num(Math.round(inUnit("wind", ms))));
 export const wind = (ms) => (ms == null ? "–" : `${windNumber(ms)} ${windUnit()}`);
-export const windRange = (ms, gust) => (ms == null ? "–" : `${windNumber(ms)}–${windNumber(gust)}`);
+// Mean wind – strongest gust, "3–5"; one number, "1", when both round the same (app
+// Format.windSpan, decision 0060). Hour tables use windPair so the column always reads mean–gust.
+export const windRange = (ms, gust) => {
+  if (ms == null) return "–";
+  const mean = windNumber(ms), strongest = windNumber(gust);
+  return gust == null || mean === strongest ? mean : `${mean}–${strongest}`;
+};
+export const windPair = (ms, gust) => (ms == null ? "–" : `${windNumber(ms)}–${windNumber(gust)}`);
 export const wavesNumber = (m) => (m == null ? "–" : num(inUnit("waves", m), unit("waves").digits));
 export const waves = (m) => (m == null ? "–" : `${wavesNumber(m)} ${unitSymbol("waves")}`);
 export const rainNumber = (mm) => (mm == null ? "–" : num(inUnit("rain", mm), unit("rain").digits));
