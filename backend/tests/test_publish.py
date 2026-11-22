@@ -685,3 +685,78 @@ def test_gap_share_goes_into_the_satellite_file_and_stays(tmp_path, monkeypatch)
     assert again["latest"]["gap"] == 0.09 and "gap" not in again["clearest"]
     same = publish._picture_meta(None, tmp_path / "b", ring, {}, clear, clear)
     assert "gap" not in same["latest"] and "gap" not in same["clearest"]
+
+
+def test_club_forecasts_built_on_several_cores_match_the_api(monkeypatch):
+    # Pi speed-up, Nov 2026: club forecasts are built in worker processes, a lake's clubs together,
+    # while the next lake's inputs load; the bodies must be the API's own answer.
+    import json
+
+    import httpx
+
+    from rowfrog import api
+
+    now = datetime(2026, 11, 10, 9, tzinfo=timezone.utc)
+    monkeypatch.setattr(api, "_now", lambda: now)
+
+    async def no_water(client, station, now):
+        return None, []
+
+    async def no_warnings(client, club, now):
+        return {"status": "ok", "lakeArea": None, "items": []}, []
+
+    monkeypatch.setattr(api, "_water", no_water)
+    monkeypatch.setattr(api, "_warnings", no_warnings)
+
+    async def no_air_days(client, lake, today):
+        return None
+
+    monkeypatch.setattr(api, "_air_days", no_air_days)
+    real_client = httpx.AsyncClient  # nothing else may reach a service either
+
+    def offline_client(*args, **kwargs):
+        return real_client(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", offline_client)
+    monkeypatch.setattr(publish, "CLUB_POOL_FROM", 2)
+    clubs = [api._locations.clubs[i] for i in ("mrc-1880", "tutzinger-rv", "ammersee-ruderer", "mrsv-bayern")]
+    assert len({c.lake_id for c in clubs}) > 1
+
+    def prepare() -> None:  # building a forecast takes its prepared weather
+        for k, club in enumerate(clubs):
+            api.prepared.weather[club.id] = weather(k)
+
+    def weather(k: int) -> list:
+        return [
+            open_meteo.ForecastHour(now + timedelta(hours=h), 8.0, 2.0 + k + h % 7, 5.0 + h % 9, (25.0 * h + k) % 360,
+                                    50.0, 10.0, 300.0 if h == 3 else 20_000.0, 0.0, 0.0, True)
+            for h in range(12)
+        ]
+
+    no_weather = api._locations.clubs["rudergesellschaft-muenchen-1972"]
+
+    def as_json(body):
+        return json.loads(json.dumps(body))
+
+    try:
+        prepare()
+        expected = {c.id: as_json(publish.built(api.club_forecast(c.id))[0]) for c in clubs}
+        prepare()
+        part = clubs + [no_weather]
+        got = publish.club_forecasts(part, workers=2)
+        assert [c.id for c, _, _ in got] == [c.id for c in part], "in the order asked"
+        for club, body, problem in got[:-1]:
+            assert problem is None and as_json(body) == expected[club.id]
+        assert got[-1][1:] == (None, "no forecast loaded")
+
+        class BrokenPool:  # the worker processes cannot start (out of memory, say)
+            def __init__(self, *args, **kwargs):
+                raise OSError("no workers")
+
+        monkeypatch.setattr(publish, "ProcessPoolExecutor", BrokenPool)
+        prepare()
+        for club, body, problem in publish.club_forecasts(clubs, workers=2):
+            assert problem is None and as_json(body) == expected[club.id]
+    finally:
+        for club in clubs:
+            api.prepared.weather.pop(club.id, None)

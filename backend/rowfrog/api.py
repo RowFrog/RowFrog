@@ -1149,6 +1149,31 @@ def build_club_forecast(
     }
 
 
+async def club_inputs(club: locations.Club) -> tuple[ClubInputs, datetime]:
+    """A club's inputs and the time they are for, as club_forecast loads them (the publish job)."""
+    now = _now()
+    return await _club_inputs(club, None, now), now
+
+
+def club_forecasts_json(task: list[tuple]) -> list[tuple[str, dict | None, str | None]]:
+    """build_club_forecast's JSON for (club id, inputs, now) entries, or what went wrong; for a
+    worker process (the publish job). Clubs of one lake go together, so their lake weather
+    travels once and the nearby-water cache works as in one process."""
+    from fastapi.encoders import jsonable_encoder
+
+    out = []
+    for club_id, inputs, now in task:
+        club = _locations.clubs[club_id]
+        try:
+            body = build_club_forecast(club, _locations.lakes[club.lake_id], inputs, None, now)
+            out.append((club_id, jsonable_encoder(body), None))
+        except HTTPException as e:
+            out.append((club_id, None, f"HTTP {e.status_code} {str(e.detail)[:120]}"))
+        except Exception as e:  # one broken club must not stop the others
+            out.append((club_id, None, f"{type(e).__name__}: {e}"))
+    return out
+
+
 def _sample_wind(weather: list[list]) -> list[list]:
     wind_from, speed, gusts = (float(v) for v in SAMPLE_LAKE_WIND.split(","))
     return [[replace(h, wind_from_deg=wind_from, wind_speed_ms=speed, wind_gust_ms=gusts) for h in w] for w in weather]

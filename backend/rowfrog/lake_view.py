@@ -409,6 +409,12 @@ def _spread(points_m: list[tuple[float, float]], count: int) -> list[tuple[float
 # Where grids are kept between publish runs (the publisher sets it next to its
 # state file); None keeps them in memory only, for this process.
 GRID_CACHE_DIR: Path | None = None
+
+
+def use_grid_cache(path: Path | None) -> None:
+    """Sets GRID_CACHE_DIR; the publish job's worker processes start with it."""
+    global GRID_CACHE_DIR
+    GRID_CACHE_DIR = path
 # The code a grid is built by: when any of these files changes, every kept grid is built again.
 _GRID_CODE = ("lake_view.py", "interpolate.py", "waves.py")
 

@@ -1277,13 +1277,76 @@ def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> in
         try:
             # "spawn": fresh processes that import rowfrog themselves, not copies of this one.
             with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
-                for (lake_id, *_), (body, problem) in zip(inputs, pool.map(api.lake_view_json, inputs, chunksize=4)):
+                for (lake_id, *_), (body, problem) in zip(inputs, pool.map(api.lake_view_json, inputs)):
                     keep(lake_id, body, problem)
         except Exception as e:  # a worker died (memory?) or could not start: the rest one after another
             print(f"  lake views on {workers} cores stopped after {done} of {len(inputs)}: {type(e).__name__}: {e}")
     for lake_id, *rest in inputs[done:]:
         keep(lake_id, *api.lake_view_json((lake_id, *rest)))
     return views
+
+
+# The fewest clubs for which club_forecasts starts worker processes.
+CLUB_POOL_FROM = 30
+
+
+def club_forecasts(part: list[locations.Club], workers: int | None = None):
+    """(club, body, problem) for every club of the part, lake by lake. The inputs are loaded
+    here, one club after another (network, shared caches); each lake's clubs are then built in
+    one of `workers` processes while the next lake's inputs load. CLUB_WORKERS=1 builds them
+    in this process, as before."""
+    try:
+        workers = workers or max(1, int(os.environ["CLUB_WORKERS"]))
+    except (KeyError, ValueError):
+        workers = lake_view_workers()
+    results: dict[str, tuple[dict | None, str | None]] = {}
+    lakes: dict[str, list[locations.Club]] = {}
+    for club in part:
+        lakes.setdefault(club.lake_id, []).append(club)
+
+    def load(clubs: list[locations.Club]) -> list[tuple]:
+        task = []
+        for club in clubs:
+            if club.id not in api.prepared.weather:
+                results[club.id] = (None, "no forecast loaded")
+                continue
+            try:
+                task.append((club.id, *asyncio.run(api.club_inputs(club))))
+            except HTTPException as e:
+                results[club.id] = (None, f"HTTP {e.status_code} {str(e.detail)[:120]}")
+            except Exception as e:
+                results[club.id] = (None, f"{type(e).__name__}: {e}")
+        return task
+
+    def keep(rows) -> None:
+        for club_id, body, problem in rows:
+            results[club_id] = (body, problem)
+
+    tasks = []
+    # Starting the workers costs a few seconds of CPU; a handful of clubs is quicker here.
+    if workers > 1 and len(lakes) > 1 and len(part) >= CLUB_POOL_FROM:
+        futures = []
+        try:
+            ctx = multiprocessing.get_context("spawn")
+            with ProcessPoolExecutor(workers, mp_context=ctx, initializer=lake_view.use_grid_cache,
+                                     initargs=(lake_view.GRID_CACHE_DIR,)) as pool:
+                for clubs in lakes.values():
+                    task = load(clubs)
+                    tasks.append(task)
+                    futures.append(pool.submit(api.club_forecasts_json, task))
+                for f in futures:
+                    keep(f.result())
+        except Exception as e:  # a worker died (memory?) or could not start: the rest in this process
+            print(f"  club forecasts on {workers} cores stopped: {type(e).__name__}: {e}")
+        for n, task in enumerate(tasks):  # whatever no worker finished
+            if n >= len(futures) or not futures[n].done() or futures[n].exception():
+                keep(api.club_forecasts_json(task))
+        for clubs in list(lakes.values())[len(tasks):]:  # lakes not loaded before the stop
+            keep(api.club_forecasts_json(load(clubs)))
+    else:
+        for clubs in lakes.values():
+            keep(api.club_forecasts_json(load(clubs)))
+    return [(c, *results[c.id]) for c in part]
 
 
 def built(forecast) -> tuple[dict | None, str | None]:
@@ -1423,11 +1486,7 @@ def publish(args, now: datetime, state: "State") -> int:
         ready_lakes = lake_weather(state, part_lakes, used_lakes, now)
         lake_count += len([i for i in part_lakes if i not in viewed])
         part_failed = []
-        for club in part:
-            if club.id not in api.prepared.weather:
-                part_failed.append(f"{club.id}: no forecast loaded")
-                continue
-            body, problem = built(api.club_forecast(club.id))
+        for club, body, problem in club_forecasts(part):
             if problem:
                 part_failed.append(f"{club.id}: {problem}")
                 continue
