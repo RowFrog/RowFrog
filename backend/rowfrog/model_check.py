@@ -576,6 +576,55 @@ def _lake_land_lines(points: list[Point], obs: dict, land: dict) -> list[str]:
     ]
 
 
+def summary(points: list[Point], rows: list[dict], obs: dict, used: dict, now: datetime, gkd: dict | None = None) -> dict:
+    """The headline numbers as data (summary.json; the Pi's RowFrog tile): the errors of what
+    the app showed, day 1, over all its points together. Without app rows (GitHub) the
+    model the app uses today (CURRENT) over "All points" stands in."""
+    scores = score(rows, obs, {p.id for p in points if p.on_lake})
+    pooled = Score()
+    for (pid, model, buck), s in scores.items():
+        if model == APP and buck == "day 1":
+            pooled.n += s.n
+            pooled.wind_err += s.wind_err
+            pooled.gust_err += s.gust_err
+            pooled.temp_err += s.temp_err
+            pooled.water_err += s.water_err
+            pooled.light_wrong += s.light_wrong
+            pooled.light_n += s.light_n
+    model = APP
+    if not pooled.n:
+        model, pooled = CURRENT, scores.get(("all", CURRENT, "day 1")) or Score()
+
+    def mae(errs: list) -> float | None:
+        return round(mean(abs(e) for e in errs), 2) if errs else None
+
+    errors = [
+        {"key": key, "name": name, "mae": mae(errs), "unit": unit}
+        for key, name, errs, unit in (
+            ("wind", "Wind", pooled.wind_err, "m/s"),
+            ("gust", "Gusts", pooled.gust_err, "m/s"),
+            ("temperature", "Air temperature", pooled.temp_err, "K"),
+            ("water", "Water temperature", pooled.water_err, "K"),
+        )
+        if errs
+    ]
+    since = now - timedelta(days=14)
+    gkd_readings = sum(1 for kinds in (gkd or {}).values() for values in kinds.values() for t in values if t >= since)
+    stations = {v["station"] for st in used.values() for k, v in st.items() if not str(v.get("name", "")).startswith("GKD")}
+    return {
+        "version": 1,
+        "time": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "model": model,
+        "lead": "day 1",
+        "points": len(points),
+        "stations": len(stations),
+        "hours": pooled.n,
+        "errors": errors,
+        "light_wrong": round(pooled.light_wrong / pooled.light_n, 4) if pooled.light_n else None,
+        "gkd_readings": gkd_readings,
+    }
+
+
 def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: datetime, land: dict | None = None) -> str:
     """`land`: the DWD measurements for the points whose own ones come from GKD (for the lake vs land section)."""
     apart = {p.id for p in points if p.on_lake}

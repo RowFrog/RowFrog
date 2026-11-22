@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import calendar
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 # Free limits: Open-Meteo's non-commercial API (open-meteo.com/en/pricing),
 # the free Copernicus Data Space account (about 10,000 Sentinel Hub requests a
@@ -31,11 +31,28 @@ ALERT = 0.85
 LEVELS = ("ok", "warn", "alert")
 
 
+# Names for people (budget-latest.json, the Pi's RowFrog tile).
+NAMES = {
+    "open-meteo": "Weather API (Open-Meteo)",
+    "copernicus": "Satellite pictures (Copernicus)",
+    "cloudflare-workers": "Worker requests",
+    "cloudflare-d1-writes": "D1 rows written",
+    "cloudflare-d1-reads": "D1 rows read",
+    "cloudflare-r2-writes": "R2 writes (class A)",
+    "cloudflare-r2-reads": "R2 reads (class B)",
+}
+
+
 @dataclass(frozen=True)
 class Finding:
     service: str
     level: str  # ok, warn, alert
     text: str
+    # For a limit check: "day" (busiest of the last 7 full days) or "month" (projected),
+    # with the calls and the limit they are measured against. Empty for other findings.
+    period: str = ""
+    used: float = 0.0
+    limit: int = 0
 
 
 def _level(share: float) -> str:
@@ -70,6 +87,7 @@ def check(rows: list[dict], today: date) -> list[Finding]:
             findings.append(Finding(
                 service, _level(share),
                 f"{service}: busiest day of the last week {busiest:,.0f} calls = {share:.0%} of {limits['day']:,} a day.",
+                "day", busiest, limits["day"],
             ))
             growth = (avg - sum(prev7) / 7) / 7 if any(prev7) else 0.0
             room = ALERT * limits["day"] - avg
@@ -86,6 +104,7 @@ def check(rows: list[dict], today: date) -> list[Finding]:
             findings.append(Finding(
                 service, _level(share),
                 f"{service}: this month projected {projected:,.0f} calls = {share:.0%} of {limits['month']:,} a month.",
+                "month", projected, limits["month"],
             ))
     return findings
 
@@ -105,3 +124,26 @@ def report(findings: list[Finding], today: date) -> str:
         "for Cloudflare, count each club once an hour instead of on every load, or take Workers Paid.",
     ]
     return "\n".join(lines)
+
+
+def summary(findings: list[Finding] | None, now: datetime) -> dict:
+    """The check's numbers as data (budget-latest.json on the Pi, read by its RowFrog tile).
+    `findings` None: the usage counter did not answer."""
+    services = [
+        {"key": f.service, "name": NAMES.get(f.service, f.service), "period": f.period,
+         "used": round(f.used), "limit": f.limit, "share": round(f.used / f.limit, 4), "level": f.level, "unit": "calls"}
+        for f in findings or [] if f.period
+    ]
+    notes = [{"key": f.service, "level": f.level, "text": f.text} for f in findings or [] if not f.period and f.level != "ok"]
+    if findings is None:
+        notes.append({"key": "usage-counter", "level": "warn", "text": "The usage counter did not answer, or RW_USAGE_KEY is not set."})
+    level = worst(findings or []) if findings is not None else "warn"
+    return {
+        "version": 1,
+        "time": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "level": level,
+        "warn_from": WARN,
+        "alert_from": ALERT,
+        "services": services,
+        "notes": notes,
+    }
