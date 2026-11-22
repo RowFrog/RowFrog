@@ -76,3 +76,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 57 | 2026-11-22 | [Dependabot may be the author of its own commits on main](0057-dependabot-may-author-its-commits.md) |
 | 58 | 2026-11-22 | [The app runs on Python 3.14.8](0058-app-python-3-14-8.md) |
 | 61 | 2026-11-22 | [One reason line per thing near the launch point; the ice line only at 3 °C or colder](0061-one-line-per-thing-and-ice-line-at-3-c.md) |
+| 63 | 2026-11-22 | [The soft blur at the top of the club pages is the app's own, with no bar per page](0063-own-soft-blur-at-the-top-of-club-pages.md) |

@@ -105,7 +105,7 @@ struct LocationPageView: View {
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
     @Environment(\.pageBarBottom) private var pageBarBottom
-    @Environment(\.pageInToolbar) private var inToolbar
+    @Environment(\.pageEdgeBlurred) private var edgeBlurred
 
     /// Whether this tip shows now: one tip on the page at a time (ClubPageTip).
     private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
@@ -242,7 +242,7 @@ struct LocationPageView: View {
                 // view blurs or fades them itself (owner's pick D, 19 Nov 2026).
                 .modifier(PageTopEdge(
                     active: !PowerState.shared.lowPower,
-                    toolbar: inToolbar,
+                    blurred: edgeBlurred,
                     scrolled: PageScroll.shared.scrolled.contains(club.id),
                     gone: PageScroll.shared.titleGone.contains(club.id)
                         ? pageBarBottom : min(pageMargins.top, pageBarBottom)))
@@ -338,11 +338,8 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            // In its navigation stack the page keeps its own top margin, measured from the
-            // screen's top, rather than the bar's, so the phone's page starts where it did.
-            .safeAreaPadding(.top, inToolbar ? pageMargins.top : max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
-            .ignoresSafeArea(.container, edges: inToolbar ? .top : [])
         }
     }
 
@@ -1734,9 +1731,9 @@ private struct DaylightText: View {
 private struct PageTopEdge: ViewModifier {
     /// Not in Low Power Mode, which keeps its plain strip.
     let active: Bool
-    /// The page sits in its own navigation stack: the bar's edge (iOS 26 soft blur,
-    /// iOS 18 frosted bar) reaches under the top buttons, so no fade mask.
-    var toolbar = false
+    /// One of the swiping club pages: the soft blur over them all (TopEdgeBlur) hides
+    /// the cards under the clock and the top buttons, so no fade mask.
+    var blurred = false
     /// Whether cards are under the clock.
     let scrolled: Bool
     /// Where on screen the cards are gone completely (iOS 18): below the clock, or
@@ -1748,16 +1745,8 @@ private struct PageTopEdge: ViewModifier {
     func body(content: Content) -> some View {
         if !active {
             content
-        } else if toolbar {
-#if compiler(>=6.2)
-            if #available(iOS 26.0, *) {
-                content.scrollEdgeEffectStyle(.soft, for: .top)
-            } else {
-                content
-            }
-#else
+        } else if blurred {
             content
-#endif
         } else {
 #if compiler(>=6.2)
             if #available(iOS 26.0, *) {

@@ -322,16 +322,11 @@ struct RootView: View {
         let barBottom = insets.top + InlineClubTitle.barHeight(statusBar: insets.top, topButtons: topButtons)
         let top = topButtons ? barBottom + PageTopButtons.gapBelow : insets.top
         let margins = EdgeInsets(top: top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
-        // Our own pager, not a paged TabView: with a navigation stack in each page, fast swipes in
-        // the paged TabView made UIKit lay out one page's bar with another page's item and abort
-        // ("top item belongs to a different navigation bar", build 1024, 21 Nov 2026).
-        return ClubPager(clubs: saved, selection: $selection) { club in
-            // Each page in its own navigation stack with an empty bar: only so that iOS 26
-            // draws its soft scroll edge as deep as a bar (under the top buttons, as in
-            // Mail), and iOS 18 its frosted bar once the page is scrolled. The buttons and
-            // the small name stay the overlays below, so they keep still while the pages
-            // swipe. One stack around the whole pager gave no soft edge at all (iOS 27).
-            NavigationStack {
+        return TabView(selection: $selection) {
+            ForEach(saved) { club in
+                // No navigation stack per page any more (#546): its bars crashed the app on
+                // quick swipes (21 Nov 2026) and its soft edge ended in a hard cut. The
+                // blur at the top is our own, over the whole TabView (TopEdgeBlur below).
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
                                  savedIDs: saved.map(\.id))
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
@@ -339,27 +334,20 @@ struct RootView: View {
                     .environment(\.openBoatSettings, openBoatSettings)
                     .environment(\.pageMargins, margins)
                     .environment(\.pageBarBottom, barBottom)
-                    .environment(\.pageInToolbar, true)
-                    .navigationBarTitleDisplayMode(.inline)
-                    // An empty bar gets no depth on iOS 27 (the soft edge covered only the
-                    // clock): an invisible item the size of a top button gives it a bar's.
-                    .toolbar {
-                        ToolbarItem(placement: .topBarLeading) {
-                            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
-                        }
-                        .ownGlass()
-                    }
-                    // The club's picture lies behind the whole pager.
-                    .containerBackground(.clear, for: .navigation)
+                    .environment(\.pageEdgeBlurred, true)
+                    .tag(club.id)
             }
         }
+        .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea(edges: [.top, .bottom])
         .overlay(alignment: .top) {
             let scroll = PageScroll.shared
             let club = saved.first { $0.id == selection }
             let forecast = forecasts.forecasts[selection]
+            let gone = scroll.titleGone.contains(selection)
             TopEdgeFade(statusBar: insets.top, scrolled: scroll.scrolled.contains(selection),
-                        title: scroll.titleGone.contains(selection) ? club : nil,
+                        edge: gone ? barBottom : min(margins.top, barBottom),
+                        title: gone ? club : nil,
                         light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
                         sideRoom: PageTopButtons.sideRoom(chrome))
                 .frame(maxHeight: .infinity, alignment: .top)
@@ -477,6 +465,8 @@ private struct TopEdgeFade: View {
     let statusBar: CGFloat
     /// Whether cards are under the clock; at the top of a page nothing is drawn.
     let scrolled: Bool
+    /// Where on screen the cards are hidden completely (TopEdgeBlur).
+    let edge: CGFloat
     /// The club whose name the bar shows once its big title has scrolled away.
     let title: Club?
     let light: Light?
@@ -500,10 +490,17 @@ private struct TopEdgeFade: View {
                     .transition(.opacity)
             }
         }
+        .frame(maxWidth: .infinity)
+        // The soft blur (not in Low Power Mode, which keeps its plain strip) lies behind
+        // the small name and reaches a little further down than the bar.
+        .background(alignment: .top) {
+            if !lowPower { TopEdgeBlur(edge: edge) }
+        }
         .frame(maxHeight: .infinity, alignment: .top)
         .opacity(scrolled ? 1 : 0)
         .animation(.easeInOut(duration: 0.2), value: scrolled)
         .animation(.easeInOut(duration: 0.2), value: title?.id)
+        .animation(.easeInOut(duration: 0.2), value: edge)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -837,18 +834,3 @@ enum PageJump {
     }
 }
 
-extension ToolbarContent {
-    /// No shared iOS 26 glass behind the item.
-    @ToolbarContentBuilder
-    func ownGlass() -> some ToolbarContent {
-#if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            sharedBackgroundVisibility(.hidden)
-        } else {
-            self
-        }
-#else
-        self
-#endif
-    }
-}
