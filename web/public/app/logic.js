@@ -884,3 +884,27 @@ export function shoreLightsState(season, now = new Date()) {
   if (parts.month === 3 && parts.day >= 15) return "soon";
   return "off";
 }
+
+/** Same service, kind, place, time and page: one block on the warnings card (WarningGroup in the app). */
+function sameWarningBlock(a, b) {
+  const when = (d) => (d ? new Date(d).getTime() : null);
+  return (a.source ?? "dwd") === (b.source ?? "dwd") && a.kind === b.kind && (a.area ?? "") === (b.area ?? "")
+    && when(a.onset) === when(b.onset) && when(a.expires) === when(b.expires)
+    && JSON.stringify(a.links ?? null) === JSON.stringify(b.links ?? null);
+}
+
+/**
+ * Warnings issued for the same place and time (Frost and Glätte, both 00:00 to 09:00) as one block,
+ * with one time, one note and one set of links, as they lead to the same page (owner's option C,
+ * 22 Nov 2026). Lake warnings are never merged. A block stands where its first warning was. The rule
+ * is testdata/states/warning-groups.json, which the app's tests read too.
+ */
+export function warningGroups(list) {
+  const groups = [];
+  for (const w of list) {
+    const group = w.kind === "lake" ? null : groups.find((g) => g[0].kind !== "lake" && sameWarningBlock(g[0], w));
+    if (group) group.push(w);
+    else groups.push([w]);
+  }
+  return groups;
+}

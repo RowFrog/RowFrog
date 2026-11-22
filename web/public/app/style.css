@@ -209,6 +209,16 @@ button.wide { margin-top: 0; }
 .warning .source-links { margin-top: 6px; line-height: 1.6; }
 .warning p { margin: 3px 0; }
 .warning .headline { font-weight: 600; font-size: 17px; }
+/* Warnings for the same place and time are one block (.merged). From two page columns the blocks
+   sit side by side, at most one per column, and a block alone puts its halves side by side
+   (WarningBlocks in WarningsCard.swift, owner's option C, 22 Nov 2026). */
+.warn-blocks { display: grid; gap: 0 16px; }
+.warn-blocks > .warning { min-width: 0; }
+.warning.merged .w-item + .w-item { margin-top: 8px; }
+.page[data-cols="2"] .warn-blocks:not([data-n="1"]), .page[data-cols="3"] .warn-blocks[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.page[data-cols="3"] .warn-blocks[data-n="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.page:is([data-cols="2"], [data-cols="3"]) .warn-blocks[data-n="1"] .w-body { display: grid; grid-template-columns: repeat(var(--k, 2), minmax(0, 1fr)); gap: 0 24px; align-items: start; }
+.page:is([data-cols="2"], [data-cols="3"]) .warn-blocks[data-n="1"] .warning.merged .w-item + .w-item { margin-top: 0; }
 .original { background: color-mix(in srgb, var(--sub) 10%, transparent); color: var(--sub); border-radius: 8px; padding: 8px; font-size: 12px; margin-top: 6px; }
 .original p { margin: 2px 0; }
 .tag { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 6px; background: var(--fill); color: var(--text); }

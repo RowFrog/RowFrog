@@ -1,0 +1,56 @@
+{
+  "about": "Which warnings the warnings card shows as one block (owner's option C, 22 Nov 2026): same service, kind, place, start, end and page. Lake warnings never merge. Each case lists the warnings in order and the blocks expected, by each warning's event. Read by the app (WarningGroupTests) and the website (warninggroups.test.mjs).",
+  "cases": [
+    {
+      "name": "frost and black ice for the same town and time merge",
+      "warnings": [
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "FROST", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z", "links": { "de": "https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=Starnberg" } },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "GLÄTTE", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z", "links": { "de": "https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=Starnberg" } }
+      ],
+      "blocks": [["FROST", "GLÄTTE"]]
+    },
+    {
+      "name": "another end time keeps its own block",
+      "warnings": [
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "FROST", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "NEBEL", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T10:00:00Z" }
+      ],
+      "blocks": [["FROST"], ["NEBEL"]]
+    },
+    {
+      "name": "lake warnings never merge, not even with each other",
+      "warnings": [
+        { "kind": "lake", "area": "Starnberger See", "event": "STARKWIND", "onset": "2026-11-22T12:00:00Z", "expires": "2026-11-22T17:00:00Z" },
+        { "kind": "lake", "area": "Starnberger See", "event": "STURM", "onset": "2026-11-22T12:00:00Z", "expires": "2026-11-22T17:00:00Z" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "WINDBÖEN", "onset": "2026-11-22T12:00:00Z", "expires": "2026-11-22T17:00:00Z" }
+      ],
+      "blocks": [["STARKWIND"], ["STURM"], ["WINDBÖEN"]]
+    },
+    {
+      "name": "a block stands where its first warning was",
+      "warnings": [
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "FROST", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "NEBEL", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T10:00:00Z" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "GLÄTTE", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" }
+      ],
+      "blocks": [["FROST", "GLÄTTE"], ["NEBEL"]]
+    },
+    {
+      "name": "another place or service keeps its own block",
+      "warnings": [
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "FROST", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" },
+        { "kind": "weather", "area": "Kreis Starnberg", "event": "GLÄTTE", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "GLÄTTE", "source": "geosphere", "onset": "2026-11-21T23:00:00Z", "expires": "2026-11-22T08:00:00Z" }
+      ],
+      "blocks": [["FROST"], ["GLÄTTE"], ["GLÄTTE"]]
+    },
+    {
+      "name": "without start or end, the same (missing) times still match",
+      "warnings": [
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "FROST" },
+        { "kind": "weather", "area": "Stadt Starnberg", "event": "GLÄTTE" }
+      ],
+      "blocks": [["FROST", "GLÄTTE"]]
+    }
+  ]
+}

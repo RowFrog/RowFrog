@@ -17,6 +17,9 @@ struct WarningsCard: View {
     /// The moment "now" and "later" are told apart; nil follows the clock, minute by
     /// minute, and the screenshots can fix it.
     var checkedNow: Date? = nil
+    /// The club page's column count (ClubPageColumns): from two, the card spans
+    /// them all and puts its blocks side by side (owner's option C, 22 Nov 2026).
+    var columns: Int = 1
 
     var body: some View {
         // Grouped again every minute, and warnings that have ended left out: a gust
@@ -38,7 +41,7 @@ struct WarningsCard: View {
                       systemImage: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
             } else if !warnings.localChecked {
-                ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
+                WarningBlocks(groups: WarningGroup.groups(warnings.items.filter(\.isLake)), columns: columns)
                 NotCheckedNote(local: warnings.local)
                 lightsInfo(now: checkedNow)
                 Text(coverage)
@@ -56,15 +59,22 @@ struct WarningsCard: View {
                 // One order in every state (owner, 20 Nov 2026, decision 0052): the warnings,
                 // then the shore lights, then what was checked. The lake warning itself
                 // says how many times the lights flash.
-                ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
+                let lake = warnings.items.filter(\.isLake)
                 let local = warnings.items.filter { !$0.isLake }
                 let now = local.filter { $0.isActive(at: checkedNow) }
                 let later = local.filter { !$0.isActive(at: checkedNow) }.sorted { ($0.onset ?? .distantPast) < ($1.onset ?? .distantPast) }
+                // Warnings for the same place and time are one block (WarningGroup), and in
+                // columns the blocks sit side by side; the lake warning stays its own block, first.
                 // "Now" and "Later" so a warning for tonight is not read as one for this hour.
-                if !now.isEmpty && !later.isEmpty { SectionLabel(text: tr("Now")) }
-                ForEach(now) { WarningRow(warning: $0) }
+                if !now.isEmpty && !later.isEmpty {
+                    WarningBlocks(groups: WarningGroup.groups(lake), columns: columns)
+                    SectionLabel(text: tr("Now"))
+                    WarningBlocks(groups: WarningGroup.groups(now), columns: columns)
+                } else {
+                    WarningBlocks(groups: WarningGroup.groups(lake + now), columns: columns)
+                }
                 if !later.isEmpty { SectionLabel(text: tr("Later")) }
-                ForEach(later) { WarningRow(warning: $0) }
+                WarningBlocks(groups: WarningGroup.groups(later), columns: columns)
                 lightsInfo(now: checkedNow)
                 Text(earlierCheck ? coverage + " " + tr("Checked %@.", Format.time(checkedAt)) : coverage)
                     .font(.caption)
@@ -148,72 +158,171 @@ private struct NotCheckedNote: View {
     }
 }
 
-private struct WarningRow: View {
-    let warning: DWDWarning
+/// Warnings issued for the same place and the same time (Frost and Glätte, both
+/// tonight 00:00 to 09:00): one block with one time, one note and one set of links,
+/// as they all lead to the same page (backend warning_links.py). Lake warnings are
+/// never merged: each has its own lights and page. Owner's option C, 22 Nov 2026.
+struct WarningGroup: Identifiable, Equatable {
+    var warnings: [DWDWarning]
+
+    var id: String { warnings.map(\.id).joined(separator: "+") }
+    var first: DWDWarning { warnings[0] }
+    /// The worst level in the block gives its bar and symbol their colour.
+    var worst: DWDWarning {
+        let rank = ["extreme", "severe", "moderate", "minor"]
+        return warnings.min { (rank.firstIndex(of: $0.severity) ?? 4) < (rank.firstIndex(of: $1.severity) ?? 4) } ?? first
+    }
+    /// One note for the block when it says the same for every warning in it; else each says its own.
+    var sharedNote: Bool {
+        warnings.allSatisfy { $0.isInfoOnly == first.isInfoOnly && $0.isSlippery == first.isSlippery }
+    }
+
+    /// The warnings in blocks, in their order; a block stands where its first warning was.
+    static func groups(_ warnings: [DWDWarning]) -> [WarningGroup] {
+        var groups: [WarningGroup] = []
+        for warning in warnings {
+            if !warning.isLake, let i = groups.firstIndex(where: { !$0.first.isLake && $0.first.sameBlock(as: warning) }) {
+                groups[i].warnings.append(warning)
+            } else {
+                groups.append(WarningGroup(warnings: [warning]))
+            }
+        }
+        return groups
+    }
+}
+
+extension DWDWarning {
+    /// Same service, kind, place, time and page: shown as one block (WarningGroup).
+    func sameBlock(as other: DWDWarning) -> Bool {
+        (source ?? "dwd") == (other.source ?? "dwd") && kind == other.kind && area == other.area
+            && onset == other.onset && expires == other.expires && links == other.links
+    }
+}
+
+/// The blocks of one section. In one column they are stacked. From two columns they
+/// sit side by side, at most one per page column, sharing the width; a block alone
+/// lays itself out in two halves, so its lines do not run across the whole page.
+private struct WarningBlocks: View {
+    let groups: [WarningGroup]
+    let columns: Int
 
     var body: some View {
+        if columns < 2 {
+            ForEach(groups) { WarningBlock(group: $0, wide: false) }
+        } else if groups.count == 1, let group = groups.first {
+            WarningBlock(group: group, wide: true)
+        } else if !groups.isEmpty {
+            let perRow = min(columns, groups.count)
+            ForEach(Array(stride(from: 0, to: groups.count, by: perRow)), id: \.self) { start in
+                HStack(alignment: .top, spacing: ClubPageColumns.spacing) {
+                    ForEach(start..<(start + perRow), id: \.self) { i in
+                        if i < groups.count {
+                            WarningBlock(group: groups[i], wide: false)
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                        } else {
+                            Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// One block: the coloured bar, what and where, the time, the warning texts, the
+/// note about the rowing light and the links. `wide`: the block has the card's
+/// whole width (alone in columns), so a single warning puts its advice and links
+/// beside its text, and merged warnings put their texts side by side.
+private struct WarningBlock: View {
+    let group: WarningGroup
+    let wide: Bool
+
+    var body: some View {
+        let first = group.first
         HStack(alignment: .top, spacing: 10) {
             RoundedRectangle(cornerRadius: 2)
-                .fill(warning.color)
+                .fill(group.worst.color)
                 .frame(width: 4)
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Image(systemName: warning.isLake ? "light.beacon.max.fill" : "exclamationmark.triangle.fill")
-                        .foregroundStyle(warning.color)
-                    Text((warning.isLake ? tr("Lake warning") : tr("Weather warning")) + " · \(warning.area)")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    if warning.sample == true {
-                        Text(tr("SAMPLE"))
-                            .font(.caption2.weight(.bold))
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 1)
-                            .background(Color.secondary.opacity(0.2), in: Capsule())
-                            .accessibilityLabel(tr("Sample warning for the preview, not an official warning"))
+                WarningMeta(warning: group.worst)
+                if group.warnings.count == 1 && wide {
+                    HStack(alignment: .top, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            WarningText(warning: first, part: .main, withPeriod: true)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
+                        VStack(alignment: .leading, spacing: 4) {
+                            WarningText(warning: first, part: .advice)
+                            WarningNote(warning: first)
+                            SourceLinks(warning: first)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .topLeading)
                     }
-                }
-                if warningsInEnglish, let english = warning.english {
-                    Text(english.headline).font(.headline)
-                    if let period = period {
-                        Label(period, systemImage: "clock").font(.caption)
-                    }
-                    Text(english.description ?? (warning.isDWD
-                        ? tr("DWD publishes the details of this warning in German only; see the original below.")
-                        : tr("The details of this warning are in German only; see the original below.")))
-                        .fixedSize(horizontal: false, vertical: true)
-                    if let instruction = english.instruction, !instruction.isEmpty {
-                        Text(instruction)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    GermanOriginal(warning: warning)
+                } else if group.warnings.count == 1 {
+                    WarningText(warning: first, part: .all, withPeriod: true)
+                    WarningNote(warning: first)
+                    SourceLinks(warning: first)
                 } else {
-                    Text(warning.headline).font(.headline)
-                    if let period = period {
-                        Label(period, systemImage: "clock").font(.caption)
+                    WarningPeriod(warning: first)
+                    if wide {
+                        HStack(alignment: .top, spacing: 24) {
+                            ForEach(group.warnings) { warning in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    WarningText(warning: warning, part: .all)
+                                    if !group.sharedNote { WarningNote(warning: warning) }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                            }
+                        }
+                    } else {
+                        ForEach(group.warnings) { warning in
+                            VStack(alignment: .leading, spacing: 4) {
+                                WarningText(warning: warning, part: .all)
+                                if !group.sharedNote { WarningNote(warning: warning) }
+                            }
+                            .padding(.top, warning == first ? 0 : 6)
+                        }
                     }
-                    Text(warning.description).fixedSize(horizontal: false, vertical: true)
-                    if let instruction = warning.instruction, !instruction.isEmpty {
-                        Text(instruction)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                    if group.sharedNote { WarningNote(warning: first) }
+                    SourceLinks(warning: first)
                 }
-                if warning.isInfoOnly {
-                    Label(warning.isSlippery
-                          ? tr("Not part of the rowing light. The jetty and boat area may be slippery.")
-                          : tr("Not part of the rowing light: it is not about the water."),
-                          systemImage: "info.circle")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                SourceLinks(warning: warning)
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+/// "Weather warning · Stadt Starnberg", with the sample badge on screenshots.
+private struct WarningMeta: View {
+    let warning: DWDWarning
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: warning.isLake ? "light.beacon.max.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(warning.color)
+            Text((warning.isLake ? tr("Lake warning") : tr("Weather warning")) + " · \(warning.area)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            if warning.sample == true {
+                Text(tr("SAMPLE"))
+                    .font(.caption2.weight(.bold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.secondary.opacity(0.2), in: Capsule())
+                    .accessibilityLabel(tr("Sample warning for the preview, not an official warning"))
+            }
+        }
+    }
+}
+
+/// When the warning is in force.
+private struct WarningPeriod: View {
+    let warning: DWDWarning
+
+    var body: some View {
+        if let period {
+            Label(period, systemImage: "clock").font(.caption)
+        }
     }
 
     private var period: String? {
@@ -222,6 +331,67 @@ private struct WarningRow: View {
         case let (onset?, nil): tr("From %@", Format.dayTime(onset))
         case let (nil, expires?): tr("Until %@", Format.dayTime(expires))
         default: nil
+        }
+    }
+}
+
+/// The warning's own words: headline and description (`main`), the service's advice
+/// and, in English, the German original (`advice`), or all of it.
+private struct WarningText: View {
+    enum Part { case main, advice, all }
+    let warning: DWDWarning
+    let part: Part
+    /// The time under the headline, as for a warning on its own; merged ones show it once above.
+    var withPeriod = false
+
+    var body: some View {
+        if warningsInEnglish, let english = warning.english {
+            if part != .advice {
+                Text(english.headline).font(.headline)
+                if withPeriod { WarningPeriod(warning: warning) }
+                Text(english.description ?? (warning.isDWD
+                    ? tr("DWD publishes the details of this warning in German only; see the original below.")
+                    : tr("The details of this warning are in German only; see the original below.")))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if part != .main {
+                if let instruction = english.instruction, !instruction.isEmpty {
+                    Text(instruction)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                GermanOriginal(warning: warning)
+            }
+        } else {
+            if part != .advice {
+                Text(warning.headline).font(.headline)
+                if withPeriod { WarningPeriod(warning: warning) }
+                Text(warning.description).fixedSize(horizontal: false, vertical: true)
+            }
+            if part != .main, let instruction = warning.instruction, !instruction.isEmpty {
+                Text(instruction)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+/// Frost, black ice and the like are shown but do not change the rowing light.
+private struct WarningNote: View {
+    let warning: DWDWarning
+
+    var body: some View {
+        if warning.isInfoOnly {
+            Label(warning.isSlippery
+                  ? tr("Not part of the rowing light. The jetty and boat area may be slippery.")
+                  : tr("Not part of the rowing light: it is not about the water."),
+                  systemImage: "info.circle")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

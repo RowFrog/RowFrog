@@ -185,19 +185,22 @@ struct LocationPageView: View {
                                 // Its tips: inside the tile under its first line, or a bubble on its values.
                                 .environment(\.cardTip, topTileCardTip(forecast))
                                 .environment(\.bubbleTip, isCurrentPage ? topTileBubble(forecast) : nil)
+                            let cards = AppSettings.shared.pageCards(for: club.id)
+                            // Never more columns than cards.
+                            let shownColumns = twoColumns ? min(columns, max(2, cards.count)) : 1
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.current(at: .now).items.isEmpty {
+                                // Spans all columns, its blocks side by side (owner's option C, 22 Nov 2026).
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town,
                                              checkedAt: warnings.checkedTime(forecastAt: forecast.generatedAt),
-                                             earlierCheck: warnings.isEarlierCheck(forecastAt: forecast.generatedAt))
+                                             earlierCheck: warnings.isEarlierCheck(forecastAt: forecast.generatedAt),
+                                             columns: shownColumns)
                                     .id("warnings")
                             }
-                            let cards = AppSettings.shared.pageCards(for: club.id)
                             Group {
                                 if twoColumns {
                                     // The page's end goes into the shorter column too, and the maps
                                     // there grow, so both columns end level (BalancedColumns).
-                                    // Never more columns than cards.
-                                    BalancedColumns(columns: min(columns, max(2, cards.count)), tallestCard: geometry.size.height - 32) {
+                                    BalancedColumns(columns: shownColumns, tallestCard: geometry.size.height - 32) {
                                         ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: true) }
                                         pageEnd(forecast)
                                     }
