@@ -160,3 +160,27 @@ def test_a_download_is_tried_three_times():
     with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(503))) as client:
         with pytest.raises(httpx.HTTPError):
             maps._fetch(client, "https://example.org/x")
+
+
+def test_steps_decoded_on_several_processes_write_the_same_files(tmp_path, dwd, monkeypatch):
+    # Pi speed-up, Nov 2026: each step is decoded in a worker process; the files must not change.
+    now = datetime(2026, 11, 3, 13, 5, tzinfo=timezone.utc)
+
+    def files(folder):
+        return {p.relative_to(folder): p.read_bytes() for p in sorted(folder.rglob("*")) if p.is_file()}
+
+    monkeypatch.setenv("MAP_WORKERS", "1")
+    maps.build(tmp_path / "one", [CLUB], now)
+    monkeypatch.setenv("MAP_WORKERS", "2")
+    maps.build(tmp_path / "two", [CLUB], now)
+    assert files(tmp_path / "one") and files(tmp_path / "one") == files(tmp_path / "two")
+
+    class BrokenPool:  # the worker processes cannot start: decoded here, as before
+        def __init__(self, *args, **kwargs):
+            raise OSError("no workers")
+
+    import concurrent.futures
+
+    monkeypatch.setattr(concurrent.futures, "ProcessPoolExecutor", BrokenPool)
+    maps.build(tmp_path / "broken", [CLUB], now)
+    assert files(tmp_path / "broken") == files(tmp_path / "one")

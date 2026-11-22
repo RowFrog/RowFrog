@@ -247,6 +247,43 @@ def rain_rate(total: np.ndarray, before: np.ndarray | None, hours: int) -> np.nd
     return np.maximum(total - before, 0) / hours
 
 
+# Processes that decode the steps: the Raspberry Pi's 4 cores. MAP_WORKERS=1 decodes them here.
+def _workers() -> int:
+    import os
+
+    try:
+        return max(1, int(os.environ["MAP_WORKERS"]))
+    except (KeyError, ValueError):
+        return min(4, os.cpu_count() or 1)
+
+
+def _step_cuts(job: tuple[dict[str, bytes], list[Tile]]) -> dict[str, dict[str, np.ndarray]]:
+    """One step's values decoded and cut out for every tile: tile id -> value name -> array."""
+    data, tiles = job
+    grids = {var: _decode(blob) for var, blob in data.items()}
+    g0 = grids["t_2m"]
+    out = {}
+    for tile in tiles:
+        rows, cols = _sample_index(g0, tile)
+        out[tile.id] = {var: _cut(grid, rows, cols) for var, grid in grids.items()}
+    return out
+
+
+def _cuts_of_steps(jobs: list) -> list:
+    """_step_cuts of every step, in order; on `_workers()` processes, else (or if they fail) here."""
+    workers = _workers()
+    if workers > 1 and len(jobs) > 1:
+        import multiprocessing
+        from concurrent.futures import ProcessPoolExecutor
+
+        try:
+            with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
+                return list(pool.map(_step_cuts, jobs))
+        except Exception:  # a worker died or could not start: one after another, as before
+            pass
+    return [_step_cuts(job) for job in jobs]
+
+
 def build(out: Path, points: list[tuple[float, float]], now: datetime | None = None,
           last_run: datetime | None = None) -> datetime | None:
     """Writes the maps of the newest run for the tiles around `points`.
@@ -263,28 +300,25 @@ def build(out: Path, points: list[tuple[float, float]], now: datetime | None = N
         with ThreadPoolExecutor(PARALLEL) as pool:
             raw = list(pool.map(lambda u: (u[0], u[1], _fetch(client, u[2])), urls))
 
-    # One step at a time, so only one hour of every value is held at full size.
+    # Each step is decoded and cut into tiles in one of MAP_WORKERS processes (the decoding is
+    # most of the work, about 3.5 minutes on one Raspberry Pi core); only the tiles come back.
     by_step: dict[int, dict[str, bytes]] = {}
     for var, step, data in raw:
         by_step.setdefault(step, {})[var] = data
     del raw
+    jobs = [(by_step.pop(step), tiles) for step in steps]
     cut: dict[str, dict[str, list[np.ndarray]]] = {t.id: {v: [] for v in VALUES} for t in tiles}
-    index: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     totals: dict[str, np.ndarray] = {}  # tile -> rain since the run began, at the step before
     last_step = 0
-    for step in steps:
-        grids = {var: _decode(data) for var, data in by_step.pop(step).items()}
-        g0 = grids["t_2m"]
+    for step, tile_cuts in zip(steps, _cuts_of_steps(jobs)):
         for tile in tiles:
-            if tile.id not in index:
-                index[tile.id] = _sample_index(g0, tile)
-            rows, cols = index[tile.id]
-            u, v = _cut(grids["u_10m"], rows, cols), _cut(grids["v_10m"], rows, cols)
+            c = tile_cuts[tile.id]
+            u, v = c["u_10m"], c["v_10m"]
             speed = np.hypot(u, v)
-            t_c = _cut(g0, rows, cols) - 273.15
-            rh = np.clip(_cut(grids["relhum_2m"], rows, cols), 0, 100)
+            t_c = c["t_2m"] - 273.15
+            rh = np.clip(c["relhum_2m"], 0, 100)
             # The first hour has no gusts yet (they are the strongest of the past hour).
-            gust = _cut(grids["vmax_10m"], rows, cols) if step > 0 else speed
+            gust = c["vmax_10m"] if step > 0 else speed
             values = {
                 "wind": speed,
                 # Where the wind comes from, clockwise from north.
@@ -293,10 +327,9 @@ def build(out: Path, points: list[tuple[float, float]], now: datetime | None = N
                 "temperature": t_c,
                 "feelsLike": feels_like(t_c, rh, speed),
                 "humidity": rh,
-                "pressure": _cut(grids["pmsl"], rows, cols) / 100,
-                "visibility": np.minimum(_cut(grids["vis"], rows, cols) / 1000, 25.4),
-                "rain": np.minimum(rain_rate(total := _cut(grids["tot_prec"], rows, cols),
-                                             totals.get(tile.id), step - last_step), 25.4),
+                "pressure": c["pmsl"] / 100,
+                "visibility": np.minimum(c["vis"] / 1000, 25.4),
+                "rain": np.minimum(rain_rate(total := c["tot_prec"], totals.get(tile.id), step - last_step), 25.4),
             }
             totals[tile.id] = total
             for name, data in values.items():
