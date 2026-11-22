@@ -15,13 +15,16 @@ from datetime import date, timedelta
 # Free limits: Open-Meteo's non-commercial API (open-meteo.com/en/pricing),
 # the free Copernicus Data Space account (about 10,000 Sentinel Hub requests a
 # month) and Cloudflare's free Workers plan (100,000 Worker requests a day for
-# the whole account; D1 100,000 rows written and 5 million read a day).
+# the whole account; D1 100,000 rows written and 5 million read a day; R2
+# 1 million class A and 10 million class B operations a month).
 LIMITS = {
     "open-meteo": {"day": 10_000, "month": 300_000},
     "copernicus": {"month": 10_000},
     "cloudflare-workers": {"day": 100_000},
     "cloudflare-d1-writes": {"day": 100_000},
     "cloudflare-d1-reads": {"day": 5_000_000},
+    "cloudflare-r2-writes": {"month": 1_000_000},
+    "cloudflare-r2-reads": {"month": 10_000_000},
 }
 WARN = 0.70
 ALERT = 0.85

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { baseLabel, reasonExplanation } from "../public/app/shared.js";
+import { baseLabel, reasonExplanation, nearbyWithLaunchPoint } from "../public/app/shared.js";
 import { REASONS, reasonCondition, REASON_ORDER, orderReasons } from "../public/app/logic.js";
 
 // testdata/reasons.json lists every reason the backend may send; the backend's and the app's
@@ -50,4 +50,17 @@ test("red first, then the more dangerous, daylight last (owner's screenshot, 20 
     { condition: "brand_new_reason", light: "amber" }, { condition: "nearby_water", light: "red", topic: "fog" },
   ]).map((r) => r.condition);
   assert.deepEqual(got, ["nearby_water", "gusts", "wind", "weather_warning", "brand_new_reason", "sunset_soon"]);
+});
+
+test("a nearby reason with the same thing at the launch point names both places (owner's pick A, 22 Nov 2026)", () => {
+  const near = { condition: "nearby_water", light: "red", topic: "fog", value: 300 };
+  const both = { reasons: [near, { condition: "fog", light: "amber" }], visibilityM: 700 };
+  assert.match(nearbyWithLaunchPoint(near, both), /^Fog: visibility 0\.7 km at the launch point, only 0\.3 km within 1 km\.$/);
+  assert.equal(nearbyWithLaunchPoint(near, { reasons: [near], visibilityM: 700 }), null, "no launch point reason: the old sentence");
+  assert.equal(nearbyWithLaunchPoint(near, { reasons: both.reasons }), null, "no launch point value: the old sentence");
+  const wind = { condition: "nearby_water", light: "red", topic: "wind", value: 9 };
+  assert.ok(nearbyWithLaunchPoint(wind, { reasons: [wind, { condition: "wind", light: "amber", mine: true }], windSpeedMs: 6 }).endsWith("You set this limit yourself."));
+  const storm = { condition: "nearby_water", light: "red", topic: "thunderstorm" };
+  assert.equal(nearbyWithLaunchPoint(storm, { reasons: [storm, { condition: "thunderstorm", light: "amber" }] }), "Thunderstorms are possible at the launch point and within 1 km of it.");
+  assert.equal(nearbyWithLaunchPoint({ condition: "fog", light: "amber" }, both), null);
 });

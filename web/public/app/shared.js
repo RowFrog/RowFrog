@@ -703,7 +703,34 @@ export function baseLabel(condition, topic = null, value = null) {
 export const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
 
 /** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
+/**
+ * For a "nearby_water" reason whose thing the launch point also has as a reason: one sentence with
+ * both places (ForecastHour.nearbyWithLaunchPoint); null otherwise, or when a value is missing.
+ */
+export function nearbyWithLaunchPoint(reason, hour) {
+  if (reason.condition !== "nearby_water" || !reason.topic) return null;
+  const own = (hour?.reasons ?? []).find((r) => r.condition === reason.topic);
+  if (!own) return null;
+  const v = reason.value;
+  const at = { fog: hour.visibilityM, wind: hour.windSpeedMs, gusts: hour.windGustMs, waves: hour.waveHeightM, heavy_rain: hour.precipitationMm }[reason.topic];
+  const has = at != null && v != null;
+  let text = null;
+  switch (reason.topic) {
+    case "fog": if (has) text = t("Fog: visibility %@ at the launch point, only %@ within 1 km.", distance(at), distance(v)); break;
+    case "wind": if (has) text = t("Wind %@ at the launch point, up to %@ within 1 km.", wind(at), wind(v)); break;
+    case "gusts": if (has) text = t("Gusts %@ at the launch point, up to %@ within 1 km.", wind(at), wind(v)); break;
+    case "waves": if (has) text = t("Waves %@ at the launch point, up to %@ within 1 km.", waves(at), waves(v)); break;
+    case "heavy_rain": if (has) text = t("Heavy rain: %@ in the hour at the launch point, up to %@ within 1 km.", rain(at), rain(v)); break;
+    case "thunderstorm": text = t("Thunderstorms are possible at the launch point and within 1 km of it."); break;
+    case "hail": text = t("Hail is forecast at the launch point and within 1 km of it."); break;
+  }
+  if (text == null) return null;
+  return own.mine ? `${text} ${t("You set this limit yourself.")}` : text;
+}
+
 export function hourExplanation(forecast, reason, hour, _now = new Date()) {
+  const both = nearbyWithLaunchPoint(reason, hour);
+  if (both) return both;
   const days = sunDaysOf(forecast);
   if (DAYLIGHT_REASONS.includes(reason.condition) && days.length) {
     // "Now" in the last hour: one line, the count down is at the sun (owner's pick E, 20 Nov 2026).
