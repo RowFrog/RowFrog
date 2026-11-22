@@ -78,3 +78,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 60 | 2026-11-22 | [Wind shows one number when mean and gust round the same; hour tables keep both](0060-wind-once-when-mean-and-gust-round-the-same.md) |
 | 61 | 2026-11-22 | [One reason line per thing near the launch point; the ice line only at 3 °C or colder](0061-one-line-per-thing-and-ice-line-at-3-c.md) |
 | 62 | 2026-11-22 | [In columns the warnings card spans the page, and warnings for the same place and time are one block](0062-warnings-tile-in-columns.md) |
+| 64 | 2026-11-22 | [The small print at a club page's end sits on the cards' plate over a picture](0064-small-print-on-the-card-plate.md) |

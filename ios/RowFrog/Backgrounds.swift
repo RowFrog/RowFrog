@@ -449,6 +449,19 @@ extension View {
         }
     }
 
+    /// Behind the small print at a club page's end (forecast line, credits) over a
+    /// picture: the cards' plate, so its grey reads like the cards' own small text
+    /// (owner's pick B, 22 Nov 2026); nothing over the plain background.
+    func plateBackground(_ surface: Surface, in shape: some Shape) -> some View {
+        background {
+            if surface == .frosted {
+                FrostedFill(shape: shape)
+            } else if surface.hasPicture {
+                shape.fill(Color(.secondarySystemGroupedBackground))
+            }
+        }
+    }
+
     /// Behind text that sits on the picture itself, like a page's title: a thin
     /// frost over a picture, nothing over the plain background.
     func labelBackground(_ surface: Surface, in shape: some Shape) -> some View {

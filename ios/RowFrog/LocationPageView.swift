@@ -512,7 +512,7 @@ private extension LocationPageView {
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(surface.hasPicture ? 12 : 0)
-        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 12))
+        .plateBackground(surface, in: RoundedRectangle(cornerRadius: 12))
     }
 
     @ViewBuilder

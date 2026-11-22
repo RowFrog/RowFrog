@@ -1716,6 +1716,11 @@ main.page.club .page-end, main.page.club .cards.two .col > .page-end { display: 
 main.page.club .page-end > *, main.page.club .page-end > #arrange, main.page.club .page-end > #updates { margin: 0; }
 main.page.club .page-end > .source, main.page.club .page-end > .credits { align-self: stretch; text-align: left; }
 body.has-picture main.page.club .page-end > .source, body.has-picture main.page.club .page-end > .credits { width: auto; padding: 12px; border-radius: 12px; }
+/* The small print at the page's end sits on the cards' plate over a picture, so its grey reads like the cards'
+   own small text (owner's pick B, 22 Nov 2026; plateBackground in the app): solid card with "No picture" tiles,
+   frosted 66 % with "Picture blurred". */
+body.has-picture .page-end > .source, body.has-picture .page-end > .credits, body.has-picture .page-end > footer.links { background: var(--card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.has-picture[data-tiles="frosted"] .page-end > .source, body.has-picture[data-tiles="frosted"] .page-end > .credits, body.has-picture[data-tiles="frosted"] .page-end > footer.links { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 main.page.club .page-end > .source button.link { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; }
 
 /* The satellite card's caption as the app's (SatelliteCaption): line and info button on one row with the button at
