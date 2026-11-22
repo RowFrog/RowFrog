@@ -1052,11 +1052,17 @@ function balanceCards() {
   const end = root.querySelector(".page-end");
   // Keep the page's height while the cards move: emptied, it would be shorter
   // than the window and Safari, which has no scroll anchoring, jumps to the top.
+  // The hold ends as soon as the cards are back (settled(), below), not a frame later: until that frame
+  // the page ended with empty room as tall as its end, which a slow or busy device showed for a moment
+  // and the layout test measured (614 px above the source line, Website run 44985553862, 22 Nov 2026).
   const scroller = document.scrollingElement;
   let y = scroller.scrollTop;
   box.style.minHeight = `${box.offsetHeight + (end?.offsetHeight ?? 0)}px`;
-  requestAnimationFrame(() => {
+  const settled = () => {
     box.style.minHeight = "";
+    if (scroller.scrollTop !== y) scroller.scrollTop = y;
+  };
+  requestAnimationFrame(() => {
     if (scroller.scrollTop !== y) scroller.scrollTop = y;
   });
   // When the count changes, the card at the top of the window stays at the top (pick B).
@@ -1085,6 +1091,7 @@ function balanceCards() {
     cardWatch?.disconnect();
     box.append(...cards);
     if (end) box.after(end);
+    settled();
     keepAnchor();
     return fitSatellite();
   }
@@ -1107,6 +1114,7 @@ function balanceCards() {
   // Every shorter column's maps share out what it lacks against the tallest.
   const tallest = Math.max(...columns.map((_, i) => counted(i)));
   columns.forEach((column, i) => fill(column, tallest - counted(i)));
+  settled();
   keepAnchor();
   watchCards(cards);
 }
