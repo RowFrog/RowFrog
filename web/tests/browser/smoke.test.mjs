@@ -171,8 +171,8 @@ test("the club page shows the sample forecast and every tile opens its value pag
   const sel = ".card.now .tt-open [data-tile]";
   await page.locator(".card.now .all-values").first().click({ timeout: 20000 });
   // The page draws more than once while it loads; wait until the tiles are there.
-  const found = await page.waitForFunction((sel) => {
-    const tiles = [...document.querySelectorAll(sel)].filter((e) => e.offsetParent).map((e) => e.dataset.tile);
+  const found = await page.waitForFunction((selector) => {
+    const tiles = [...document.querySelectorAll(selector)].filter((e) => e.offsetParent).map((e) => e.dataset.tile);
     return tiles.length >= 8 && tiles;
   }, sel, { timeout: 20000 });
   const tiles = await found.jsonValue();
@@ -184,7 +184,7 @@ test("the club page shows the sample forecast and every tile opens its value pag
     // A value page that cannot load its forecast goes back to the club page by itself.
     assert.ok(await page.evaluate((t) => location.hash.includes(`/value/${t}`), tile), `${tile} went back`);
     await page.goBack();
-    await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent).length >= 8, sel, { timeout: 20000 });
+    await page.waitForFunction((selector) => [...document.querySelectorAll(selector)].filter((e) => e.offsetParent).length >= 8, sel, { timeout: 20000 });
   }
   await context.close();
 });
@@ -466,7 +466,7 @@ test("a refused forecast shows No forecast, and a failed update keeps the foreca
   refused.add(path);
   await page.goto(`${base}/app/#/club/mrc-1880`);
   // The page may draw more than once while it loads; wait for the text rather than the first element.
-  const shows = (sel, text) => page.waitForFunction(([sel, text]) => document.querySelector(sel)?.innerText.includes(text), [sel, text], { timeout: 20000 });
+  const shows = (sel, text) => page.waitForFunction(([selector, want]) => document.querySelector(selector)?.innerText.includes(want), [sel, text], { timeout: 20000 });
   // The page draws twice on opening (both tries are refused); wait until it has settled.
   await page.waitForLoadState("networkidle");
   await shows(".loading", "No forecast: server refused the download (error 403)");
@@ -513,7 +513,7 @@ test("on wide windows the page's buttons stay level with the list's buttons and 
     return { list: list ? mid(list) : null, cog: mid(cog), boat: mid(boat), cogLeft: Math.round(cog.left - main.left), boatRight: Math.round(main.right - boat.right) };
   });
   for (const y of [0, 40, 400]) {
-    await page.evaluate((y) => scrollTo(0, y), y);
+    await page.evaluate((top) => scrollTo(0, top), y);
     await settles(async () => {
       const now = await at();
       assert.ok(now.cog > 0, `in the window at ${y}`);

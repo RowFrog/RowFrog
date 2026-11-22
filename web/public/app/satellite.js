@@ -565,7 +565,7 @@ export function isBright({ width, height, values }, x, y, radius) {
  * black with a white edge where the picture under it is white (cloud, snow),
  * judged from `brightness`.
  */
-function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightness) {
+function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightnessShown) {
   const f = (v) => v.toFixed(1);
   const point = (lon, lat) => [((lon - box[0]) / (box[2] - box[0])) * fw, ((box[3] - lat) / (box[3] - box[1])) * fh];
   const samples = view.points.flatMap((p, i) => {
@@ -586,7 +586,7 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightness
   });
   const screen = (x, y) => [x * zoom + ox, y * zoom + oy];
   // Whether the picture is white under a point of the picture, within `reach` screen pixels.
-  const bright = (x, y, reach) => brightness != null && isBright(brightness, x / fw, y / fh, reach / zoom / Math.max(fw, fh));
+  const bright = (x, y, reach) => brightnessShown != null && isBright(brightnessShown, x / fw, y / fh, reach / zoom / Math.max(fw, fh));
   const colours = (light) => (light ? ["rgba(255,255,255,.9)", "#000"] : ["rgba(0,0,0,.6)", "#fff"]);
   const out = [];
   for (const light of [false, true]) {
@@ -724,11 +724,11 @@ function legend(lake) {
  * drag to move, a double click or tap to zoom in or back, and the same
  * switches (SatellitePictureScreen).
  */
-function openSatelliteScreen(lake, clubId, startKind, onKind) {
+function openSatelliteScreen(lake, clubId, firstKind, onKind) {
   document.querySelector(".sat-full")?.remove();
   const { meta } = lake;
   const ratio = meta.width / meta.height;
-  let kind = startKind;
+  let kind = firstKind;
   const el = document.createElement("div");
   el.className = "sat-full";
   el.setAttribute("role", "dialog");
@@ -743,7 +743,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     document.removeEventListener("keydown", keys);
     el.remove();
     document.body.classList.remove("locked");
-    if (kind !== startKind) onKind(kind);
+    if (kind !== firstKind) onKind(kind);
     // The club page under the full view follows a boat picked here once the view closes.
     if (boatPicked) document.dispatchEvent(new CustomEvent("rf-boat-picked"));
   };

@@ -387,9 +387,9 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     if (!note) return;
     const away = !detail.history && (Math.abs(time.scrollX - START) > 0.5 || time.hour !== 0);
     if (away) {
-      const label = data.isNow ? t("Back to now") : t("Back to %@", dayTime(data.now.time));
-      if (note.querySelector("#chart-back")?.title === label) return;
-      note.innerHTML = `<button class="link strong" id="chart-back" title="${h(label)}" aria-label="${h(label)}">${icon("undo-2")}<span>${h(label)}</span></button>`;
+      const backLabel = data.isNow ? t("Back to now") : t("Back to %@", dayTime(data.now.time));
+      if (note.querySelector("#chart-back")?.title === backLabel) return;
+      note.innerHTML = `<button class="link strong" id="chart-back" title="${h(backLabel)}" aria-label="${h(backLabel)}">${icon("undo-2")}<span>${h(backLabel)}</span></button>`;
       note.querySelector("#chart-back").addEventListener("click", () => {
         time.back();
         scroller.scrollLeft = px(START) - 16;

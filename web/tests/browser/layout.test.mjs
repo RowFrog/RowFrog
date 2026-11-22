@@ -60,27 +60,6 @@ after(async () => {
   server?.close();
 });
 
-/** A page with the sample API, the clock at the sample's time and JavaScript errors collected. */
-async function open(storage = {}, viewport = { width: 390, height: 844 }) {
-  const context = await browser.newContext({ viewport, locale: "en-GB", timezoneId: "Europe/Berlin" });
-  await context.route((url) => !url.href.startsWith(base), (route) => route.abort());
-  const page = await context.newPage();
-  const errors = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  page.on("console", (m) => /Content Security Policy/i.test(m.text()) && errors.push(m.text()));
-  if (process.env.RF_DEBUG) page.on("pageerror", (e) => console.log("DEBUG", e.stack));
-  if (process.env.RF_DEBUG) page.on("response", (r) => r.status() >= 400 && console.log("DEBUG", r.status(), r.url()));
-  await page.clock.install({ time: new Date(forecast.generatedAt) });
-  await page.addInitScript(([api, entries]) => {
-    globalThis.RF_API = api;
-    if (!sessionStorage.getItem("rf.test")) {
-      sessionStorage.setItem("rf.test", "1");
-      for (const [k, v] of Object.entries(entries)) localStorage.setItem(k, JSON.stringify(v));
-    }
-  }, [`${base}/v1`, storage]);
-  return { page, errors, context };
-}
-
 const visitor = () => ({
   "rf.safety": { version: 1, at: forecast.generatedAt },
   "rf.tourSeen": true,
@@ -232,7 +211,7 @@ for (const layout of LAYOUTS) {
     // For the screenshot matrix: RF_SHOTS=<folder> keeps a picture of each layout as loaded.
     if (process.env.RF_SHOTS) await page.screenshot({ path: join(process.env.RF_SHOTS, `layout-${layout.name.replaceAll(" ", "-")}.png`) });
     for (const y of [40, 400]) {
-      await page.evaluate((y) => scrollTo(0, y), y);
+      await page.evaluate((top) => scrollTo(0, top), y);
       await page.waitForTimeout(150);
       await checkSettled(page, layout, `scrolled ${y} px`);
     }
