@@ -725,8 +725,8 @@ export function routePlanner(view, waypoints, outAndBack) {
  * On rivers `currentMs` (the club's gauge, mid-river) speeds the boat up downstream and slows it
  * down upstream: over ground, still-water speed ± current.
  */
-export function planRoute(planner, start, pace, currentMs = null) {
-  const speed = 500 / Math.max(pace, 60);
+export function planRoute(planner, start, paceSeconds, currentMs = null) {
+  const speed = 500 / Math.max(paceSeconds, 60);
   const { view } = planner;
   const current = view.section ? currentMs ?? 0 : 0;
   const hours = view.hours;
@@ -786,12 +786,12 @@ export function roughest(plan) {
 }
 
 /** The start within the forecast that meets the best conditions: best worst light, lowest waves, earliest. */
-export function bestStart(planner, pace, from = new Date(), currentMs = null) {
+export function bestStart(planner, paceSeconds, from = new Date(), currentMs = null) {
   let best = null;
   for (const hour of planner.view.hours) {
     const t = new Date(hour.time);
     if (t.getTime() + 3600 * 1000 <= from.getTime()) continue;
-    const plan = planRoute(planner, t < from ? from : t, pace, currentMs);
+    const plan = planRoute(planner, t < from ? from : t, paceSeconds, currentMs);
     if (plan.beyondForecast) continue;
     const score = [RANK[plan.worstLight], Math.round(plan.maxWaveM * 100), plan.start.getTime()];
     if (!best || compare(score, best.score) < 0) best = { plan, score };

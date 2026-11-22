@@ -44,8 +44,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import dataclasses
+import gzip
+import hashlib
 import json
 import logging
+import lzma
 import math
 import multiprocessing
 import os
@@ -56,7 +60,8 @@ import subprocess
 import sys
 import tempfile
 import threading
-from concurrent.futures import ProcessPoolExecutor
+import time
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -64,7 +69,7 @@ import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from rowfrog import api, ice, lake_view, locations, outlines, sleet, water_estimate, water_log, water_stations, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, sleet, source_status, water_estimate, water_log, water_stations, weather_models
 from rowfrog.api import LOCAL
 from rowfrog.sources import dwd_radar, dwd_warnings, gkd, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
@@ -159,6 +164,11 @@ class RunCounts:
         self.old_water = 0  # club forecasts with a water reading older than gkd.MAX_AGE
         self.sleet_clubs: set[str] = set()  # clubs asked for rain and snowfall (sleet.py)
         self.sleet_calls = 0.0  # what that cost in Open-Meteo calls, also inside open_meteo.calls_counted
+        # Club forecast reuse, measured only (Nov 2026): clubs whose inputs were all the same as in the
+        # last run, how many were compared, and which inputs changed how often (see input_prints).
+        self.same_inputs = 0
+        self.compared_inputs = 0
+        self.changed_inputs: dict[str, int] = {}
 
 
 RUN = RunCounts()
@@ -190,13 +200,14 @@ def view_is_empty(body: dict) -> bool:
     return not (wind and waves)
 
 
-def count_club_water(club: locations.Club, body: dict, now: datetime) -> None:
+def count_club_water(club: locations.Club, body: dict, now: datetime, lakes: dict[str, locations.Lake] | None = None) -> None:
     """Counts the club forecasts without a measured water temperature (with or
     without a station) and those whose reading is older than gkd.MAX_AGE."""
     RUN.forecasts += 1
     water = body.get("waterTemperature")
     if water is None:
-        lake = locations.load().lakes.get(club.lake_id)
+        # Reading the catalog again for every club cost about 0.3 s of Pi CPU per club.
+        lake = (lakes if lakes is not None else locations.load().lakes).get(club.lake_id)
         station = water_stations.for_club(club, lake) if lake else None
         RUN.no_water["station without reading" if station else "no station"] += 1
     elif now - datetime.fromisoformat(water["measuredAt"]) > gkd.MAX_AGE:
@@ -296,9 +307,15 @@ class State:
         self.model_runs: list[dict[str, str]] = []
         # Per club, the model run its saved forecast came from ({"started", "available"}).
         self.club_runs: dict[str, dict[str, str]] = {}
+        # Per club, a fingerprint of each of its forecast's inputs in the last run (input_prints).
+        self.club_inputs: dict[str, dict[str, str]] = {}
+        # Fingerprints of what save() last wrote (or load found), so an unchanged part is not written again.
+        self._written: dict[str, str] = {}
         if path and path.exists():
             try:
-                saved = pickle.loads(path.read_bytes())
+                started = time.perf_counter()
+                saved = self._load(path)
+                STATE_SECONDS["load"] += time.perf_counter() - started
                 if not saved.get("rain_at_hour_start"):
                     # Saved before decision 0043: move their rain to the hour it fell once, as parse now does.
                     for key in ("clubs", "lakes", "outlooks", "models"):
@@ -312,6 +329,7 @@ class State:
                 self.maps_run = saved.get("maps_run")
                 self.model_runs = saved.get("model_runs", [])
                 self.club_runs = saved.get("club_runs", {})
+                self.club_inputs = saved.get("club_inputs", {})
                 api.prepared.last_water.update(saved.get("water", {}))
                 api.prepared.last_levels.update(saved.get("levels", {}))
                 api.prepared.last_warnings.update(saved.get("warnings", {}))
@@ -319,17 +337,46 @@ class State:
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
 
-    def save(self) -> None:
+    def weather_path(self) -> Path:
+        """The weather parts (clubs, lakes, ice temperatures, outlooks, models, club runs) live in their own file next to the state file."""
+        assert self.path
+        return self.path.with_name(f"{self.path.stem}-weather{self.path.suffix}")
+
+    def _load(self, path: Path) -> dict:
+        """The saved state as one dict: today's two files, or the single file of before."""
+        saved = _unpack(path.read_bytes())
+        if saved.get("format") == STATE_FORMAT:
+            weather = _unpack(self.weather_path().read_bytes())
+            self._written = {"weather": saved.get("weather_print", ""), "rest": _print(saved)}
+            saved = {**saved, **weather}
+        return saved
+
+    def save(self, weather: bool = True) -> None:
+        """`weather=False`: only the small rest can have changed since the last save (as after the weather
+        maps), so the weather parts are not even packed up to compare."""
+        started = time.perf_counter()
+        self._save(weather)
+        STATE_SECONDS["save"] += time.perf_counter() - started
+
+    def _save(self, with_weather: bool) -> None:
+        """Writes the state for the next run. The weather parts (about 95 % of the bytes) change only in
+        runs that load weather, so their file is written only when they changed; the small rest every run
+        it changed. Each file goes to a temporary name first and is then renamed, so a power cut during a
+        save leaves the last complete file, never half a one."""
         if not self.path:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        body = {
+        weather = {
             "clubs": self.clubs,
             "lakes": self.lakes,
-            "ice_map": self.ice_map,
             "ice_temps": api.prepared.ice_temps,
             "outlooks": self.outlooks,
             "models": self.models,
+            "club_runs": self.club_runs,
+        }
+        rest = {
+            "format": STATE_FORMAT,
+            "ice_map": self.ice_map,
             "water_satellite": self.water_satellite,
             "water_logged": self.water_logged,
             "water": api.prepared.last_water,
@@ -338,10 +385,78 @@ class State:
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
-            "club_runs": self.club_runs,
+            "club_inputs": self.club_inputs,
             "rain_at_hour_start": True,  # decision 0043
         }
-        self.path.write_bytes(pickle.dumps(body))
+        if with_weather or "weather" not in self._written or not self.weather_path().exists():
+            blob = pickle.dumps(weather, protocol=5)
+            weather_print = hashlib.blake2b(blob, digest_size=16).hexdigest()
+        else:
+            weather_print = self._written["weather"]
+        if weather_print != self._written.get("weather") or not self.weather_path().exists():
+            _write_whole(self.weather_path(), _pack(blob))
+            STATE_WRITES.append(("weather", self.weather_path().stat().st_size))
+            self._written["weather"] = weather_print
+        rest["weather_print"] = weather_print
+        rest_print = _print(rest)
+        if rest_print != self._written.get("rest"):
+            _write_whole(self.path, _pack(pickle.dumps(rest, protocol=5)))
+            STATE_WRITES.append(("rest", self.path.stat().st_size))
+            self._written["rest"] = rest_print
+
+
+# The state file's layout: 2 = the small rest in --state, the weather parts in <stem>-weather<suffix>.
+STATE_FORMAT = 2
+# How the state files are packed: "gzip1" (default), "lzma0" or "none"; reading takes any of them.
+STATE_PACK = os.environ.get("STATE_PACK", "gzip1")
+# What this run's saves wrote: (file, bytes), for the run log.
+STATE_WRITES: list[tuple[str, int]] = []
+STATE_SECONDS = {"load": 0.0, "save": 0.0}
+
+
+def state_line() -> str:
+    """One line on what the state cost this run: time to read and write it, and the files written."""
+    wrote = ", ".join(f"{name} {size / 1e6:.2f} MB" for name, size in STATE_WRITES) or "nothing"
+    return (f"  state: read {STATE_SECONDS['load']:.2f} s, saves {STATE_SECONDS['save']:.2f} s, wrote {wrote}"
+            f" (packed {STATE_PACK})")
+
+
+def _print(body: dict) -> str:
+    return hashlib.blake2b(pickle.dumps(body, protocol=5), digest_size=16).hexdigest()
+
+
+def _pack(blob: bytes) -> bytes:
+    if STATE_PACK == "gzip1":
+        return gzip.compress(blob, compresslevel=1, mtime=0)
+    if STATE_PACK == "lzma0":
+        return lzma.compress(blob, preset=0)
+    return blob
+
+
+def _unpack(data: bytes) -> dict:
+    if data[:2] == b"\x1f\x8b":
+        data = gzip.decompress(data)
+    elif data[:6] == b"\xfd7zXZ\x00":
+        data = lzma.decompress(data)
+    return pickle.loads(data)
+
+
+def _write_whole(path: Path, data: bytes) -> None:
+    """Writes `data` to a temporary file next to `path`, flushes it to the card and renames it over `path`."""
+    tmp = path.with_name(f".{path.name}.tmp")
+    with open(tmp, "wb") as f:
+        f.write(data)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+    try:
+        fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
 
 
 def _rain_to_hour_start(value):
@@ -638,9 +753,12 @@ def archive_water_log() -> None:
     if not WATER_LOG or not target or not WATER_LOG.exists():
         return
     try:
-        result = subprocess.run(["rclone", "copy", str(WATER_LOG), target, "--checksum", "--stats", "0", "--log-level", "NOTICE"], timeout=300, check=False)
+        command = ["rclone", "copy", str(WATER_LOG), target, "--checksum", "--stats", "0", "--log-level", "NOTICE"]
+        result = subprocess.run(command, timeout=300, check=False)
+        source_status.note_command(command, result.returncode)
         print(f"  water log copied to {target} (exit {result.returncode})")
     except (OSError, subprocess.SubprocessError) as e:
+        source_status.note_command(command, error=e)
         print(f"  water log not copied: {e!r}")
 
 
@@ -961,11 +1079,17 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
         path = folder / entry["image"]
         folder.mkdir(parents=True, exist_ok=True)
         if before and before.get("date") == entry["date"] and path.exists():
-            pass  # already there
+            if before.get("gap"):
+                entry["gap"] = before["gap"]  # already there
         elif kind == "clearest" and latest is not None and found.day == latest.day:
             path.write_bytes((folder / "satellite-latest.jpg").read_bytes())  # the same pass
+            if body["latest"].get("gap"):
+                entry["gap"] = body["latest"]["gap"]
         else:
-            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, found.day))
+            data, gap = sentinel2.picture(client, bbox, width, height, found.day)
+            path.write_bytes(data)
+            if gap:
+                entry["gap"] = gap  # share of the picture the pass did not see, drawn grey
         if sharp:
             same = body["latest"] if kind == "clearest" and latest is not None and found.day == latest.day else None
             entry.update(_sharp(client, folder, kind, bbox, sharp, found.day, before, same))
@@ -979,8 +1103,14 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
             "image": "satellite-mostly-clear.jpg",
         }
         path = folder / entry["image"]
-        if not (before and before.get("date") == entry["date"] and path.exists()):
-            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, mostly_clear.day))
+        if before and before.get("date") == entry["date"] and path.exists():
+            if before.get("gap"):
+                entry["gap"] = before["gap"]
+        else:
+            data, gap = sentinel2.picture(client, bbox, width, height, mostly_clear.day)
+            path.write_bytes(data)
+            if gap:
+                entry["gap"] = gap
         if sharp:
             entry.update(_sharp(client, folder, "mostly-clear", bbox, sharp, mostly_clear.day, before))
         body["mostlyClear"] = entry
@@ -1126,12 +1256,14 @@ class Uploader:
             f.write("\n".join(names) + "\n")
         try:
             result = subprocess.run([f.name if a == "{files}" else a for a in self.args], timeout=600)
+            source_status.note_command(self.args, result.returncode)
             if result.returncode == 0:
                 self.sent += len(names)
                 self.batches += 1
             else:
                 print(f"  upload of {len(names)} files failed (exit {result.returncode}); the copy after the run sends them", flush=True)
         except (OSError, subprocess.SubprocessError) as e:
+            source_status.note_command(self.args, error=e)
             print(f"  upload of {len(names)} files failed: {e!r}; the copy after the run sends them", flush=True)
         finally:
             os.unlink(f.name)
@@ -1259,13 +1391,114 @@ def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> in
         try:
             # "spawn": fresh processes that import rowfrog themselves, not copies of this one.
             with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
-                for (lake_id, *_), (body, problem) in zip(inputs, pool.map(api.lake_view_json, inputs, chunksize=4)):
+                for (lake_id, *_), (body, problem) in zip(inputs, pool.map(api.lake_view_json, inputs)):
                     keep(lake_id, body, problem)
         except Exception as e:  # a worker died (memory?) or could not start: the rest one after another
             print(f"  lake views on {workers} cores stopped after {done} of {len(inputs)}: {type(e).__name__}: {e}")
     for lake_id, *rest in inputs[done:]:
         keep(lake_id, *api.lake_view_json((lake_id, *rest)))
     return views
+
+
+def input_prints(inputs: api.ClubInputs, now: datetime) -> dict[str, str]:
+    """A short fingerprint of each input a club forecast is built from, and of the hour it starts
+    at (forecasts begin at the current hour). Only measured for now: if a club's prints are all
+    the same as at its last build, its forecast could be kept instead of built again."""
+    prints = {"hour": now.astimezone(timezone.utc).strftime("%Y-%m-%dT%H")}
+    for field in dataclasses.fields(inputs):
+        blob = pickle.dumps(getattr(inputs, field.name), protocol=5)
+        prints[field.name] = hashlib.blake2b(blob, digest_size=8).hexdigest()
+    return prints
+
+
+def count_inputs(kept: dict[str, dict[str, str]], club_id: str, prints: dict[str, str]) -> None:
+    """Compares a club's input prints with those of its last build (in `kept`) and keeps the new ones."""
+    last = kept.get(club_id)
+    kept[club_id] = prints
+    if last is None:
+        return
+    RUN.compared_inputs += 1
+    changed = [k for k in prints if last.get(k) != prints[k]]
+    if not changed:
+        RUN.same_inputs += 1
+    for k in changed:
+        RUN.changed_inputs[k] = RUN.changed_inputs.get(k, 0) + 1
+
+
+def inputs_line() -> str:
+    """How many club forecasts had the same inputs as when last built, and what changed how often."""
+    changed = ", ".join(f"{k} {n}" for k, n in sorted(RUN.changed_inputs.items(), key=lambda kv: (-kv[1], kv[0])))
+    return (f"  club inputs: {RUN.same_inputs} of {RUN.compared_inputs} the same as when last built"
+            f"{' (changed: ' + changed + ')' if changed else ''}")
+
+
+# The fewest clubs for which club_forecasts starts worker processes.
+CLUB_POOL_FROM = 30
+
+
+def club_forecasts(part: list[locations.Club], workers: int | None = None, kept: dict[str, dict[str, str]] | None = None):
+    """(club, body, problem) for every club of the part, lake by lake. The inputs are loaded
+    here, one club after another (network, shared caches); each lake's clubs are then built in
+    one of `workers` processes while the next lake's inputs load. CLUB_WORKERS=1 builds them
+    in this process, as before."""
+    try:
+        workers = workers or max(1, int(os.environ["CLUB_WORKERS"]))
+    except (KeyError, ValueError):
+        workers = lake_view_workers()
+    results: dict[str, tuple[dict | None, str | None]] = {}
+    lakes: dict[str, list[locations.Club]] = {}
+    for club in part:
+        lakes.setdefault(club.lake_id, []).append(club)
+
+    def load(clubs: list[locations.Club]) -> list[tuple]:
+        task = []
+        for club in clubs:
+            if club.id not in api.prepared.weather:
+                results[club.id] = (None, "no forecast loaded")
+                continue
+            try:
+                inputs, at = asyncio.run(api.club_inputs(club))
+                task.append((club.id, inputs, at))
+                if kept is not None:
+                    try:
+                        count_inputs(kept, club.id, input_prints(inputs, at))
+                    except Exception as e:  # measuring only: never stops the forecast
+                        print(f"  club inputs {club.id}: {type(e).__name__}: {e}")
+            except HTTPException as e:
+                results[club.id] = (None, f"HTTP {e.status_code} {str(e.detail)[:120]}")
+            except Exception as e:
+                results[club.id] = (None, f"{type(e).__name__}: {e}")
+        return task
+
+    def keep(rows) -> None:
+        for club_id, body, problem in rows:
+            results[club_id] = (body, problem)
+
+    tasks = []
+    # Starting the workers costs a few seconds of CPU; a handful of clubs is quicker here.
+    if workers > 1 and len(lakes) > 1 and len(part) >= CLUB_POOL_FROM:
+        futures = []
+        try:
+            ctx = multiprocessing.get_context("spawn")
+            with ProcessPoolExecutor(workers, mp_context=ctx, initializer=lake_view.use_grid_cache,
+                                     initargs=(lake_view.GRID_CACHE_DIR,)) as pool:
+                for clubs in lakes.values():
+                    task = load(clubs)
+                    tasks.append(task)
+                    futures.append(pool.submit(api.club_forecasts_json, task))
+                for f in futures:
+                    keep(f.result())
+        except Exception as e:  # a worker died (memory?) or could not start: the rest in this process
+            print(f"  club forecasts on {workers} cores stopped: {type(e).__name__}: {e}")
+        for n, task in enumerate(tasks):  # whatever no worker finished
+            if n >= len(futures) or not futures[n].done() or futures[n].exception():
+                keep(api.club_forecasts_json(task))
+        for clubs in list(lakes.values())[len(tasks):]:  # lakes not loaded before the stop
+            keep(api.club_forecasts_json(load(clubs)))
+    else:
+        for clubs in lakes.values():
+            keep(api.club_forecasts_json(load(clubs)))
+    return [(c, *results[c.id]) for c in part]
 
 
 def built(forecast) -> tuple[dict | None, str | None]:
@@ -1303,19 +1536,38 @@ def parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
     return [(first, lakes_of(first, set(used_lakes))), (rest, lakes_of(rest, due_lakes))]
 
 
+def radar_started(points: dict[str, tuple[float, float]]) -> Future | None:
+    """Starts loading the radar of these clubs (dwd_radar.nowcasts) in a thread of its own and
+    gives its future, or None without clubs. Only DWD's answers are waited for, so this runs
+    beside the Open-Meteo and warning loads of the same part; the requests stay the same."""
+    if not points:
+        return None
+    pool = ThreadPoolExecutor(1, thread_name_prefix="radar")
+    try:
+        return pool.submit(asyncio.run, dwd_radar.nowcasts(points))
+    finally:
+        pool.shutdown(wait=False)
+
+
 def clubs_written() -> None:
     """Runs PUBLISH_CLUBS_DONE (a command, if set) once a part's club forecasts are
     written (see parts()), so they can go online before the slow lake views (the Raspberry Pi uploads them
     there; pi/run-publish.sh). Its failure is only logged; the run goes on."""
     command = os.environ.get("PUBLISH_CLUBS_DONE")
-    if not command:
-        return
-    sys.stdout.flush()
-    try:
-        result = subprocess.run(shlex.split(command), timeout=600)
-        print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
-    except (OSError, ValueError, subprocess.SubprocessError) as e:
-        print(f"Club forecasts not handed on early: {e!r}", flush=True)
+    if command:  # the Pi no longer sets it (speed-up #4, Nov 2026): PUBLISH_UPLOAD has sent the files already
+        sys.stdout.flush()
+        args: list[str] = []
+        try:
+            args = shlex.split(command)
+            result = subprocess.run(args, timeout=600)
+            source_status.note_command(args, result.returncode)
+            print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
+        except (OSError, ValueError, subprocess.SubprocessError) as e:
+            source_status.note_command(args, error=e)
+            print(f"Club forecasts not handed on early: {e!r}", flush=True)
+    # The club forecasts are online: the sources they came from answered (or not) already,
+    # so the Pi's monitor sees it now and not only after the lake views (up to 50 minutes).
+    source_status.flush()
 
 
 def main() -> int:
@@ -1340,6 +1592,12 @@ def main() -> int:
         # The long-running water temperature log (water_log.py) lives next to the state too.
         global WATER_LOG
         WATER_LOG = args.state.parent / "water-log"
+    # What this run's own requests say about each outside service (sources-status.json,
+    # for the Pi's connection monitor; SOURCES_STATUS, else next to --state). The sources
+    # only some clubs need are fetched every 30 minutes for used clubs, else in the
+    # all-clubs runs only (every 6 hours; a regular run's 30 minutes stays while it lasts).
+    every = {k: source_status.ALL_CLUBS_EVERY for k in source_status.CLUB_DEPENDENT} if args.clubs == "all" else None
+    source_status.start("publish", args.state.parent if args.state else None, expect=every)
     global UPLOADER
     UPLOADER = start_uploader(args.out)
     try:
@@ -1349,6 +1607,7 @@ def main() -> int:
         if UPLOADER is not None:
             UPLOADER.close()
             UPLOADER = None
+        source_status.flush()
 
 
 def publish(args, now: datetime, state: "State") -> int:
@@ -1366,7 +1625,8 @@ def publish(args, now: datetime, state: "State") -> int:
 
     check_model_run(state, now)
     write(args.out / "status" / "model-runs", {"model": "dwd_icon_d2", "runs": state.model_runs})
-    every = list(locations.load().clubs.values())
+    catalog = locations.load()
+    every = list(catalog.clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
@@ -1377,24 +1637,22 @@ def publish(args, now: datetime, state: "State") -> int:
     viewed: set[str] = set()
     for part, part_lakes in parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
         # A part is loaded, built and (with PUBLISH_UPLOAD) put online before the next one starts.
+        # The radar line on the widget, for the clubs people use: 10 DWD requests a club, loaded
+        # while the weather and warnings below load (the run used to wait 8-37 s for it on its own).
+        radar_points = {c.id: (c.launch_point.lat, c.launch_point.lon) for c in part if c.id in used_clubs}
+        radar_job = radar_started(radar_points)
         club_weather(state, part, used_clubs, with_usage, now)
         club_outlooks(state, part, used_clubs, now)
         model_pairs = model_weather(state, part, now)
         local_warnings(state, part, now)
-        # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
-        radar_points = {c.id: (c.launch_point.lat, c.launch_point.lon) for c in part if c.id in used_clubs}
-        radar = asyncio.run(dwd_radar.nowcasts(radar_points)) if radar_points else {}
-        if radar_points:
-            print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
         # Lake weather before the clubs, so a club's light can count the water near its launch point.
         ready_lakes = lake_weather(state, part_lakes, used_lakes, now)
+        radar = radar_job.result() if radar_job else {}
+        if radar_points:
+            print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
         lake_count += len([i for i in part_lakes if i not in viewed])
         part_failed = []
-        for club in part:
-            if club.id not in api.prepared.weather:
-                part_failed.append(f"{club.id}: no forecast loaded")
-                continue
-            body, problem = built(api.club_forecast(club.id))
+        for club, body, problem in club_forecasts(part, kept=state.club_inputs):
             if problem:
                 part_failed.append(f"{club.id}: {problem}")
                 continue
@@ -1405,7 +1663,7 @@ def publish(args, now: datetime, state: "State") -> int:
             if with_usage:
                 body["refresh"] = refresh_block(club.id in used_clubs)
             write(args.out / "clubs" / club.id / "forecast", body)
-            count_club_water(club, body, now)
+            count_club_water(club, body, now, catalog.lakes)
         print(f"Wrote {len(part) - len(part_failed)} of {len(part)} forecasts to {args.out}")
         failed += part_failed
         model_count += len(model_pairs)
@@ -1433,6 +1691,7 @@ def publish(args, now: datetime, state: "State") -> int:
         f" ({RUN.no_water['no station']} have no station, {RUN.no_water['station without reading']} a station without"
         f" a reading), {RUN.old_water} with a water reading older than {gkd.MAX_AGE.total_seconds() / 3600:.0f} h"
     )
+    print(inputs_line())
     for line in water_lines():
         print(" ", line)
     log_station_water(state, now)
@@ -1440,7 +1699,8 @@ def publish(args, now: datetime, state: "State") -> int:
     state.save()
 
     weather_maps(state, args.out, every, now)
-    state.save()
+    state.save(weather=False)  # the maps change only maps_run
+    print(state_line())
 
     publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
     # River sections and clubs without an outline only when used: about 340

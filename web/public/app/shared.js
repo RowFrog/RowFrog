@@ -253,7 +253,7 @@ export const mapLimits = () => boatLimits(mapBoat());
  * view: app.js, which owns the boat menu, fills this in. `open` calls `picked` once a boat is picked
  * there, so those screens redraw in place (owner's pick B, 5 Nov 2026).
  */
-export const boatControl = { html: () => "", open: (anchor, picked) => {} };
+export const boatControl = { html: () => "", open: (_anchor, _picked) => {} };
 
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
 export function limitText(limit, value) {
@@ -495,7 +495,7 @@ class SafeHTML {
 }
 
 /** Marks trusted markup (icon(), footerLinks()) so html`` keeps it as it is. Never for names or other data. */
-export const raw = (markup) => new SafeHTML(String(markup ?? ""));
+export const raw = (text) => new SafeHTML(String(text ?? ""));
 
 /**
  * Builds markup and escapes every value by default (code review finding 9):
@@ -696,7 +696,34 @@ export function baseLabel(condition, topic = null, value = null) {
 export const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
 
 /** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
+/**
+ * For a "nearby_water" reason whose thing the launch point also has as a reason: one sentence with
+ * both places (ForecastHour.nearbyWithLaunchPoint); null otherwise, or when a value is missing.
+ */
+export function nearbyWithLaunchPoint(reason, hour) {
+  if (reason.condition !== "nearby_water" || !reason.topic) return null;
+  const own = (hour?.reasons ?? []).find((r) => r.condition === reason.topic);
+  if (!own) return null;
+  const v = reason.value;
+  const at = { fog: hour.visibilityM, wind: hour.windSpeedMs, gusts: hour.windGustMs, waves: hour.waveHeightM, heavy_rain: hour.precipitationMm }[reason.topic];
+  const has = at != null && v != null;
+  let text = null;
+  switch (reason.topic) {
+    case "fog": if (has) text = t("Fog: visibility %@ at the launch point, only %@ within 1 km.", distance(at), distance(v)); break;
+    case "wind": if (has) text = t("Wind %@ at the launch point, up to %@ within 1 km.", wind(at), wind(v)); break;
+    case "gusts": if (has) text = t("Gusts %@ at the launch point, up to %@ within 1 km.", wind(at), wind(v)); break;
+    case "waves": if (has) text = t("Waves %@ at the launch point, up to %@ within 1 km.", waves(at), waves(v)); break;
+    case "heavy_rain": if (has) text = t("Heavy rain: %@ in the hour at the launch point, up to %@ within 1 km.", rain(at), rain(v)); break;
+    case "thunderstorm": text = t("Thunderstorms are possible at the launch point and within 1 km of it."); break;
+    case "hail": text = t("Hail is forecast at the launch point and within 1 km of it."); break;
+  }
+  if (text == null) return null;
+  return own.mine ? `${text} ${t("You set this limit yourself.")}` : text;
+}
+
 export function hourExplanation(forecast, reason, hour, _now = new Date()) {
+  const both = nearbyWithLaunchPoint(reason, hour);
+  if (both) return both;
   const days = sunDaysOf(forecast);
   if (DAYLIGHT_REASONS.includes(reason.condition) && days.length) {
     // "Now" in the last hour: one line, the count down is at the sun (owner's pick E, 20 Nov 2026).
@@ -1008,12 +1035,12 @@ export function sunPath(sunrise, sunset, at, width = 64, height = 32) {
   const noon = (rise + down) / 2;
   const lineWidth = height >= 48 ? 3 : 2;
   // Sun height through the day, 0 at sunrise and sunset; noon touches the top, midnight the bottom.
-  const sunHeight = (h) => Math.cos((2 * Math.PI * (h - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
+  const sunHeight = (hr) => Math.cos((2 * Math.PI * (hr - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
   const top = sunHeight(noon);
   const bottom = sunHeight(noon + 12);
   const inset = lineWidth * 2 + 2;
-  const y = (h) => ((top - sunHeight(h)) / (top - bottom)) * (height - 2 * inset) + inset;
-  const x = (h) => (h / 24) * width;
+  const y = (hr) => ((top - sunHeight(hr)) / (top - bottom)) * (height - 2 * inset) + inset;
+  const x = (hr) => (hr / 24) * width;
   const points = Array.from({ length: 97 }, (_, i) => `${x(i / 4).toFixed(1)},${y(i / 4).toFixed(1)}`).join(" ");
   const horizon = y(rise);
   const now = clockHours(at);
@@ -1138,7 +1165,7 @@ export const TILE_ORDER = ["temperature", "feelsLike", "wind", "waves", "waterTe
 
 /** Each condition's icon key, title, unit and explanation. */
 export function conditionTexts() {
-  const r = (c, title, unit, text) => [c, title, unit, text];
+  const r = (c, title, unitText, text) => [c, title, unitText, text];
   return {
     temperature: r("temperature", t("Air temperature"), unitSymbol("temperature"), t("Air temperature at 2 m.")),
     feelsLike: r("feelsLike", t("Feels like"), unitSymbol("temperature"), t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),

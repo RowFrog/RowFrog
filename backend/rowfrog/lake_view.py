@@ -29,6 +29,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Sequence
 
+try:  # only the publishing job has numpy (satellite extra); without it the plain loop is used
+    import numpy as np
+except ImportError:  # pragma: no cover
+    np = None
+
 from . import interpolate
 from .forecast import CAPE_AMBER_JKG, CAPE_RED_JKG, CONVECTIVE_RAIN_MM, _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
 from .outlines import Rings
@@ -404,6 +409,12 @@ def _spread(points_m: list[tuple[float, float]], count: int) -> list[tuple[float
 # Where grids are kept between publish runs (the publisher sets it next to its
 # state file); None keeps them in memory only, for this process.
 GRID_CACHE_DIR: Path | None = None
+
+
+def use_grid_cache(path: Path | None) -> None:
+    """Sets GRID_CACHE_DIR; the publish job's worker processes start with it."""
+    global GRID_CACHE_DIR
+    GRID_CACHE_DIR = path
 # The code a grid is built by: when any of these files changes, every kept grid is built again.
 _GRID_CODE = ("lake_view.py", "interpolate.py", "waves.py")
 
@@ -687,7 +698,117 @@ def nearby_cells(grid: Grid, lat: float, lon: float, radius_m: float = NEARBY_M)
     return [i for i, (plon, plat) in enumerate(grid.points) if math.dist((0.0, 0.0), _local(plon, plat, lon, lat)) <= radius_m]
 
 
+def _python_sum(terms: list) -> "np.ndarray":
+    """sum() of these arrays, element by element, exactly as Python 3.12 and later add floats from 0:
+    the first added as it is, then with Neumaier's compensation (so the result is bit-identical)."""
+    f = 0.0 + terms[0]
+    c = np.zeros_like(f)
+    for t in terms[1:]:
+        s = f + t
+        c = c + np.where(np.abs(f) >= np.abs(t), (f - s) + t, (t - s) + f)
+        f = s
+    return np.where((c != 0) & np.isfinite(c), f + c, f)
+
+
 def nearby_water(
+    grid: Grid,
+    weather: Sequence[Sequence[ForecastHour]],
+    lat: float,
+    lon: float,
+    water_temp_c: float | None = None,
+    thresholds: Thresholds = Thresholds(),
+    radius_m: float = NEARBY_M,
+) -> dict:
+    """Per forecast time, the worst of the water within `radius_m` (blended as on the lake map).
+
+    The same values as _nearby_water_loop (kept for the test), worked out for all hours at
+    once per cell with numpy instead of hour by hour; None is NaN inside."""
+    if np is None:
+        return _nearby_water_loop(grid, weather, lat, lon, water_temp_c, thresholds, radius_m)
+    cells = nearby_cells(grid, lat, lon, radius_m)
+    if not cells or not weather or not weather[0]:
+        return {}
+    t = thresholds.for_water(water_temp_c)
+    hours = len(weather[0])
+    nan = math.nan
+
+    def table(values) -> np.ndarray:
+        return np.array([[nan if v is None else v for v in row] for row in values], dtype=float)
+
+    rows = [list(w[:hours]) for w in weather]
+    speed_at = [[p.wind_speed_ms for p in r] for r in rows]
+    dir_at = [[p.wind_from_deg for p in r] for r in rows]
+    speed = table(speed_at)
+    gust = table([[p.wind_gust_ms for p in r] for r in rows])
+    u_at = table([[(s or 0.0) * math.sin(math.radians(d)) if d is not None else None for s, d in zip(sr, dr)]
+                  for sr, dr in zip(speed_at, dir_at)])
+    v_at = table([[(s or 0.0) * math.cos(math.radians(d)) if d is not None else None for s, d in zip(sr, dr)]
+                  for sr, dr in zip(speed_at, dir_at)])
+    log_vis = table([[math.log(max(p.visibility_m, 1.0)) if p.visibility_m is not None else None for p in r] for r in rows])
+    rain_at = table([[p.precipitation_mm for p in r] for r in rows])
+    storm_at = [[_thunderstorm(p) for p in r] for r in rows]
+    hail_at = [[p.weather_code in HAIL_CODES for p in r] for r in rows]
+
+    # Cells grouped by how many points they blend, so each group is one array operation.
+    plans: dict[int, list] = {}
+    for i in cells:
+        weights = list((grid.weights[i] if i < len(grid.weights) and grid.weights[i] else {grid.nearest[i]: 1.0}).items())
+        plans.setdefault(len(weights), []).append((weights, grid.nearest[i], grid.fetch[i]))
+    wind = np.zeros(hours)
+    gusts = np.zeros(hours)
+    waves = [0.0] * hours
+    low_vis = np.full(hours, np.inf)
+    rain = np.full(hours, -np.inf)
+    nears = set()
+    for k, group in plans.items():
+        idx = np.array([[j for j, _ in w] for w, _, _ in group])  # cells × k
+        wts = np.array([[x for _, x in w] for w, _, _ in group])
+        near = np.array([n for _, n, _ in group])
+        nears.update(near.tolist())
+
+        def mix(values: np.ndarray) -> np.ndarray:  # cells × hours; as mix() in _nearby_water_loop
+            picked = values[idx]  # cells × k × hours
+            mixed = _python_sum([wts[:, m, None] * picked[:, m] for m in range(k)])
+            return np.where(np.isnan(picked).any(axis=1), values[near], mixed)
+
+        cell_speed = np.nan_to_num(mix(speed), nan=0.0)  # `or 0.0`: no value counts as calm
+        wind = np.maximum(wind, cell_speed.max(axis=0))
+        gusts = np.maximum(gusts, np.nan_to_num(mix(gust), nan=0.0).max(axis=0))
+        low_vis = np.fmin(low_vis, np.fmin.reduce(mix(log_vis), axis=0))
+        rain = np.fmax(rain, np.fmax.reduce(mix(rain_at), axis=0))
+        us, vs = mix(u_at).tolist(), mix(v_at).tolist()
+        for (_, n, fetch), sp, ur, vr in zip(group, cell_speed.tolist(), us, vs):
+            dirs = dir_at[n]
+            for h, (s, u, v) in enumerate(zip(sp, ur, vr)):
+                if u != u or v != v:  # NaN: no wind direction here
+                    continue
+                direction = math.degrees(math.atan2(u, v)) % 360 if abs(u) > 1e-9 or abs(v) > 1e-9 else dirs[h]
+                if direction is not None:
+                    wave = significant_wave_height(s, _interpolated_fetch(fetch, direction))
+                    if wave > waves[h]:
+                        waves[h] = wave
+    out = {}
+    for h in range(hours):
+        vis = math.exp(low_vis[h]) if low_vis[h] != np.inf else None
+        r = float(rain[h]) if rain[h] != -np.inf else None
+        storm = max([Light.GREEN, *(storm_at[n][h] for n in nears)])
+        hail = any(hail_at[n][h] for n in nears)
+        code = HAIL_CODES[0] if hail else None
+        w, g, wave = float(wind[h]), float(gusts[h]), waves[h]
+        full = assess(HourConditions(wind_speed_ms=w, wind_gust_ms=g, wave_height_m=wave, visibility_m=vis,
+                                     thunderstorm=storm, precipitation_mm=r, weather_code=code), t)
+        other = assess(HourConditions(wind_speed_ms=0.0, wind_gust_ms=0.0, visibility_m=vis, thunderstorm=storm,
+                                      precipitation_mm=r, weather_code=code), t)
+        values = {"wind_ms": w, "gust_ms": g, "wave_m": wave, "vis_m": vis, "rain_mm": r}
+        cause = full.reasons[0][0] if full.reasons else None
+        out[rows[0][h].time] = Nearby(
+            full.light, cause, values.get(_NEARBY_VALUE.get(cause or "", ""), None),
+            w, g, wave, vis, r, other.light, other.reasons[0][0] if other.reasons else None,
+        )
+    return out
+
+
+def _nearby_water_loop(
     grid: Grid,
     weather: Sequence[Sequence[ForecastHour]],
     lat: float,

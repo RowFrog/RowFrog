@@ -20,7 +20,6 @@ const TYPES = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 
 const lakes = JSON.parse(await readFile(join(API, "lakes/index"), "utf8"));
 const forecast = JSON.parse(await readFile(join(API, "clubs/mrc-1880/forecast"), "utf8"));
-const club = lakes.flatMap((l) => l.clubs.map((c) => ({ ...c, lakeId: l.id }))).find((c) => c.id === "mrc-1880");
 
 let server, base, browser;
 

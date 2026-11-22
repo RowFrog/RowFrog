@@ -240,9 +240,9 @@ export const endsAtSunrise = (end, days) => days.some((d) => d.sunrise >= end &&
 
 /** What a night's line shows, each for its column: the worst of the night. */
 export function nightSummary(hours) {
-  const values = (key) => hours.map((x) => x[key]).filter((v) => v != null);
-  const min = (key) => (values(key).length ? Math.min(...values(key)) : null);
-  const max = (key) => (values(key).length ? Math.max(...values(key)) : null);
+  const values = (field) => hours.map((x) => x[field]).filter((v) => v != null);
+  const min = (field) => (values(field).length ? Math.min(...values(field)) : null);
+  const max = (field) => (values(field).length ? Math.max(...values(field)) : null);
   const rain = values("precipitationMm");
   const lowest = min("temperatureC");
   const fogs = hours.map((x) => lightFor(x, ["fog"])).filter(Boolean);
@@ -546,6 +546,17 @@ export function nearbyCondition(hour) {
   return { wind: "wind", gusts: "wind", waves: "waves", fog: "visibility", heavy_rain: "precipitation", hail: "precipitation", thunderstorm: "thunderstorm" }[topic] ?? null;
 }
 
+/**
+ * The reasons as lines: where the water within 1 km sets the light for the same thing as the
+ * launch point itself, the launch point's own reason goes into the nearby one, so each thing has
+ * one line in the worse colour (ForecastHour.shownReasons, owner's pick A, 22 Nov 2026).
+ */
+export function shownReasons(hour) {
+  const reasons = hour?.reasons ?? [];
+  const topic = reasons.find((r) => r.condition === "nearby_water")?.topic;
+  return topic ? reasons.filter((r) => r.condition !== topic) : reasons;
+}
+
 /** Wind and gusts as the top tile shows them: the worst within 1 km while that sets the light (shownWind). */
 export function shownWind(hour) {
   const n = hour.nearby;
@@ -603,6 +614,9 @@ export function iceOff(ice, now = new Date()) {
   return !ICE_MONTHS.has(now.getMonth() + 1);
 }
 
+/** Measured water above this is open water (OPEN_WATER_C in backend/rowfrog/ice.py; IceSeason.openWaterC). */
+export const OPEN_WATER_C = 3;
+
 export const ICE_TITLES = {
   open: key("No ice"), edges: key("Shore ice possible"), forming: key("Ice forming"), frozen: key("Ice cover likely"), drift_ice: key("Drift ice possible"),
 };
@@ -612,7 +626,8 @@ export function iceValue(forecast) {
   const ice = forecast.ice;
   if (ice && ice.status !== "unavailable" && ice.status !== "open") return ICE_TITLES[ice.status] ?? key("No data");
   const c = forecast.waterTemperature?.celsius;
-  if (c != null && c < 8) return ice ? ICE_TITLES[ice.status] ?? key("No data") : key("No data yet");
+  // At or below the backend's open-water mark only, so the line never says "too warm for ice" (owner's pick A, 22 Nov 2026).
+  if (c != null && c <= OPEN_WATER_C) return ice ? ICE_TITLES[ice.status] ?? key("No data") : key("No data yet");
   return null;
 }
 

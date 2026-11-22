@@ -31,6 +31,7 @@ import httpx
 
 from rowfrog import app_check
 from rowfrog import model_check as mc
+from rowfrog import source_status
 from rowfrog import usage
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -46,6 +47,8 @@ def main() -> None:
     parser.add_argument("--gkd", choices=["run", "skip", "only"], default="run")
     args = parser.parse_args()
 
+    # What the requests say about each service (sources-status.json, only where SOURCES_STATUS is set: the Pi).
+    source_status.start("gkd-log" if args.gkd == "only" else "model-check")
     now = datetime.now(timezone.utc)
     points = mc.load_points(ROOT / "data" / "model-check" / "points.json", args.stage)
     if args.gkd == "only":

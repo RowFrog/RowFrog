@@ -9,7 +9,7 @@ import {
 } from "./shared.js";
 import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
-  precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
+  precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key, OPEN_WATER_C,
 } from "./logic.js";
 import { radarAhead, rainOutlook, rainingNow, forecastRain, wetHour, traceKind, traceNote, radarGraphic, radarEnd, peak, RADAR_CREDIT } from "./radar.js";
 
@@ -326,9 +326,9 @@ const BUILDERS = {
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
     // Fitted to the readings and the forecast, with room around them, the
     // life-jacket and very-cold lines always in view (ConditionDetail.waterTemperature).
-    const span = [...history.map((p) => p.celsius), ...days.map(([, v]) => v), ...(estimate != null ? [estimate] : []),
+    const spread = [...history.map((p) => p.celsius), ...days.map(([, v]) => v), ...(estimate != null ? [estimate] : []),
       currentLimits().value("lifeJacket"), COLD.waterC];
-    const yDomain = [degreesIn(Math.floor(Math.min(...span) - 2)), degreesIn(Math.ceil(Math.max(...span) + 2))];
+    const yDomain = [degreesIn(Math.floor(Math.min(...spread) - 2)), degreesIn(Math.ceil(Math.max(...spread) + 2))];
     const chartLimits = [
       limitLine("lifeJacket", COLOURS.kit, t("Cold-water shock: life jacket"), degreesIn),
       { value: degreesIn(COLD.waterC), colour: COLOURS.deep, label: t("Very cold") },
@@ -572,7 +572,7 @@ const BUILDERS = {
       if (ice.satellite) facts.push([t("Satellite"), iceSatelliteSummary(ice.satellite)]);
       return base({ value: t(ICE_TITLES[ice.status] ?? "No data"), note: iceDetail(ice), facts, rowing, source: explanation });
     }
-    const warm = (d.water?.celsius ?? 0) >= 8;
+    const warm = (d.water?.celsius ?? 0) > OPEN_WATER_C;
     return base({
       value: warm ? t("No ice") : t("No data yet"),
       note: warm ? t("Water %@, too warm for ice", temperature(d.water?.celsius, 1)) : t("Check the lake yourself"),

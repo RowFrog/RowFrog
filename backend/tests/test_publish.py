@@ -72,6 +72,12 @@ def test_ice_map_is_looked_at_twice_a_day():
     assert not publish.ice_map_due(utc(22, 18, 30), utc(23, 2, 0))
 
 
+def fake_render(monkeypatch, render):
+    """Stands in for Copernicus: `render` makes every picture and tile; the card's pictures see the whole frame."""
+    monkeypatch.setattr(sentinel2, "jpeg", render)
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (render(client, bbox, w, h, day), 0.0))
+
+
 def test_latest_and_clearest_pass():
     passes = [
         sentinel2.Pass(date(2026, 10, 3), 0.05),
@@ -86,7 +92,7 @@ def test_latest_and_clearest_pass():
 
 def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
     rendered = []
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: rendered.append(day) or b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: rendered.append(day) or b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     same = sentinel2.Pass(date(2026, 10, 8), 0.05)
     body = publish._picture_meta(None, tmp_path, ring, {}, same, same)
@@ -103,7 +109,7 @@ def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
 
 
 def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     clear = sentinel2.Pass(date(2026, 10, 3), 0.05)
     mostly = sentinel2.Pass(date(2026, 10, 8), 0.25)
@@ -279,7 +285,7 @@ def test_local_warnings_skip_clubs_outside_germany(monkeypatch):
 
 def test_big_lakes_get_sharp_tiles_once_per_pass(tmp_path, monkeypatch):
     rendered = []
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: rendered.append((w, h)) or b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: rendered.append((w, h)) or b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
     # About 30 x 20 km: 1280 px wide in the card, about 3300 px at 10 m, so tiles but no overview.
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
@@ -311,7 +317,7 @@ def test_only_the_biggest_lakes_get_an_overview():
 
 
 def test_tiles_wait_for_a_later_run_when_the_run_has_used_its_share(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 3)
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
@@ -323,7 +329,7 @@ def test_tiles_wait_for_a_later_run_when_the_run_has_used_its_share(tmp_path, mo
 
 
 def test_small_lakes_get_no_sharp_files(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
     body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
@@ -347,7 +353,7 @@ def test_clubs_without_an_outline_get_a_place_around_their_launch_point():
 
 
 def test_big_lakes_nobody_uses_get_no_tiles(tmp_path, monkeypatch):
-    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    fake_render(monkeypatch, lambda client, bbox, w, h, day: b"jpg")
     monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
     ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
@@ -421,8 +427,12 @@ def test_a_file_that_only_differs_in_build_time_is_left_as_published(tmp_path):
 
 def test_nothing_is_handed_on_without_the_setting(monkeypatch, capsys):
     monkeypatch.delenv("PUBLISH_CLUBS_DONE", raising=False)
+    flushed = []
+    monkeypatch.setattr(publish.source_status, "flush", lambda: flushed.append(True))
     publish.clubs_written()
     assert capsys.readouterr().out == ""
+    # The Pi no longer sets it (speed-up #4): the sources' status is still written at this point.
+    assert flushed == [True]
 
 
 def test_the_club_forecasts_are_handed_on_once_written(monkeypatch, tmp_path, capsys):
@@ -664,3 +674,202 @@ def test_a_state_saved_before_0043_gets_its_rain_moved_once(tmp_path):
     # Saved again with the mark, it is not moved a second time.
     again = publish.State(path)
     assert [h.precipitation_mm for h in again.clubs["a"][1]] == [0.8, None]
+
+
+def test_gap_share_goes_into_the_satellite_file_and_stays(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (b"jpg", 0.09))
+    ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
+    edge = sentinel2.Pass(date(2026, 11, 17), 1.0)
+    clear = sentinel2.Pass(date(2026, 11, 14), 0.0)
+    body = publish._picture_meta(None, tmp_path, ring, {}, edge, None)
+    assert body["latest"]["gap"] == 0.09
+    # Kept when the same pass is looked at again, and copied when the clearest is the same pass.
+    monkeypatch.setattr(sentinel2, "picture", lambda client, bbox, w, h, day: (b"jpg", 0.0))
+    again = publish._picture_meta(None, tmp_path, ring, body, edge, clear)
+    assert again["latest"]["gap"] == 0.09 and "gap" not in again["clearest"]
+    same = publish._picture_meta(None, tmp_path / "b", ring, {}, clear, clear)
+    assert "gap" not in same["latest"] and "gap" not in same["clearest"]
+
+
+def test_club_forecasts_built_on_several_cores_match_the_api(monkeypatch):
+    # Pi speed-up, Nov 2026: club forecasts are built in worker processes, a lake's clubs together,
+    # while the next lake's inputs load; the bodies must be the API's own answer.
+    import json
+
+    import httpx
+
+    from rowfrog import api
+
+    now = datetime(2026, 11, 10, 9, tzinfo=timezone.utc)
+    monkeypatch.setattr(api, "_now", lambda: now)
+
+    async def no_water(client, station, now):
+        return None, []
+
+    async def no_warnings(client, club, now):
+        return {"status": "ok", "lakeArea": None, "items": []}, []
+
+    monkeypatch.setattr(api, "_water", no_water)
+    monkeypatch.setattr(api, "_warnings", no_warnings)
+
+    async def no_air_days(client, lake, today):
+        return None
+
+    monkeypatch.setattr(api, "_air_days", no_air_days)
+    real_client = httpx.AsyncClient  # nothing else may reach a service either
+
+    def offline_client(*args, **kwargs):
+        return real_client(transport=httpx.MockTransport(lambda request: httpx.Response(404)))
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", offline_client)
+    monkeypatch.setattr(publish, "CLUB_POOL_FROM", 2)
+    clubs = [api._locations.clubs[i] for i in ("mrc-1880", "tutzinger-rv", "ammersee-ruderer", "mrsv-bayern")]
+    assert len({c.lake_id for c in clubs}) > 1
+
+    def prepare() -> None:  # building a forecast takes its prepared weather
+        for k, club in enumerate(clubs):
+            api.prepared.weather[club.id] = weather(k)
+
+    def weather(k: int) -> list:
+        return [
+            open_meteo.ForecastHour(now + timedelta(hours=h), 8.0, 2.0 + k + h % 7, 5.0 + h % 9, (25.0 * h + k) % 360,
+                                    50.0, 10.0, 300.0 if h == 3 else 20_000.0, 0.0, 0.0, True)
+            for h in range(12)
+        ]
+
+    no_weather = api._locations.clubs["rudergesellschaft-muenchen-1972"]
+
+    def as_json(body):
+        return json.loads(json.dumps(body))
+
+    try:
+        prepare()
+        expected = {c.id: as_json(publish.built(api.club_forecast(c.id))[0]) for c in clubs}
+        prepare()
+        part = clubs + [no_weather]
+        got = publish.club_forecasts(part, workers=2)
+        assert [c.id for c, _, _ in got] == [c.id for c in part], "in the order asked"
+        for club, body, problem in got[:-1]:
+            assert problem is None and as_json(body) == expected[club.id]
+        assert got[-1][1:] == (None, "no forecast loaded")
+
+        class BrokenPool:  # the worker processes cannot start (out of memory, say)
+            def __init__(self, *args, **kwargs):
+                raise OSError("no workers")
+
+        monkeypatch.setattr(publish, "ProcessPoolExecutor", BrokenPool)
+        prepare()
+        for club, body, problem in publish.club_forecasts(clubs, workers=2):
+            assert problem is None and as_json(body) == expected[club.id]
+    finally:
+        for club in clubs:
+            api.prepared.weather.pop(club.id, None)
+
+
+def test_the_radar_loads_beside_the_weather(monkeypatch):
+    # Pi speed-up #5, Nov 2026: the radar is loaded in a thread while the weather loads.
+    import threading
+
+    started, release = threading.Event(), threading.Event()
+
+    async def nowcasts(points):
+        started.set()
+        assert release.wait(5), "the publishing process went on meanwhile"
+        return {club_id: {"steps": []} for club_id in points}
+
+    monkeypatch.setattr(publish.dwd_radar, "nowcasts", nowcasts)
+    job = publish.radar_started({"mrc-1880": (47.9, 11.3)})
+    assert started.wait(5) and not job.done()
+    release.set()  # the "weather" is loaded; now the radar is picked up
+    assert job.result(5) == {"mrc-1880": {"steps": []}}
+    assert publish.radar_started({}) is None
+
+
+def test_club_inputs_are_compared_with_their_last_build(monkeypatch):
+    # Measuring for club forecast reuse (Nov 2026): nothing is kept yet, only counted.
+    from rowfrog import api
+
+    monkeypatch.setattr(publish, "RUN", publish.RunCounts())
+    now = datetime(2026, 11, 22, 12, 10, tzinfo=timezone.utc)
+    inputs = api.ClubInputs(
+        weather=[1.0, 2.0], outlook=None, station=None, water=None, water_history=[], warnings_block={"active": []},
+        warnings=[], estimate=None, water_model_c=8.5, ice_estimate=None, air_days=None, gauge=None, readings=None,
+        level_lake=None, levels=None,
+    )
+    kept = {}
+    publish.count_inputs(kept, "a", publish.input_prints(inputs, now))
+    assert publish.RUN.compared_inputs == 0, "nothing to compare with the first time"
+    publish.count_inputs(kept, "a", publish.input_prints(inputs, now + timedelta(minutes=30)))
+    assert (publish.RUN.same_inputs, publish.RUN.compared_inputs) == (1, 1), "same hour, same inputs"
+    other = api.ClubInputs(**{**inputs.__dict__, "water_model_c": 8.6})
+    publish.count_inputs(kept, "a", publish.input_prints(other, now + timedelta(hours=1)))
+    assert (publish.RUN.same_inputs, publish.RUN.compared_inputs) == (1, 2)
+    assert publish.RUN.changed_inputs == {"hour": 1, "water_model_c": 1}
+    assert publish.inputs_line() == "  club inputs: 1 of 2 the same as when last built (changed: hour 1, water_model_c 1)"
+
+
+def _small_state(path):
+    state = publish.State(path)
+    hour = open_meteo.ForecastHour(
+        time=utc(16, 12), temperature_c=5, wind_speed_ms=2, wind_gust_ms=4, wind_from_deg=0, cloud_cover_pct=90,
+        cloud_cover_low_pct=None, visibility_m=20000, precipitation_mm=0.0, cape_jkg=0, is_day=True, weather_code=3,
+    )
+    state.clubs["a"] = (utc(16, 11), [hour])
+    state.lakes["see"] = (utc(16, 11), 1, [[hour]])
+    return state
+
+
+def test_the_state_is_two_packed_files_and_unchanged_weather_is_not_written_again(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "STATE_WRITES", [])
+    path = tmp_path / "publish.pickle"
+    state = _small_state(path)
+    state.save()
+    assert [name for name, _ in publish.STATE_WRITES] == ["weather", "rest"]
+    assert path.read_bytes()[:2] == b"\x1f\x8b" and (tmp_path / "publish-weather.pickle").exists()
+    state.save()  # nothing changed: nothing written
+    assert len(publish.STATE_WRITES) == 2
+    again = publish.State(path)
+    assert again.clubs["a"][1][0].temperature_c == 5 and again.lakes["see"][2][0][0].weather_code == 3
+    again.warn_cells["a"] = (utc(16, 12), 7)  # only the small rest changed
+    again.save()
+    assert [name for name, _ in publish.STATE_WRITES[2:]] == ["rest"]
+    again.clubs["b"] = again.clubs["a"]
+    again.save()
+    assert [name for name, _ in publish.STATE_WRITES[3:]] == ["weather", "rest"]
+    assert "b" in publish.State(path).clubs
+
+
+def test_a_state_of_the_single_file_before_is_read_and_then_split(tmp_path):
+    import pickle
+
+    path = tmp_path / "publish.pickle"
+    old = _small_state(None)
+    path.write_bytes(pickle.dumps({
+        "clubs": old.clubs, "lakes": old.lakes, "ice_map": (None, {}), "ice_temps": {}, "outlooks": {},
+        "warn_cells": {"a": (utc(16, 11), 7)}, "rain_at_hour_start": True,
+    }))
+    state = publish.State(path)
+    assert "a" in state.clubs and state.warn_cells["a"][1] == 7
+    state.save()
+    split = publish.State(path)
+    assert "a" in split.clubs and split.warn_cells["a"][1] == 7 and (tmp_path / "publish-weather.pickle").exists()
+
+
+def test_a_save_cut_off_halfway_leaves_the_last_whole_file(tmp_path, monkeypatch):
+    import pytest
+
+    path = tmp_path / "publish.pickle"
+    state = _small_state(path)
+    state.save()
+    before = path.read_bytes()
+    state.warn_cells["a"] = (utc(16, 12), 7)
+
+    def power_cut(fd):
+        raise OSError("power cut")
+
+    monkeypatch.setattr(publish.os, "fsync", power_cut)
+    with pytest.raises(OSError):
+        state.save()
+    assert path.read_bytes() == before  # the half-written copy is only the temporary file
+    monkeypatch.undo()
+    assert "a" in publish.State(path).clubs

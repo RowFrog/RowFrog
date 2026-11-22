@@ -98,14 +98,24 @@ function evaluatePixel(s) {
 }
 """
 
+# The fourth band says where the pass took a picture (dataMask): at the edge of
+# its strip a pass can cover the lake but not the whole frame around it. Those
+# parts are drawn grey (GAP_COLOURS) instead of black, and their share of the
+# picture goes into the satellite file as "gap" (owner's pick 2026-11-21:
+# grey area, explained behind a filled "i"; decision 0056).
 PICTURE_SCRIPT = """//VERSION=3
 function setup() {
-  return {input: ["B02", "B03", "B04"], output: {bands: 3}};
+  return {input: ["B02", "B03", "B04", "dataMask"], output: {bands: 4}};
 }
 function evaluatePixel(s) {
-  return [2.5 * s.B04, 2.5 * s.B03, 2.5 * s.B02];
+  return [2.5 * s.B04, 2.5 * s.B03, 2.5 * s.B02, s.dataMask];
 }
 """
+# Soft grey stripes, so the area reads as "no picture", not as cloud, fog or water.
+GAP_COLOURS = ((150, 156, 166), (160, 166, 176))
+GAP_STRIPE = 10  # pixels
+# Below this share a gap is a few pixels at a corner: not worth a note.
+GAP_MIN_SHARE = 0.005
 
 
 @dataclass(frozen=True)
@@ -232,18 +242,52 @@ def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None, Pass | None]:
 JPEG_QUALITY = 90
 
 
-def to_jpeg(png: bytes, quality: int = JPEG_QUALITY) -> bytes:
-    """A PNG from the Process API as a JPEG at our own quality."""
+def _flatten(png: bytes):
+    """The picture as RGB with the parts the pass did not see in grey stripes, and their share."""
     from PIL import Image
 
-    out = io.BytesIO()
     with Image.open(io.BytesIO(png)) as picture:
-        picture.convert("RGB").save(out, "JPEG", quality=quality, optimize=True)
-    return out.getvalue()
+        picture.load()
+        if picture.mode not in ("RGBA", "LA"):
+            return picture.convert("RGB"), 0.0
+        rgba = picture.convert("RGBA")
+    alpha = rgba.getchannel("A")
+    seen = alpha.point(lambda a: 255 if a >= 128 else 0)
+    histogram = seen.histogram()
+    share = histogram[0] / max(1, rgba.width * rgba.height)
+    if share == 0:
+        return rgba.convert("RGB"), 0.0
+    # Diagonal stripes: one tile of the period, pasted across (pixel x, y follows x + y).
+    period = 2 * GAP_STRIPE
+    tile = Image.new("RGB", (period, period))
+    tile.putdata([GAP_COLOURS[((x + y) // GAP_STRIPE) % 2] for y in range(period) for x in range(period)])
+    stripes = Image.new("RGB", rgba.size)
+    for top in range(0, rgba.height, period):
+        for left in range(0, rgba.width, period):
+            stripes.paste(tile, (left, top))
+    return Image.composite(rgba.convert("RGB"), stripes, seen), share
+
+
+def to_jpeg(png: bytes, quality: int = JPEG_QUALITY) -> bytes:
+    """A PNG from the Process API as a JPEG at our own quality."""
+    return picture_from_png(png, quality)[0]
+
+
+def picture_from_png(png: bytes, quality: int = JPEG_QUALITY) -> tuple[bytes, float]:
+    """The JPEG of a Process API PNG and the share of it the pass did not see (0 when below GAP_MIN_SHARE)."""
+    flat, share = _flatten(png)
+    out = io.BytesIO()
+    flat.save(out, "JPEG", quality=quality, optimize=True)
+    return out.getvalue(), (round(share, 3) if share >= GAP_MIN_SHARE else 0.0)
 
 
 def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
     return to_jpeg(png(client, bbox, width, height, day))
+
+
+def picture(client: httpx.Client, bbox, width: int, height: int, day: date) -> tuple[bytes, float]:
+    """The card's picture of the box on that day and the share of it the pass did not see."""
+    return picture_from_png(png(client, bbox, width, height, day))
 
 
 def png(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:

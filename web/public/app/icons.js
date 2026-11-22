@@ -43,6 +43,9 @@ const PATHS = {
   "oars": `<path d="M3.5 20.5 14 10" /> <ellipse cx="17" cy="7" rx="2.4" ry="4.8" transform="rotate(45 17 7)" fill="currentColor" /> <path d="M20.5 20.5 10 10" /> <ellipse cx="7" cy="7" rx="2.4" ry="4.8" transform="rotate(-45 7 7)" fill="currentColor" />`,
   "sailboat": `<path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z" /> <path d="M21 14 10 2 3 14h18Z" /> <path d="M10 2v16" />`,
   "info": `<circle cx="12" cy="12" r="10" /> <path d="M12 16v-4" /> <path d="M12 8h.01" />`,
+  // The filled "i" on a satellite picture with a grey area (app: info.circle.fill). As the SF Symbol, the "i" is cut
+  // out of the disc, so the card (or the picture through a frosted card) shows through it, also in dark mode.
+  "info-fill": `<mask id="info-fill-cut"><rect width="24" height="24" fill="#fff" /><path d="M12 16v-4M12 8h.01" stroke="#000" /></mask><circle cx="12" cy="12" r="11" fill="currentColor" stroke="none" mask="url(#info-fill-cut)" />`,
   "chevron-right": `<path d="m9 18 6-6-6-6" />`,
   "chevrons-up-down": `<path d="m7 15 5 5 5-5" /> <path d="m7 9 5-5 5 5" />`,
   "search": `<circle cx="11" cy="11" r="8" /> <path d="m21 21-4.3-4.3" />`,
@@ -133,7 +136,6 @@ const PATHS = {
   "clock-alert": `<path d="M12 6v6l4 2" /> <path d="M16 21.16a10 10 0 1 1 5-13.516" /> <path d="M20 11.5v6" /> <path d="M20 21.5h.01" />`,
   "bookmark": `<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />`,
   "columns-2": `<rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M12 3v18" />`,
-  "panel-left": `<rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M9 3v18" />`,
   "layout-grid": `<rect width="7" height="7" x="3" y="3" rx="1" /> <rect width="7" height="7" x="14" y="3" rx="1" /> <rect width="7" height="7" x="14" y="14" rx="1" /> <rect width="7" height="7" x="3" y="14" rx="1" />`,
   "image": `<rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />`,
   "circle-help": `<circle cx="12" cy="12" r="10" /> <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /> <path d="M12 17h.01" />`,

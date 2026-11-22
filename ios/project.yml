@@ -156,6 +156,7 @@ targets:
       - path: RowFrog/TrafficLightView.swift
       - path: RowFrog/DaylightRule.swift
       - path: RowFrog/Backgrounds.swift
+      - path: RowFrog/BackgroundPicture.swift
       - path: RowFrog/WidgetViews.swift
       - path: RowFrog/WidgetLayouts.swift
       - path: RowFrog/WidgetDayBars.swift

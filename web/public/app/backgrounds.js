@@ -160,11 +160,11 @@ const clamp01 = (v) => Math.min(Math.max(v, 0), 1);
  * Where a picture lies when it fills an area: scaled to cover it, with its focus point as near the
  * area's middle as the picture's edges allow (PicturePlace.rect). Returns the offset and size in pixels.
  */
-export function picturePlace(picture, area, focus) {
-  if (!(picture.width > 0 && picture.height > 0)) return { x: 0, y: 0, width: area.width, height: area.height };
-  const scale = Math.max(area.width / picture.width, area.height / picture.height);
-  const width = picture.width * scale;
-  const height = picture.height * scale;
+export function picturePlace(image, area, focus) {
+  if (!(image.width > 0 && image.height > 0)) return { x: 0, y: 0, width: area.width, height: area.height };
+  const scale = Math.max(area.width / image.width, area.height / image.height);
+  const width = image.width * scale;
+  const height = image.height * scale;
   const f = focus ?? { x: 0.5, y: 0.5 };
   return {
     x: Math.min(0, Math.max(area.width - width, area.width / 2 - f.x * width)),
@@ -293,11 +293,11 @@ async function sampleTop(url, pictureFocus) {
 export function paintClockStrip() {
   if (typeof document === "undefined") return;
   const bg = hexRgb(getComputedStyle(document.documentElement).getPropertyValue("--bg")) ?? [242, 242, 247];
-  const picture = document.body.classList.contains("has-picture");
-  const colour = picture && pictureTop ? stripColour(pictureTop, bg, isDark()) : null;
+  const hasPicture = document.body.classList.contains("has-picture");
+  const colour = hasPicture && pictureTop ? stripColour(pictureTop, bg, isDark()) : null;
   if (colour) document.body.style.setProperty("--picture-top", `rgb(${colour.join(" ")})`);
   else document.body.style.removeProperty("--picture-top");
-  const strip = colour ?? (picture ? stripColour(bg, bg, isDark()) : bg);
+  const strip = colour ?? (hasPicture ? stripColour(bg, bg, isDark()) : bg);
   const meta = document.querySelector('meta[name="theme-color"]');
   const value = `#${strip.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
   if (meta && meta.content !== value) meta.content = value;

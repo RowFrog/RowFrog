@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   isStale, shownLight, currentHour, nextHours, beaufort, windValue, compass, searchClubs, fold, town, overlayBox,
-  sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState,
+  sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState, shownReasons,
   applyBoat, applyBoatToHour, coldWaterKit, place, twilight, applyLimitsToHour, limitsFor, riverForBoat, GROUPS,
 } from "../public/app/logic.js";
 
@@ -81,6 +81,13 @@ test("water and ice: the estimate only without a station, ice only when it matte
   assert.equal(iceOff(null, new Date("2026-01-10")), false);
   assert.equal(iceValue({ ice: { status: "edges" } }), "Shore ice possible");
   assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 12 } }), null);
+  // Owner's pick A, 22 Nov 2026: only at or below the backend's open-water mark (3 °C), or when ice is reported.
+  assert.equal(iceValue({ ice: { status: "open", basis: "measured" }, waterTemperature: { celsius: 7.9 } }), null);
+  assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 3.1 } }), null);
+  assert.equal(iceValue({ ice: { status: "open" }, waterTemperature: { celsius: 3 } }), "No ice");
+  assert.equal(iceValue({ ice: { status: "edges" }, waterTemperature: { celsius: 10 } }), "Shore ice possible");
+  assert.equal(iceValue({ waterTemperature: { celsius: 2 } }), "No data yet");
+  assert.equal(iceValue({ waterTemperature: { celsius: 5 } }), null);
 });
 
 test("the sun is up between sunrise and sunset, else the next sunrise", () => {
@@ -183,44 +190,44 @@ test("the night's dark hours fold into one line with the worst of each column", 
 
 test("now takes the daylight light of this minute (Forecast.current)", async () => {
   const { nowHour } = await import("../public/app/logic.js");
-  const forecast = {
+  const nightForecast = {
     daylight: [{ sunrise: "2026-11-05T06:02:00Z", sunset: "2026-11-05T15:51:00Z" }, { sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }],
     hours: [{ time: "2026-11-05T14:00:00Z", light: "amber", reasons: [{ condition: "twilight", light: "amber" }], sunUp: true },
       { time: "2026-11-05T15:00:00Z", light: "red", reasons: [{ condition: "daylight", light: "red" }], sunUp: true }],
   };
-  const green = nowHour(forecast, new Date("2026-11-05T14:40:00Z"));
+  const green = nowHour(nightForecast, new Date("2026-11-05T14:40:00Z"));
   assert.equal(green.light, "green");
   assert.deepEqual(green.reasons, []);
-  const soon = nowHour(forecast, new Date("2026-11-05T14:51:00Z"));
+  const soon = nowHour(nightForecast, new Date("2026-11-05T14:51:00Z"));
   assert.equal(soon.light, "amber");
   assert.equal(soon.reasons[0].condition, "sunset_soon");
-  const after = nowHour(forecast, new Date("2026-11-05T15:55:00Z"));
+  const after = nowHour(nightForecast, new Date("2026-11-05T15:55:00Z"));
   assert.equal(after.light, "red");
   assert.equal(after.reasons[0].condition, "daylight");
   assert.equal(after.sunUp, false);
   // Another amber reason stays amber.
-  forecast.hours[0].reasons.push({ condition: "wind", light: "amber" });
-  assert.equal(nowHour(forecast, new Date("2026-11-05T14:30:00Z")).light, "amber");
+  nightForecast.hours[0].reasons.push({ condition: "wind", light: "amber" });
+  assert.equal(nowHour(nightForecast, new Date("2026-11-05T14:30:00Z")).light, "amber");
   // The hour itself, as the 48 hours show it, keeps its own light.
-  assert.equal(forecast.hours[1].light, "red");
+  assert.equal(nightForecast.hours[1].light, "red");
 });
 
 test("an hour in which the daylight changes shows half and half (DaylightRule.halves)", async () => {
   const { hourHalves, daylightHalves, daylightAt, nightParts, sunDaysOf } = await import("../public/app/logic.js");
-  const forecast = { daylight: [{ sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }] };
-  const days = sunDaysOf(forecast);
+  const sunForecast = { daylight: [{ sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }] };
+  const days = sunDaysOf(sunForecast);
   assert.equal(daylightAt(Date.parse("2026-11-06T14:48:00Z"), days), "green");
   assert.equal(daylightAt(Date.parse("2026-11-06T14:49:00Z"), days), "amber");
   assert.equal(daylightAt(Date.parse("2026-11-06T15:49:00Z"), days), "red");
   const hour = (time, light, condition) => ({ time, light, reasons: [{ condition, light }], sunUp: true });
-  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T14:00:00Z", "amber", "twilight")), { start: "green", end: "amber" });
-  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T15:00:00Z", "red", "daylight")), { start: "amber", end: "red" });
-  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T06:00:00Z", "red", "daylight")), { start: "red", end: "green" });
-  assert.equal(hourHalves(forecast, hour("2026-11-06T14:00:00Z", "amber", "twilight"), true), null, "no halves on an old forecast");
+  assert.deepEqual(hourHalves(sunForecast, hour("2026-11-06T14:00:00Z", "amber", "twilight")), { start: "green", end: "amber" });
+  assert.deepEqual(hourHalves(sunForecast, hour("2026-11-06T15:00:00Z", "red", "daylight")), { start: "amber", end: "red" });
+  assert.deepEqual(hourHalves(sunForecast, hour("2026-11-06T06:00:00Z", "red", "daylight")), { start: "red", end: "green" });
+  assert.equal(hourHalves(sunForecast, hour("2026-11-06T14:00:00Z", "amber", "twilight"), true), null, "no halves on an old forecast");
   // Another reason sets a floor: amber wind leaves green-to-amber one colour.
   const windy = hour("2026-11-06T14:00:00Z", "amber", "twilight");
   windy.reasons.push({ condition: "wind", light: "amber" });
-  assert.equal(hourHalves(forecast, windy), null);
+  assert.equal(hourHalves(sunForecast, windy), null);
   // A relaxed part under 10 minutes is dropped; a stricter one always shows.
   const late = [{ sunrise: Date.parse("2026-11-06T06:04:00Z"), sunset: Date.parse("2026-11-06T15:05:00Z") }];
   assert.equal(daylightHalves(Date.parse("2026-11-06T14:00:00Z"), late), null, "5 green minutes before 14:05 are dropped");
@@ -265,12 +272,12 @@ test("the night after the 48 hours is marked as coming from the coarser model", 
   const { coarserModel } = await import("../public/app/logic.js");
   const part = (model, resolutionKm, fromHour, toHour) => ({ model, provider: "DWD", resolutionKm, fromHour, toHour });
   const f = { generatedAt: "2026-10-18T17:20:00+00:00", forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48), part("ICON-EU", 7, 48, 60)] } };
-  const at = (i) => ({ time: new Date(Date.parse("2026-10-18T17:00:00Z") + i * 3600e3).toISOString() });
-  assert.equal(coarserModel(f, at(0)), null);
-  assert.equal(coarserModel(f, at(47)), null);
-  assert.equal(coarserModel(f, at(48)).model, "ICON-EU");
-  assert.equal(coarserModel({ ...f, forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48)] } }, at(50)), null);
-  assert.equal(coarserModel({}, at(50)), null);
+  const hourAt = (i) => ({ time: new Date(Date.parse("2026-10-18T17:00:00Z") + i * 3600e3).toISOString() });
+  assert.equal(coarserModel(f, hourAt(0)), null);
+  assert.equal(coarserModel(f, hourAt(47)), null);
+  assert.equal(coarserModel(f, hourAt(48)).model, "ICON-EU");
+  assert.equal(coarserModel({ ...f, forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48)] } }, hourAt(50)), null);
+  assert.equal(coarserModel({}, hourAt(50)), null);
 });
 
 test("a night that ends the table is whole when the sun rises in the next hour", async () => {
@@ -279,4 +286,13 @@ test("a night that ends the table is whole when the sun rises in the next hour",
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), days), true, "17–07: finished up to sunrise");
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T03:00:00Z"), days), false, "cut off in the dark: 17–");
   assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), []), false);
+});
+
+test("fog at the launch point and within 1 km is one line (owner's pick A, 22 Nov 2026)", () => {
+  const near = { condition: "nearby_water", light: "red", topic: "fog", value: 300 };
+  const cool = { condition: "cool_water", light: "amber" };
+  assert.deepEqual(shownReasons({ reasons: [near, { condition: "fog", light: "amber" }, cool] }), [near, cool]);
+  assert.deepEqual(shownReasons({ reasons: [near, cool] }), [near, cool]);
+  assert.deepEqual(shownReasons({ reasons: [{ condition: "fog", light: "amber" }] }), [{ condition: "fog", light: "amber" }]);
+  assert.deepEqual(shownReasons({}), []);
 });
