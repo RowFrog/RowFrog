@@ -83,11 +83,16 @@ def _ask(query: str, variables: dict, token: str, client: httpx.Client | None) -
     return resp.json()
 
 
-def r2_daily(today: date, days: int = 35, client: httpx.Client | None = None) -> list[dict] | None:
-    """R2 operations for the last `days` days (enough for the month); None when they cannot be read."""
+# Cloudflare answers R2 queries over at most 4 weeks and 4 days (32 days, end day included).
+R2_MAX_DAYS = 30
+
+
+def r2_daily(today: date, days: int = R2_MAX_DAYS, client: httpx.Client | None = None) -> list[dict] | None:
+    """R2 operations for the last `days` days (enough for the month so far); None when they cannot be read."""
     token, account = os.environ.get("CLOUDFLARE_API_TOKEN"), os.environ.get("CLOUDFLARE_ACCOUNT_ID")
     if not token or not account:
         return None
+    days = min(days, R2_MAX_DAYS)
     variables = {"a": account, "s": (today - timedelta(days=days)).isoformat(), "e": today.isoformat()}
     try:
         return parse_r2(_ask(R2_QUERY, variables, token, client))

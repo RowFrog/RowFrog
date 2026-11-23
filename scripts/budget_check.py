@@ -40,7 +40,7 @@ def main() -> int:
         if cloudflare is None:
             findings.append(limits.Finding("cloudflare", "warn", "cloudflare: Worker and D1 figures could not be read (token or analytics answer)."))
         if r2 is None:
-            findings.append(limits.Finding("cloudflare-r2", "warn", "cloudflare-r2: R2 figures could not be read (token needs Account Analytics read)."))
+            findings.append(limits.Finding("cloudflare-r2", "warn", "cloudflare-r2: R2 figures could not be read; the log line \"Cloudflare R2 analytics\" says why."))
         text = limits.report(findings, today)
         level = limits.worst(findings)
     # The sizes a phone downloads, for the data-per-user estimate (Pi only: its published folder).

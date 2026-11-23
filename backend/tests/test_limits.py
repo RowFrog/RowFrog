@@ -144,3 +144,40 @@ def test_summary_without_the_usage_counter():
     from datetime import datetime, timezone
     data = limits.summary(None, datetime(2026, 11, 20, tzinfo=timezone.utc))
     assert data["level"] == "warn" and data["services"] == [] and data["notes"][0]["key"] == "usage-counter"
+
+
+def test_r2_query_stays_inside_cloudflares_window(monkeypatch):
+    from rowfrog import cloudflare_usage
+
+    asked = {}
+
+    class Client:
+        def post(self, url, json, headers, timeout):
+            asked.update(json["variables"])
+
+            class Resp:
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {"data": {"viewer": {"accounts": []}}}
+
+            return Resp()
+
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "t")
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "a")
+    assert cloudflare_usage.r2_daily(TODAY, days=35, client=Client()) == []
+    span = (date.fromisoformat(asked["e"]) - date.fromisoformat(asked["s"])).days + 1
+    assert span <= 32  # Cloudflare: at most 4 weeks and 4 days
+
+
+def test_published_folder_on_the_managed_pi(tmp_path, monkeypatch):
+    from rowfrog import published_sizes
+
+    monkeypatch.delenv("PUBLISHED_DIR", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert published_sizes.folder() is None
+    (tmp_path / "site" / "v1").mkdir(parents=True)
+    assert published_sizes.folder() == tmp_path / "site" / "v1"
+    (tmp_path / "data" / "rowfrog" / "site" / "v1").mkdir(parents=True)
+    assert published_sizes.folder() == tmp_path / "data" / "rowfrog" / "site" / "v1"

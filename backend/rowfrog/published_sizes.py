@@ -1,8 +1,7 @@
 """Sizes of the published files a phone downloads, for the daily Usage limits report.
 
 The data-per-user estimate on the budgets page multiplies these sizes by a
-typical day of use. Read from the published folder on the Pi (~/site/v1, or
-PUBLISHED_DIR), never from api.rowfrog.com: a download there would count as
+typical day of use. Read from the published folder on the Pi (see folder()), never from api.rowfrog.com: a download there would count as
 use. Sizes are given as stored and gzip-compressed, which is about what
 Cloudflare sends to the app.
 """
@@ -25,10 +24,14 @@ KINDS = {
 
 
 def folder() -> Path | None:
-    """The published v1 folder, or None where there is none (GitHub, a laptop)."""
+    """The published v1 folder, or None where there is none (GitHub, a laptop).
+
+    PUBLISHED_DIR when set; else the Pi's folders: ~/data/rowfrog/site/v1 on the
+    managed Pi card (since 22 Nov 2026), ~/site/v1 before."""
     given = os.environ.get("PUBLISHED_DIR")
-    path = Path(given) if given else Path.home() / "site" / "v1"
-    return path if path.is_dir() else None
+    home = Path.home()
+    candidates = [Path(given)] if given else [home / "data" / "rowfrog" / "site" / "v1", home / "site" / "v1"]
+    return next((p for p in candidates if p.is_dir()), None)
 
 
 def measure(root: Path) -> list[dict]:
