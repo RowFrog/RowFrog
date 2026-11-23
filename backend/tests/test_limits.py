@@ -126,3 +126,21 @@ def test_published_sizes(tmp_path):
     text = published_sizes.report(list(rows.values()))
     assert "## Download sizes" in text and "| Club forecast | 2 |" in text
     assert published_sizes.report([]) == ""
+
+
+def test_summary_gives_the_numbers_as_data():
+    from datetime import datetime, timezone
+    rows = _rows(lambda i: 7500 if i == 2 else 6000 - 50 * i)  # copernicus silent -> a note
+    data = limits.summary(limits.check(rows, TODAY), datetime(2026, 11, 20, 6, 10, tzinfo=timezone.utc))
+    assert data["version"] == 1 and data["time"] == "2026-11-20T06:10:00Z" and data["level"] == "warn"
+    om = {s["period"]: s for s in data["services"] if s["key"] == "open-meteo"}
+    assert om["day"]["used"] == 7500 and om["day"]["limit"] == 10_000 and om["day"]["share"] == 0.75
+    assert om["day"]["level"] == "warn" and om["day"]["name"] == "Weather API (Open-Meteo)"
+    assert om["month"]["limit"] == 300_000
+    assert {n["key"] for n in data["notes"]} == {"open-meteo", "copernicus"}  # growth warning, silent service
+
+
+def test_summary_without_the_usage_counter():
+    from datetime import datetime, timezone
+    data = limits.summary(None, datetime(2026, 11, 20, tzinfo=timezone.utc))
+    assert data["level"] == "warn" and data["services"] == [] and data["notes"][0]["key"] == "usage-counter"

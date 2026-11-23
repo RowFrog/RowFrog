@@ -6,6 +6,9 @@ Usage (from the repository root, after `pip install -e backend`):
 
 DATA_DIR keeps the stored forecasts (forecasts/YYYY/MM/DD-HH.csv.gz) and gets
 report.md and stations.json; the workflow keeps it on the model-check branch.
+It also gets summary.json (the headline numbers as data, see model_check.summary)
+and summary-history.jsonl (one such line per run, the last 14 days), which the
+Pi copies next to its reports for its RowFrog tile.
 --archive-days N also loads N days of Open-Meteo's archived forecasts once,
 so a first score exists without waiting weeks. See backend/rowfrog/model_check.py.
 
@@ -90,7 +93,8 @@ def main() -> None:
     # GKD's measurements replace the land station's where a point has them; the land
     # station's wind is kept for the "On the lake vs on land" section.
     land = {}
-    for pid, kinds in app_check.gkd_observations(args.data_dir, points).items():
+    gkd = app_check.gkd_observations(args.data_dir, points)
+    for pid, kinds in gkd.items():
         land[pid] = dict(obs.get(pid, {}))
         obs.setdefault(pid, {}).update(kinds)
     for p in points:
@@ -104,11 +108,34 @@ def main() -> None:
     (args.data_dir / "stations.json").write_text(json.dumps(used, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     text = mc.report(points, stored, obs, used, now, land)
     (args.data_dir / "report.md").write_text(text + "\n", encoding="utf-8")
+    write_summary(args.data_dir, mc.summary(points, stored, obs, used, now, gkd), now)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write(text + "\n")
     print(text)
+
+
+def write_summary(data_dir: Path, data: dict, now: datetime, keep_days: int = 14) -> None:
+    """summary.json whole or not at all (os.replace), and the line added to
+    summary-history.jsonl, which keeps only the last `keep_days` days."""
+    line = json.dumps(data, ensure_ascii=False)
+    tmp = data_dir / "summary.json.tmp"
+    tmp.write_text(line + "\n", encoding="utf-8")
+    os.replace(tmp, data_dir / "summary.json")
+    history = data_dir / "summary-history.jsonl"
+    cutoff = (now - timedelta(days=keep_days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    kept = []
+    if history.exists():
+        for old in history.read_text(encoding="utf-8").splitlines():
+            try:
+                if json.loads(old).get("time", "") >= cutoff:
+                    kept.append(old)
+            except ValueError:
+                continue  # a broken line is dropped, not carried on
+    tmp = data_dir / "summary-history.jsonl.tmp"
+    tmp.write_text("".join(l + "\n" for l in kept + [line]), encoding="utf-8")
+    os.replace(tmp, history)
 
 
 if __name__ == "__main__":
