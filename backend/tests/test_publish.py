@@ -425,6 +425,47 @@ def test_a_file_that_only_differs_in_build_time_is_left_as_published(tmp_path):
     assert other.read_text() == "[1,2,3]"
 
 
+def test_kept_prints_tell_unchanged_files_without_reading_them_back(tmp_path, monkeypatch):
+    # Pi speed-up (22 Nov 2026): the print kept from the last run stands in for reading the file
+    # back, but only while the file is still the one it was kept for (same size and time).
+    import os
+
+    prints: dict = {}
+    monkeypatch.setattr(publish, "FILE_PRINTS", prints)
+    monkeypatch.setattr(publish, "FILE_PRINTS_ROOT", tmp_path)
+    path = tmp_path / "lakes" / "x" / "view"
+    publish.write(path, {"lakeId": "x", "generatedAt": "2026-11-22T15:00:00+00:00", "hours": [1.5, 2]})
+    first = path.read_bytes()
+    assert list(prints) == ["lakes/x/view"]  # kept by path inside the output folder, short
+    read_back = []
+    real_unchanged = publish.unchanged
+    monkeypatch.setattr(publish, "unchanged", lambda p, b: read_back.append(p) or real_unchanged(p, b))
+    # Same content later: left as published, and the old file is not read.
+    publish.write(path, {"lakeId": "x", "generatedAt": "2026-11-22T15:30:00+00:00", "hours": [1.5, 2]})
+    assert path.read_bytes() == first and read_back == []
+    # A real change is written, again without reading the old file.
+    publish.write(path, {"lakeId": "x", "generatedAt": "2026-11-22T16:00:00+00:00", "hours": [3]})
+    assert b"16:00:00" in path.read_bytes() and read_back == []
+    # Put back by something else (say a restored backup): the print no longer counts, the file is read.
+    path.write_text('{"lakeId":"x","generatedAt":"2026-11-22T14:00:00+00:00","hours":[1.5,2]}', encoding="utf-8")
+    os.utime(path, ns=(1, 1))
+    publish.write(path, {"lakeId": "x", "generatedAt": "2026-11-22T16:30:00+00:00", "hours": [3]})
+    assert read_back == [path] and b"16:30:00" in path.read_bytes()
+    # Lists have no build time and are compared whole, as before.
+    other = tmp_path / "lakes" / "index"
+    publish.write(other, [1, 2])
+    publish.write(other, [1, 2, 3])
+    assert other.read_text() == "[1,2,3]" and "lakes/index" not in prints
+
+
+def test_file_prints_are_kept_in_the_state(tmp_path):
+    path = tmp_path / "state.pickle"
+    state = publish.State(path)
+    state.file_prints["/site/v1/lakes/x/view"] = ("abc", 10, 20)
+    state.save()
+    assert publish.State(path).file_prints == {"/site/v1/lakes/x/view": ("abc", 10, 20)}
+
+
 def test_nothing_is_handed_on_without_the_setting(monkeypatch, capsys):
     monkeypatch.delenv("PUBLISH_CLUBS_DONE", raising=False)
     flushed = []

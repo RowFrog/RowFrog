@@ -311,6 +311,9 @@ class State:
         self.club_inputs: dict[str, dict[str, str]] = {}
         # Fingerprints of what save() last wrote (or load found), so an unchanged part is not written again.
         self._written: dict[str, str] = {}
+        # Per published file, a print of what it says apart from its build time, and its size and
+        # modification time once written (FILE_PRINTS), so the next run need not read it back.
+        self.file_prints: dict[str, tuple[str, int, int]] = {}
         if path and path.exists():
             try:
                 started = time.perf_counter()
@@ -330,6 +333,7 @@ class State:
                 self.model_runs = saved.get("model_runs", [])
                 self.club_runs = saved.get("club_runs", {})
                 self.club_inputs = saved.get("club_inputs", {})
+                self.file_prints = saved.get("file_prints", {})
                 api.prepared.last_water.update(saved.get("water", {}))
                 api.prepared.last_levels.update(saved.get("levels", {}))
                 api.prepared.last_warnings.update(saved.get("warnings", {}))
@@ -386,6 +390,7 @@ class State:
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
             "club_inputs": self.club_inputs,
+            "file_prints": self.file_prints,
             "rain_at_hour_start": True,  # decision 0043
         }
         if with_weather or "weather" not in self._written or not self.weather_path().exists():
@@ -1196,15 +1201,60 @@ def unchanged(path: Path, body) -> bool:
     return strip(old) == strip(json.loads(json.dumps(body, ensure_ascii=False)))
 
 
+# The run's State.file_prints; None writes as before, comparing with each published file in full.
+FILE_PRINTS: dict[str, tuple[str, int, int]] | None = None
+# The output folder; the prints are kept by path inside it, so they stay short in the state file.
+FILE_PRINTS_ROOT: Path | None = None
+
+
+def content_print(body: dict) -> str:
+    """A short fingerprint of what a file says apart from when it was built (as unchanged() compares)."""
+    stripped = {k: v for k, v in body.items() if k not in BUILD_TIME_KEYS}
+    return hashlib.blake2b(json.dumps(stripped, ensure_ascii=False).encode(), digest_size=8).hexdigest()
+
+
+def _print_key(path: Path) -> str:
+    try:
+        return path.relative_to(FILE_PRINTS_ROOT).as_posix() if FILE_PRINTS_ROOT else str(path)
+    except ValueError:
+        return str(path)
+
+
+def _file_stamp(path: Path) -> tuple[int, int] | None:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    return st.st_size, st.st_mtime_ns
+
+
 def write(path: Path, body) -> None:
     if path.parent.is_file():  # the lake list used to be a file at v1/lakes
         path.parent.unlink()
-    if unchanged(path, body):
+    printed = FILE_PRINTS is not None and isinstance(body, dict)
+    if printed:
+        # Reading a published file back (up to ~3 MB for a lake view) took most of a lake view's
+        # time on the Pi once views were built with numpy (Nov 2026). The print kept from the last
+        # run tells the same, as long as the file is still the one it was kept for (same size and
+        # modification time); otherwise, or with no print yet, the file is read back as before.
+        key, now_print, stamp = _print_key(path), content_print(body), _file_stamp(path)
+        kept = FILE_PRINTS.get(key)
+        if kept is not None and stamp is not None and tuple(kept[1:]) == stamp:
+            same = kept[0] == now_print
+        else:
+            same = unchanged(path, body)
+        if same:
+            if stamp is not None:
+                FILE_PRINTS[key] = (now_print, *stamp)
+            return
+    elif unchanged(path, body):
         return
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     tmp.replace(path)
+    if printed and (stamp := _file_stamp(path)) is not None:
+        FILE_PRINTS[key] = (now_print, *stamp)
     if UPLOADER is not None:
         UPLOADER.add(path)
 
@@ -1586,6 +1636,8 @@ def main() -> int:
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
     state = State(args.state)
+    global FILE_PRINTS, FILE_PRINTS_ROOT
+    FILE_PRINTS, FILE_PRINTS_ROOT = state.file_prints, args.out
     if args.state:
         # Lake grids are kept next to the state and built again only when an outline or the grid code changed.
         lake_view.GRID_CACHE_DIR = args.state.parent / "lake-grids"
