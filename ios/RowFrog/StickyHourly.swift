@@ -7,6 +7,8 @@ import SwiftUI
 final class StickyHourly {
     var hourlyFrame: CGRect = .zero
     var dayTops: [Date: CGFloat] = [:]
+    /// Where the table's last line starts, in global coordinates (0 before it was measured).
+    var lastRowTop: CGFloat = 0
     /// Where the header stays on the screen, in global coordinates.
     var top: CGFloat = 0
     /// The height of the tip under the card's title (0 without one): the header stays only once
@@ -18,9 +20,13 @@ final class StickyHourly {
         hourlyFrame.height > 0 && hourlyFrame.minY + 40 + leadIn < top && hourlyFrame.maxY > top
     }
 
-    /// How far up the last rows have pushed the header (0 or less).
+    /// How far up the last line has pushed the header (0 or less). The header stops on the
+    /// table's last line and the two leave together, so it never stands alone over the
+    /// tile's rounded end with no row under it (owner's pick B, 25 Nov 2026: it showed
+    /// square corners there on the iPhone).
     func push(at top: CGFloat) -> CGFloat {
-        min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
+        let end = lastRowTop > hourlyFrame.minY && lastRowTop < hourlyFrame.maxY ? lastRowTop : hourlyFrame.maxY
+        return min(0, end - top - HourlyStickyHeader.height)
     }
 }
 

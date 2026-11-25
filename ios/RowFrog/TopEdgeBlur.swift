@@ -13,8 +13,9 @@ struct TopEdgeBlur: View {
     /// Where on screen the cards should be hidden completely: below the clock, or
     /// below the small name and the top buttons.
     let edge: CGFloat
-    /// How far below `edge` the blur runs out.
-    static let runOut: CGFloat = 24
+    /// How far below `edge` the blur runs out: 10 pt more than at first, as deep as the
+    /// website's looked on the owner's iPhone (25 Nov 2026); the website follows this.
+    static let runOut: CGFloat = 34
 
     var body: some View {
         // Fractions of the whole height, as the website's (style.css .soft-edge).

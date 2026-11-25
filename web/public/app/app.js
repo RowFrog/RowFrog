@@ -1256,6 +1256,17 @@ function stickHourlyHeader() {
   const head = root.querySelector(".hhead");
   const card = head?.closest(".card");
   if (!card) return;
+  // The table's last line stops the pinned header, and the two leave together, so it never stands
+  // alone over the tile's rounded end (owner's pick B, 25 Nov 2026; StickyHourly.push in the app).
+  // Sticky keeps its margin box inside the table: a bottom margin as tall as the last line, taken back
+  // by the rows, ends its ride on that line without moving anything.
+  const lines = [...(head.nextElementSibling?.children ?? [])].filter((x) => x.offsetParent);
+  const fold = card.querySelector(".fold");
+  const last = fold?.offsetParent ? 0 : lines.at(-1)?.offsetHeight ?? 0;
+  if (head.style.marginBottom !== `${last}px`) {
+    head.style.marginBottom = `${last}px`;
+    if (head.nextElementSibling) head.nextElementSibling.style.marginTop = `${-last}px`;
+  }
   const table = head.parentElement.getBoundingClientRect();
   const at = head.getBoundingClientRect();
   const top = parseFloat(getComputedStyle(head).top) || 0;

@@ -20,6 +20,12 @@
 - On the device, iOS's soft edge from that bar ended in a hard cut under the name capsule (owner's shots, 22 Nov 00:58 CET), not the soft fade-out picked in 0054.
 - UIKit blur views are used rather than SwiftUI materials under a mask, because such a material did not blur on the owner's iPad (#439, 17 Nov 2026).
 
+## Added 25 Nov 2026 (owner, after the real-device shots of 23 Nov)
+
+- The pinned 48-hour header stops on the table's last line and leaves together with it (pick B), in the app and on the website. Before, it rode to the tile's end and stood there alone with square corners over the tile's rounded end.
+- The soft edge runs out 34 pt below the clock, or below the small name and the buttons, 10 pt deeper than at first, as deep as the website's looked.
+- The website behaves as the app, in light and dark mode: the same depth and tint for the soft edge (system background, 45 % to clear), and glass buttons as clear as the app's in dark mode (28 % tint, nothing behind darkened, where it was 55 % and darker).
+
 ## Turned down
 
 - 1: keep the bar per page with an own pager (PR #607): the hard cut stays, swipe questions open.

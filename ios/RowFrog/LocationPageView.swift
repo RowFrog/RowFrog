@@ -237,6 +237,9 @@ struct LocationPageView: View {
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
                         if sticky.hourlyFrame != frame { sticky.hourlyFrame = frame }
                     }
+                    .onPreferenceChange(LastRowTopKey.self) { top in
+                        if sticky.lastRowTop != top { sticky.lastRowTop = top }
+                    }
                     .onPreferenceChange(DayTopKey.self) { tops in
                         if sticky.dayTops != tops { sticky.dayTops = tops }
                     }
@@ -1272,6 +1275,24 @@ private struct HourlyFrameKey: PreferenceKey {
     }
 }
 
+/// Where the hourly table's last line starts on the page (StickyHourly.lastRowTop).
+private struct LastRowTopKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next != 0 { value = next }
+    }
+}
+
+/// Reports where the line it sits behind starts.
+private struct LastRowTop: View {
+    var body: some View {
+        GeometryReader { geo in
+            Color.clear.preference(key: LastRowTopKey.self, value: geo.frame(in: .global).minY)
+        }
+    }
+}
+
 /// Where each day of the hourly table starts on the page.
 private struct DayTopKey: PreferenceKey {
     static var defaultValue: [Date: CGFloat] = [:]
@@ -1315,7 +1336,9 @@ private struct HourlyCard: View {
         let firstRow = firstHourRow
         return Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
+            let lastID = folds && hiddenHours > 0 ? nil : rows.last?.id
             ForEach(rows) { row in
+                Group {
                 switch row {
                 case let .day(day, index):
                     DayHeader(day: day, sun: sunDay(on: day))
@@ -1347,9 +1370,13 @@ private struct HourlyCard: View {
                     }
                     .buttonStyle(.plain)
                 }
+                }
+                // The table's last line stops the pinned header (owner's pick B, 25 Nov 2026).
+                .background { if row.id == lastID { LastRowTop() } }
             }
             if folds && hiddenHours > 0 {
                 foldButton(proxy)
+                    .background { LastRowTop() }
             }
         }
         .background {

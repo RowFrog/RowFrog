@@ -299,6 +299,31 @@ test("tablet from the Home Screen icon (no #/club/ address): a turn lays the pag
   await context.close();
 });
 
+test("48 hours: the table's last line stops the pinned header, and the two leave together (owner's pick B, 25 Nov 2026)", async () => {
+  const { page, errors, context } = await openIn({ name: "short phone", viewport: { width: 390, height: 330 }, touch: true });
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".hhead").waitFor();
+  const at = () => page.evaluate(() => {
+    const head = document.querySelector(".hhead");
+    const last = [...head.nextElementSibling.children].filter((x) => x.offsetParent).at(-1).getBoundingClientRect();
+    const box = head.getBoundingClientRect();
+    return { stuck: head.classList.contains("stuck"), bottom: box.bottom, lastTop: last.top };
+  });
+  const end = await page.evaluate(() => document.querySelector(".hourly").getBoundingClientRect().bottom + scrollY);
+  let met = 0;
+  for (let y = end - 330; y <= end - 40; y += 10) {
+    await page.evaluate((to) => scrollTo(0, to), y);
+    await page.waitForTimeout(60);
+    const now = await at();
+    if (!now.stuck) continue;
+    assert.ok(now.bottom <= now.lastTop + 0.5, `at ${y}: the header (bottom ${now.bottom}) lies over the last line (top ${now.lastTop})`);
+    if (Math.abs(now.bottom - now.lastTop) < 0.5) met++;
+  }
+  assert.ok(met >= 2, "the header rode on the last line for a while");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("tablet: a swipe on a short club list never scrolls the club page beside it (owner's iPad shots, 23 Nov 2026)", async () => {
   const { page, errors, context } = await openIn({ name: "tablet", viewport: { width: 1180, height: 820 } });
   await page.goto(`${base}/app/#/club/mrc-1880`);

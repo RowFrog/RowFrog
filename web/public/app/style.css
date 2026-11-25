@@ -445,18 +445,20 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
   --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .35), transparent 55%), radial-gradient(90% 70% at 80% 110%, rgba(255, 255, 255, .14), transparent 60%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .75), inset 0 -1px .5px rgba(255, 255, 255, .25), inset 0 0 0 .5px rgba(255, 255, 255, .35);
   --glass-shadow: 0 6px 16px rgba(0, 0, 0, .16); }
-:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #1c1c1e 55%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #1c1c1e 28%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #1c1c1e 55%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #1c1c1e 28%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); } }
+/* Dark mode as clear as the app's Liquid Glass (owner, 25 Nov 2026: the buttons looked darker than the app's): 28 % tint
+   and nothing behind darkened, where it was 55 % and brightness .8. */
 /* Doubled class, so the glass wins over .round, .search and the other looks these controls also carry. */
 .glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--glass-sheen), var(--glass-tint);
   backdrop-filter: blur(8px) saturate(1.4) brightness(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(1.1);
   border: 0; box-shadow: var(--glass-rim), var(--glass-shadow); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass.glass, .leaflet-bar { background: var(--card); } }
 /* Dark glass stays dark over a light map (the title pill was pale text on a pale pill), as iOS's dark material. */
-:root[data-theme="dark"] .glass.glass, :root[data-theme="dark"] .leaflet-bar { backdrop-filter: blur(8px) saturate(1.4) brightness(.8); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(.8); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .glass.glass, :root:not([data-theme="light"]) .leaflet-bar { backdrop-filter: blur(8px) saturate(1.4) brightness(.8); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(.8); } }
+:root[data-theme="dark"] .glass.glass, :root[data-theme="dark"] .leaflet-bar { backdrop-filter: blur(8px) saturate(1.6); -webkit-backdrop-filter: blur(8px) saturate(1.6); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .glass.glass, :root:not([data-theme="light"]) .leaflet-bar { backdrop-filter: blur(8px) saturate(1.6); -webkit-backdrop-filter: blur(8px) saturate(1.6); } }
 @media (prefers-reduced-transparency: reduce) { .glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
 /* Bottom bar: three floating pieces, all 44 px high: cog and boat, page dots, list (RootView.PageBar). */
@@ -551,16 +553,23 @@ body.edge-page::before { display: none; }
 .top-title.edge::before { display: none; }
 /* The small name in its own glass capsule (InlineClubTitle); the buttons keep their places. */
 .top-pill { min-width: 0; height: 44px; padding: 0 16px; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; }
+/* As the app's (TopEdgeBlur, owner 25 Nov 2026: the website behaves as the app): it runs out 34 px below the clock,
+   and once the small name shows, 34 px below it and the buttons; on wide windows always below the line of buttons.
+   The tint is the app's: the system background at 45 %, 20 % at 40 % of the way down, then clear, also over a picture. */
 .soft-edge { position: fixed; top: 0; left: var(--area-left); width: var(--area-width); z-index: 9; pointer-events: none;
-  height: calc(var(--safe-top) + 44px + 10px); --edge-tint: var(--bg); --edge-top: 80%; }
-body.wide-bar .soft-edge { height: calc(var(--head-mid, 22px) + 22px + 10px); }
+  --edge-run-out: 34px; height: calc(var(--safe-top) + var(--edge-run-out)); --edge-tint: var(--system-bg); --edge-top: 45%;
+  transition: height .2s ease-in-out; }
+body.title-gone .soft-edge { height: calc(var(--safe-top) + 44px + var(--edge-run-out)); }
+body.wide-bar .soft-edge { height: calc(var(--head-mid, 22px) + 22px + var(--edge-run-out)); }
+:root { --system-bg: #fff; }
+:root[data-theme="dark"] { --system-bg: #000; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --system-bg: #000; } }
 @media (display-mode: standalone) {
   html::after { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); z-index: 11; pointer-events: none;
     background: linear-gradient(rgba(0, 0, 0, .3), rgba(0, 0, 0, .1)); }
   :root[data-theme="dark"]::after { background: linear-gradient(rgba(0, 0, 0, .18), rgba(0, 0, 0, 0)); }
 }
 @media (display-mode: standalone) and (prefers-color-scheme: dark) { :root:not([data-theme="light"])::after { background: linear-gradient(rgba(0, 0, 0, .18), rgba(0, 0, 0, 0)); } }
-body.has-picture .soft-edge { --edge-tint: var(--picture-top, color-mix(in srgb, var(--bg) 66%, transparent)); }
 .soft-edge > i { position: absolute; inset: 0; opacity: 0; transition: opacity .2s ease-in-out;
   backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
   -webkit-mask-image: linear-gradient(#000 var(--full), transparent var(--clear)); mask-image: linear-gradient(#000 var(--full), transparent var(--clear)); }
@@ -569,7 +578,7 @@ body.has-picture .soft-edge { --edge-tint: var(--picture-top, color-mix(in srgb,
 .soft-edge > i:nth-child(3) { --blur: 6px; --full: 20%; --clear: 62%; }
 .soft-edge > i:nth-child(4) { --blur: 12px; --full: 5%; --clear: 45%; }
 .soft-edge > b { position: absolute; inset: 0; opacity: 0; transition: opacity .2s ease-in-out;
-  background: linear-gradient(color-mix(in srgb, var(--edge-tint) var(--edge-top), transparent), color-mix(in srgb, var(--edge-tint) 45%, transparent) 40%, transparent); }
+  background: linear-gradient(color-mix(in srgb, var(--edge-tint) var(--edge-top), transparent), color-mix(in srgb, var(--edge-tint) 20%, transparent) 40%, transparent); }
 body.scrolled .soft-edge > * { opacity: 1; }
 /* Without backdrop-filter, or with reduced transparency: no blur, the page's colour alone fades the cards out. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .soft-edge > i { display: none; } .soft-edge > b { background: linear-gradient(var(--edge-tint), var(--edge-tint) 55%, transparent); } }
