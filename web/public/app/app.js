@@ -892,7 +892,13 @@ function slideList(hide) {
   split.classList.add("hiding");
   setTimeout(done, 300);
 }
-sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
+// Laid out again on a turn or resize across the edge, also on the first club page, whose address has no
+// "#/club/…" when the Home Screen icon opens it (owner's iPad shots, 23 Nov 2026: the list stayed beside a
+// portrait page, or a landscape page had neither list nor sidebar button).
+const onClubPage = () => location.hash === "" || location.hash === "#" || location.hash === "#/" || location.hash.startsWith("#/club/");
+// Not while the safety notice or the tour is up: drawn again, they would lose a tick or a search typed into them.
+const pastStart = () => store.safety?.version >= SAFETY_VERSION && tourSeen() && location.hash !== "#/tour";
+sideList.addEventListener("change", () => onClubPage() && pastStart() && route(false));
 
 /** From this page width, padding included and counted as if the list were shown, the cards go into two columns (LocationPageView.twoColumnWidth). */
 const TWO_COLUMNS = 600;
