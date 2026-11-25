@@ -126,3 +126,58 @@ def test_published_sizes(tmp_path):
     text = published_sizes.report(list(rows.values()))
     assert "## Download sizes" in text and "| Club forecast | 2 |" in text
     assert published_sizes.report([]) == ""
+
+
+def test_summary_gives_the_numbers_as_data():
+    from datetime import datetime, timezone
+    rows = _rows(lambda i: 7500 if i == 2 else 6000 - 50 * i)  # copernicus silent -> a note
+    data = limits.summary(limits.check(rows, TODAY), datetime(2026, 11, 20, 6, 10, tzinfo=timezone.utc))
+    assert data["version"] == 1 and data["time"] == "2026-11-20T06:10:00Z" and data["level"] == "warn"
+    om = {s["period"]: s for s in data["services"] if s["key"] == "open-meteo"}
+    assert om["day"]["used"] == 7500 and om["day"]["limit"] == 10_000 and om["day"]["share"] == 0.75
+    assert om["day"]["level"] == "warn" and om["day"]["name"] == "Weather API (Open-Meteo)"
+    assert om["month"]["limit"] == 300_000
+    assert {n["key"] for n in data["notes"]} == {"open-meteo", "copernicus"}  # growth warning, silent service
+
+
+def test_summary_without_the_usage_counter():
+    from datetime import datetime, timezone
+    data = limits.summary(None, datetime(2026, 11, 20, tzinfo=timezone.utc))
+    assert data["level"] == "warn" and data["services"] == [] and data["notes"][0]["key"] == "usage-counter"
+
+
+def test_r2_query_stays_inside_cloudflares_window(monkeypatch):
+    from rowfrog import cloudflare_usage
+
+    asked = {}
+
+    class Client:
+        def post(self, url, json, headers, timeout):
+            asked.update(json["variables"])
+
+            class Resp:
+                def raise_for_status(self):
+                    pass
+
+                def json(self):
+                    return {"data": {"viewer": {"accounts": []}}}
+
+            return Resp()
+
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "t")
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "a")
+    assert cloudflare_usage.r2_daily(TODAY, days=35, client=Client()) == []
+    span = (date.fromisoformat(asked["e"]) - date.fromisoformat(asked["s"])).days + 1
+    assert span <= 32  # Cloudflare: at most 4 weeks and 4 days
+
+
+def test_published_folder_on_the_managed_pi(tmp_path, monkeypatch):
+    from rowfrog import published_sizes
+
+    monkeypatch.delenv("PUBLISHED_DIR", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    assert published_sizes.folder() is None
+    (tmp_path / "site" / "v1").mkdir(parents=True)
+    assert published_sizes.folder() == tmp_path / "site" / "v1"
+    (tmp_path / "data" / "rowfrog" / "site" / "v1").mkdir(parents=True)
+    assert published_sizes.folder() == tmp_path / "data" / "rowfrog" / "site" / "v1"

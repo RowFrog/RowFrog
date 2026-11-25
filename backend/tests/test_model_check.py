@@ -109,3 +109,38 @@ def test_schedule_effect_compares_both_runs_with_the_morning_run():
     text = "\n".join(mc._schedule_lines(effect))
     assert "Once a day instead of twice?" in text
     assert "Same order of the models with one run a day: **no**" in text
+
+
+def test_summary_pools_the_app_rows_and_falls_back_to_the_model():
+    issued = datetime(2026, 10, 23, 4, tzinfo=UTC)
+    rows = mc.rows_from_payload(_payload([3.0, 9.0], [2.0, 2.0]), P, "icon_d2", issued)
+    t10, t11 = datetime(2026, 10, 23, 10, tzinfo=UTC), datetime(2026, 10, 23, 11, tzinfo=UTC)
+    obs = {"a": {"wind": {t10: 4.0, t11: 8.0}, "gust": {t10: 6.0, t11: 12.0}, "temp": {t10: 9.0}}}
+    used = {"a": {"wind": {"station": "03739", "name": "Oberpfaffenhofen", "km": 20.5}}}
+    now = datetime(2026, 10, 24, 4, 40, tzinfo=UTC)
+    data = mc.summary(P, rows, obs, used, now)
+    assert data["model"] == "icon_d2" and data["points"] == 2 and data["stations"] == 1 and data["hours"] == 2
+    assert {e["key"]: e["mae"] for e in data["errors"]} == {"wind": 1.0, "gust": 0.0, "temperature": 1.0}
+    assert data["light_wrong"] == 0.0 and data["gkd_readings"] == 0
+
+    app = [dict(r, model="app") for r in mc.rows_from_payload(_payload([6.0, 8.0], [2.0, 2.0]), P, "icon_d2", issued)]
+    gkd = {"a": {"water": {t10: 12.0, datetime(2026, 10, 1, tzinfo=UTC): 13.0}}}  # 1 Oct is older than 14 days
+    data = mc.summary(P, rows + app, obs, used, now, gkd)
+    assert data["model"] == "app" and {e["key"]: e["mae"] for e in data["errors"]}["wind"] == 1.0
+    assert data["gkd_readings"] == 1
+
+
+def test_summary_history_keeps_14_days(tmp_path):
+    import importlib.util, json
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("model_check_script", Path(__file__).resolve().parents[2] / "scripts" / "model_check.py")
+    script = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(script)
+    (tmp_path / "summary-history.jsonl").write_text(
+        json.dumps({"time": "2026-10-01T04:40:00Z"}) + "\nnot json\n" + json.dumps({"time": "2026-10-20T04:40:00Z"}) + "\n")
+    now = datetime(2026, 10, 24, 4, 40, tzinfo=UTC)
+    script.write_summary(tmp_path, {"version": 1, "time": "2026-10-24T04:40:00Z"}, now)
+    assert json.loads((tmp_path / "summary.json").read_text())["time"] == "2026-10-24T04:40:00Z"
+    lines = [json.loads(l)["time"] for l in (tmp_path / "summary-history.jsonl").read_text().splitlines()]
+    assert lines == ["2026-10-20T04:40:00Z", "2026-10-24T04:40:00Z"]
+    assert not list(tmp_path.glob("*.tmp"))
