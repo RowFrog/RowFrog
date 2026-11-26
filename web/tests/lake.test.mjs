@@ -14,7 +14,7 @@ function sampleView({ speeds = [3, 3], lakeWide = { light: "green", reasons: [] 
     zones: ["west", "east"], outline: [], clubs: [],
     points: [{ lat: 47.905, lon: 11.315 }],
     hours: speeds.map((s, i) => ({
-      time: `2026-10-26T${String(10 + i).padStart(2, "0")}:00:00Z`, lakeWide, lights: "000", wavesCm: [5, 10, 20],
+      time: `2026-10-26T${String(10 + i).padStart(2, "0")}:00:00Z`, lakeWide, lights: "000", wavesMm: [50, 100, 200],
       wind: [{ speedMs: s, gustMs: s + 2, fromDeg: 270, other: 0 }],
       zones: [{ light: "green", maxWaveM: 0.1 }, { light: "green", maxWaveM: 0.2 }],
     })),
@@ -157,7 +157,7 @@ test("a tapped spot names hail, a thunderstorm or heavy rain, the strongest only
   assert.equal(pointExtra({ other: "red", visM: 300 }), null);
   assert.deepEqual(pointExtra({ other: "red", visM: 800 }), { kind: "thunderstorm", light: "red" });
   const view = { waterC: 15, grid: { cellPoint: [0] } };
-  const hour = { wavesCm: [40], lakeWide: { reasons: [] }, wind: [{ speedMs: 3, gustMs: 9, visM: 800, storm: "green", rainMm: 0, hail: false }] };
+  const hour = { wavesMm: [400], lakeWide: { reasons: [] }, wind: [{ speedMs: 3, gustMs: 9, visM: 800, storm: "green", rainMm: 0, hail: false }] };
   const p = spotProbe(view, hour, 0, { boat: { id: "small", name: "", type: "racing", class: "1x" }, custom: {} });
   assert.equal(p.waves.m, 0.4);
   assert.equal(p.visibility.light, "amber");
@@ -190,7 +190,7 @@ test("the lake view's now goes by this minute's daylight", () => {
 // between green and amber follows the waves blended between the cell centres, not the squares.
 test("the fine rowing light follows the blended values", () => {
   const view = sampleView();
-  view.hours[0].wavesCm = [5, 10, 30];
+  view.hours[0].wavesMm = [50, 100, 300];
   const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
   const fine = fineLight(view, view.hours[0], limits);
   assert.equal(fine.scale, 8);
@@ -219,14 +219,14 @@ test("the fine rowing light follows the blended values", () => {
 test("a cell red only by the waves' rounding is not kept as a square", () => {
   const view = sampleView();
   const hour = view.hours[0];
-  hour.wavesCm = [20, 25, 20];
+  hour.wavesMm = [200, 250, 200];
   hour.lights = ["amber", "red", "amber"];
   const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
   const fine = fineLight(view, hour, limits);
   const at = (x) => fine.data.slice((4 * fine.width + x) * 4, (4 * fine.width + x) * 4 + 3).join(",");
   for (const x of [8, 11, 12, 15]) assert.equal(at(x), "255,149,0", `pixel ${x} of the middle cell is amber, not a red square`);
   // A cell the server makes red for more than rounding still stays red.
-  hour.wavesCm = [20, 24, 20];
+  hour.wavesMm = [200, 249, 200];
   const kept = fineLight(view, hour, limits);
   assert.equal(kept.data.slice((4 * kept.width + 12) * 4, (4 * kept.width + 12) * 4 + 3).join(","), "255,59,48");
 });
@@ -240,7 +240,7 @@ test("fog along both shores: each part says why and where, and the headline name
       cellZone: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
     zones: ["north", "south"], outline: [[[11.295, 47.795], [11.345, 47.795], [11.345, 47.835], [11.295, 47.835]]], clubs: [],
     points: [{ lat: 47.815, lon: 11.32 }],
-    hours: [{ time: "2026-11-12T09:00:00Z", lakeWide: { light: "green", reasons: [] }, lights, wavesCm: Array(20).fill(1),
+    hours: [{ time: "2026-11-12T09:00:00Z", lakeWide: { light: "green", reasons: [] }, lights, wavesMm: Array(20).fill(10),
       wind: [{ speedMs: 1, gustMs: 2, fromDeg: 315, other: 2, visM: 300, storm: 0 }],
       zones: [{ light: "red", maxWaveM: 0.01 }, { light: "red", maxWaveM: 0.01 }] }],
   });
@@ -265,4 +265,31 @@ test("a part's wind direction is the speed-weighted vector mean, and its arrow g
   assert.ok(Math.abs(meanFrom([{ fromDeg: 350, speedMs: 2 }, { fromDeg: 10, speedMs: 2 }])) < 1e-9 || Math.abs(meanFrom([{ fromDeg: 350, speedMs: 2 }, { fromDeg: 10, speedMs: 2 }]) - 360) < 1e-9, "across north");
   assert.ok(Math.abs(meanFrom([{ fromDeg: 0, speedMs: 1 }, { fromDeg: 90, speedMs: 3 }]) - 71.565) < 0.01, "the stronger wind weighs more");
   assert.deepEqual([0, 45, 90, 180, 270, 337, 338, -45, 720].map(arrowGlyph), ["↑", "↗", "→", "↓", "←", "↖", "↑", "↖", "↑"]);
+});
+
+// Starnberger See, 26 Nov 2026, 12:00: cells of exactly "15 cm" next to each other blended to 0.1499999… at one
+// pixel per cell, a green dot in the amber under the 0.15 m limit (owner's zoomed-in lake map).
+test("cells exactly on a limit blend to it, without green dots", () => {
+  const view = decodeView({
+    generatedAt: "2026-11-26T11:00:00Z", waterC: 6,
+    grid: { south: 47.9, west: 11.3, dLat: 0.01, dLon: 0.01, cols: 3, rows: 3, cells: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            cellPoint: Array(9).fill(0), cellZone: Array(9).fill(0) },
+    zones: ["all"], outline: [], clubs: [], points: [{ lat: 47.915, lon: 11.315 }],
+    hours: [{
+      time: "2026-11-26T11:00:00Z", lakeWide: { light: "green", reasons: [] }, lights: "111111111", wavesMm: Array(9).fill(150),
+      wind: [{ speedMs: 2, gustMs: 4, fromDeg: 0, other: 0 }], zones: [{ light: "amber", maxWaveM: 0.15 }],
+    }],
+  });
+  const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
+  const fine = fineLight(view, view.hours[0], limits);
+  const green = [];
+  for (let p = 0; p < fine.width * fine.height; p++) if (fine.data.slice(p * 4, p * 4 + 3).join(",") === "52,199,89") green.push(p);
+  assert.deepEqual(green, []);
+});
+
+// Lakes kept from before the millimetres keep their whole centimetres until the next all-clubs run rewrites them.
+test("a view in whole centimetres still reads as millimetres", () => {
+  const view = sampleView();
+  const raw = { ...view, hours: view.hours.map(({ wavesMm, ...h }) => ({ ...h, lights: "000", wavesCm: wavesMm.map((mm) => mm / 10) })) };
+  assert.deepEqual(decodeView(raw).hours[0].wavesMm, [50, 100, 200]);
 });

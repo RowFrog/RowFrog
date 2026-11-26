@@ -100,7 +100,7 @@ def test_lake_view_endpoint(monkeypatch):
     cells = body["grid"]["cells"]
     assert len(body["hours"]) == 2
     first = body["hours"][0]
-    assert len(first["lights"]) == len(first["wavesCm"]) == len(cells) == len(body["grid"]["cellPoint"])
+    assert len(first["lights"]) == len(first["wavesMm"]) == len(cells) == len(body["grid"]["cellPoint"])
     assert set(first["lights"]) <= {"0", "1", "2"}
     assert len(first["wind"]) == len(body["points"])
     assert {w["other"] for w in first["wind"]} <= {0, 1, 2}

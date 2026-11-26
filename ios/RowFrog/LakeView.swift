@@ -138,7 +138,7 @@ struct LakeHour: Decodable, Hashable, Identifiable {
     var lakeWide: LakeWide
     /// Per water cell, from the conditions at the cell only.
     var lights: [Light]
-    let wavesCm: [Int]
+    let wavesMm: [Int]
     /// Per forecast point.
     let wind: [LakeWind]
     /// Per part of the lake: the worst light and the highest waves in it.
@@ -147,7 +147,7 @@ struct LakeHour: Decodable, Hashable, Identifiable {
     var id: Date { time }
 
     private enum CodingKeys: String, CodingKey {
-        case time, lakeWide, lights, wavesCm, wind, zones
+        case time, lakeWide, lights, wavesMm, wavesCm, wind, zones
     }
 
     init(from decoder: Decoder) throws {
@@ -156,12 +156,17 @@ struct LakeHour: Decodable, Hashable, Identifiable {
         lakeWide = try c.decode(LakeWide.self, forKey: .lakeWide)
         // One digit per cell: 0 green, 1 amber, 2 red.
         lights = try c.decode(String.self, forKey: .lights).map { (c: Character) -> Light in c == "2" ? .red : c == "1" ? .amber : .green }
-        wavesCm = try c.decode([Int].self, forKey: .wavesCm)
+        // Files written before Nov 2026's millimetres (kept lakes until the next all-clubs run) have whole centimetres.
+        if let mm = try c.decodeIfPresent([Int].self, forKey: .wavesMm) {
+            wavesMm = mm
+        } else {
+            wavesMm = try c.decode([Int].self, forKey: .wavesCm).map { $0 * 10 }
+        }
         wind = try c.decode([LakeWind].self, forKey: .wind)
         zones = try c.decode([LakeZone].self, forKey: .zones)
     }
 
-    func wave(ofCell i: Int) -> Double { Double(wavesCm[i]) / 100 }
+    func wave(ofCell i: Int) -> Double { Double(wavesMm[i]) / 1000 }
 
     /// Share of the water that is green, amber and red.
     var shares: [Light: Double] {
@@ -317,7 +322,7 @@ extension LakeView {
         let cold = waterC.map { $0 < RowingLimits.coldWaterC }
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
         let l = limits.forWater(cold ? 0 : nil)
-        let wave = i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil
+        let wave = i < hour.wavesMm.count ? hour.wave(ofCell: i) : nil
         // Wind, waves, visibility, as everywhere in the app (owner, 13 Nov 2026).
         var values = [
             LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(wind?.speedMs, wind?.gustMs),
@@ -352,7 +357,7 @@ extension LakeView {
                 let light = max(wind?.other ?? .green,
                                 forBoat.light(wind?.speedMs, .windAmber, .windRed),
                                 forBoat.light(wind?.gustMs, .gustAmber, .gustRed),
-                                forBoat.light(i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil, .waveAmber, .waveRed))
+                                forBoat.light(i < hour.wavesMm.count ? hour.wave(ofCell: i) : nil, .waveAmber, .waveRed))
                 let z = i < grid.cellZone.count ? grid.cellZone[i] : 0
                 if z < zoneLights.count { zoneLights[z] = max(zoneLights[z], light) }
                 return light
@@ -470,8 +475,8 @@ extension LakeView {
 
     /// The highest waves anywhere on the lake this hour.
     func waveSummary(for hour: LakeHour) -> String? {
-        guard let cm = hour.wavesCm.max() else { return nil }
-        return tr("Waves up to %@", Format.waves(Double(cm) / 100))
+        guard let mm = hour.wavesMm.max() else { return nil }
+        return tr("Waves up to %@", Format.waves(Double(mm) / 1000))
     }
 }
 
@@ -758,7 +763,7 @@ extension LakeRaster {
         for (i, flat) in grid.cells.enumerated() where i < hour.lights.count {
             let p = (h - 1 - flat / w) * w + flat % w
             let wind = view.cellWind(i, in: hour)
-            var f = [wind?.speedMs ?? .nan, wind?.gustMs ?? .nan, i < hour.wavesCm.count ? hour.wave(ofCell: i) : .nan, .nan, .nan]
+            var f = [wind?.speedMs ?? .nan, wind?.gustMs ?? .nan, i < hour.wavesMm.count ? hour.wave(ofCell: i) : .nan, .nan, .nan]
             var stays = Light.green
             if let wind, wind.storm != nil {
                 // Newer backends say what the combined light is made of.
@@ -769,11 +774,11 @@ extension LakeRaster {
                 stays = wind?.other ?? .green  // only the combined light: it stays per cell
             }
             values[p] = f
-            // Waves come in whole centimetres: a cell at "25 cm" may be 25.4 cm and red over a
-            // 0.25 m limit. Judged with the waves up to half a centimetre higher, so such a cell
+            // Waves come in whole millimetres: a cell at "250 mm" may be 250.4 mm and red over a
+            // 0.25 m limit. Judged with the waves up to half a millimetre higher, so such a cell
             // isn't kept as one hard square (owner's zoomed-in lake map, 12 Nov 2026).
             var upper = f
-            if !upper[2].isNaN { upper[2] += 0.005 }
+            if !upper[2].isNaN { upper[2] += 0.0005 }
             let own = max(judged(f), judged(upper), stays)
             // The backend's light is stricter than these explain: keep it for the cell.
             least[p] = max(stays, hour.lights[i] > own ? hour.lights[i] : .green)
@@ -827,7 +832,10 @@ extension LakeRaster {
                     let cell = values[y * w + x]
                     for f in 0..<fields where !cell[f].isNaN { sum[f] += cell[f] * weight; weights[f] += weight }
                 }
-                for f in 0..<fields { blended[f] = weights[f] > 0 ? sum[f] / weights[f] : .nan }
+                // Rounded to a billionth: four cells of exactly 15 cm blend to 0.15 m, but the sums
+                // came out as 0.1499999… at one pixel per cell, a green dot under a 0.15 m limit
+                // (owner's lake map, 26 Nov 2026).
+                for f in 0..<fields { blended[f] = weights[f] > 0 ? ((sum[f] / weights[f]) * 1e9).rounded() / 1e9 : .nan }
                 let light = max(least[cy * w + cx], judged(blended))
                 let c = wholeRed ? greyed(color(light)) : color(light)
                 let j = (fy * fw + fx) * 4

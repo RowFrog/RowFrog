@@ -1281,7 +1281,9 @@ def build_lake_view(
                 },
                 # One digit per water cell: 0 green, 1 amber, 2 red.
                 "lights": "".join(map(_LIGHT_DIGIT.__getitem__, h.lights)),
-                "wavesCm": [round(w * 100) for w in h.waves_m],
+                # Waves in whole millimetres, so the maps can blend them finely: in whole centimetres a
+                # lake of cells at "15 cm" against a 0.15 m limit drew boxy amber (owner, 26 Nov 2026).
+                "wavesMm": [round(w * 1000) for w in h.waves_m],
                 # "other": the light from fog, thunderstorms, heavy rain and hail at the point,
                 # 0 green to 2 red; "visM", "storm" (thunderstorm light), "rainMm" and "hail"
                 # say which of them sets it, for the tapped spot's values.

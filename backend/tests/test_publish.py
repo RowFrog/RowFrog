@@ -650,11 +650,11 @@ def test_weather_lines_say_what_was_due_fresh_failed_kept_and_missing(monkeypatc
 
 
 def test_a_view_without_wind_or_waves_counts_as_empty():
-    full = {"hours": [{"wavesCm": [3, 4], "wind": [{"speedMs": 2.1}]}]}
+    full = {"hours": [{"wavesMm": [30, 40], "wind": [{"speedMs": 2.1}]}]}
     assert not publish.view_is_empty(full)
     assert publish.view_is_empty({"hours": []})
-    assert publish.view_is_empty({"hours": [{"wavesCm": [], "wind": [{"speedMs": 2.1}]}]})
-    assert publish.view_is_empty({"hours": [{"wavesCm": [3], "wind": [{"speedMs": None}]}]})
+    assert publish.view_is_empty({"hours": [{"wavesMm": [], "wind": [{"speedMs": 2.1}]}]})
+    assert publish.view_is_empty({"hours": [{"wavesMm": [30], "wind": [{"speedMs": None}]}]})
 
 
 def test_club_forecasts_count_missing_and_old_water(monkeypatch):

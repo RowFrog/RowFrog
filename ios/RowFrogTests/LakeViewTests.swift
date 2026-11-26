@@ -16,7 +16,7 @@ final class LakeViewTests: XCTestCase {
      "clubs": [{"id": "c", "shortName": "Club", "launchPoint": {"lat": 47.80, "lon": 11.30}}],
      "hours": [{"time": "2026-10-20T12:00:00+00:00",
                 "lakeWide": {"light": "green", "reasons": []},
-                "lights": "0012", "wavesCm": [3, 5, 20, 34],
+                "lights": "0012", "wavesMm": [30, 50, 200, 340],
                 "wind": [{"speedMs": 5.0, "gustMs": 7.5, "fromDeg": 180}, {"speedMs": 4.0, "gustMs": 6.0, "fromDeg": 190}],
                 "zones": [{"light": "red", "maxWaveM": 0.34}, {"light": "green", "maxWaveM": 0.05}]}]}
     """
@@ -99,7 +99,7 @@ final class LakeViewTests: XCTestCase {
     func testACellRedOnlyByTheWavesRoundingIsNotKeptAsASquare() throws {
         let rounded = json.replacingOccurrences(of: "\"fromDeg\": 180}", with: "\"fromDeg\": 180, \"other\": 0}")
             .replacingOccurrences(of: "\"fromDeg\": 190}", with: "\"fromDeg\": 190, \"other\": 0}")
-            .replacingOccurrences(of: "\"lights\": \"0012\", \"wavesCm\": [3, 5, 20, 34]", with: "\"lights\": \"0022\", \"wavesCm\": [3, 5, 25, 34]")
+            .replacingOccurrences(of: "\"lights\": \"0012\", \"wavesMm\": [30, 50, 200, 340]", with: "\"lights\": \"0022\", \"wavesMm\": [30, 50, 250, 340]")
         let view = try APIClient.decoder.decode(LakeView.self, from: Data(rounded.utf8))
         let image = try XCTUnwrap(LakeRaster.image(view, hour: view.hours[0], layer: .light))
         let bytes = try XCTUnwrap(image.dataProvider?.data as Data?)
@@ -140,7 +140,7 @@ final class LakeViewTests: XCTestCase {
          "clubs": [],
          "hours": [{"time": "2026-11-12T09:00:00+00:00",
                     "lakeWide": {"light": "green", "reasons": []},
-                    "lights": "\(lights)", "wavesCm": [\(Array(repeating: "1", count: 20).joined(separator: ", "))],
+                    "lights": "\(lights)", "wavesMm": [\(Array(repeating: "10", count: 20).joined(separator: ", "))],
                     "wind": [{"speedMs": 1.0, "gustMs": 2.0, "fromDeg": 315, "other": 2, "visM": 300, "storm": 0}],
                     "zones": [{"light": "red", "maxWaveM": 0.01}, {"light": "red", "maxWaveM": 0.01}]}]}
         """
@@ -176,7 +176,7 @@ final class LakeViewTests: XCTestCase {
          "clubs": [],
          "hours": [{"time": "2026-11-12T09:00:00+00:00",
                     "lakeWide": {"light": "green", "reasons": []},
-                    "lights": "\(fogLights)", "wavesCm": [\(Array(repeating: "6", count: 20).joined(separator: ", "))],
+                    "lights": "\(fogLights)", "wavesMm": [\(Array(repeating: "60", count: 20).joined(separator: ", "))],
                     "wind": [{"speedMs": 3.0, "gustMs": 4.0, "fromDeg": 45, "other": 2, "visM": 300, "storm": 0}],
                     "zones": [{"light": "red", "maxWaveM": 0.06}]}]}
         """

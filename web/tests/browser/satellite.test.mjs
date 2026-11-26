@@ -185,7 +185,7 @@ test("phone: the lake map opens on the street map, dark in dark mode, and the gl
     zones: ["west"], outline: [], clubs: [{ id: club.id, name: club.name, shortName: club.shortName, launchPoint: club.launchPoint }],
     points: [{ lat: 47.997, lon: 11.348 }],
     hours: [...Array(6).keys()].map((i) => ({
-      time: new Date(start.getTime() + i * 3600e3).toISOString(), lakeWide: { light: "green", reasons: [] }, lights: "0".repeat(n), wavesCm: Array(n).fill(5),
+      time: new Date(start.getTime() + i * 3600e3).toISOString(), lakeWide: { light: "green", reasons: [] }, lights: "0".repeat(n), wavesMm: Array(n).fill(50),
       wind: [{ speedMs: 2, gustMs: 4, fromDeg: 270, other: 0 }], zones: [{ light: "green", maxWaveM: 0.05 }],
     })),
   };
