@@ -286,3 +286,10 @@ test("cells exactly on a limit blend to it, without green dots", () => {
   for (let p = 0; p < fine.width * fine.height; p++) if (fine.data.slice(p * 4, p * 4 + 3).join(",") === "52,199,89") green.push(p);
   assert.deepEqual(green, []);
 });
+
+// Lakes kept from before the millimetres keep their whole centimetres until the next all-clubs run rewrites them.
+test("a view in whole centimetres still reads as millimetres", () => {
+  const view = sampleView();
+  const raw = { ...view, hours: view.hours.map(({ wavesMm, ...h }) => ({ ...h, lights: "000", wavesCm: wavesMm.map((mm) => mm / 10) })) };
+  assert.deepEqual(decodeView(raw).hours[0].wavesMm, [50, 100, 200]);
+});

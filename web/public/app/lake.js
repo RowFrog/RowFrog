@@ -75,6 +75,8 @@ export function decodeView(raw) {
     ...raw,
     hours: raw.hours.map((hour) => ({
       ...hour,
+      // Files written before Nov 2026's millimetres (kept lakes until the next all-clubs run) have whole centimetres.
+      wavesMm: hour.wavesMm ?? (hour.wavesCm ?? []).map((cm) => cm * 10),
       lights: typeof hour.lights === "string" ? [...hour.lights].map((c) => LIGHTS[Number(c)] ?? "green") : hour.lights,
       wind: hour.wind.map((w) => ({ ...w, other: w.other == null ? null : LIGHTS[Math.min(2, w.other)],
         storm: w.storm == null ? null : LIGHTS[Math.min(2, w.storm)] })),

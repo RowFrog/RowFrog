@@ -147,7 +147,7 @@ struct LakeHour: Decodable, Hashable, Identifiable {
     var id: Date { time }
 
     private enum CodingKeys: String, CodingKey {
-        case time, lakeWide, lights, wavesMm, wind, zones
+        case time, lakeWide, lights, wavesMm, wavesCm, wind, zones
     }
 
     init(from decoder: Decoder) throws {
@@ -156,7 +156,12 @@ struct LakeHour: Decodable, Hashable, Identifiable {
         lakeWide = try c.decode(LakeWide.self, forKey: .lakeWide)
         // One digit per cell: 0 green, 1 amber, 2 red.
         lights = try c.decode(String.self, forKey: .lights).map { (c: Character) -> Light in c == "2" ? .red : c == "1" ? .amber : .green }
-        wavesMm = try c.decode([Int].self, forKey: .wavesMm)
+        // Files written before Nov 2026's millimetres (kept lakes until the next all-clubs run) have whole centimetres.
+        if let mm = try c.decodeIfPresent([Int].self, forKey: .wavesMm) {
+            wavesMm = mm
+        } else {
+            wavesMm = try c.decode([Int].self, forKey: .wavesCm).map { $0 * 10 }
+        }
         wind = try c.decode([LakeWind].self, forKey: .wind)
         zones = try c.decode([LakeZone].self, forKey: .zones)
     }
