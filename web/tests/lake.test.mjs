@@ -14,7 +14,7 @@ function sampleView({ speeds = [3, 3], lakeWide = { light: "green", reasons: [] 
     zones: ["west", "east"], outline: [], clubs: [],
     points: [{ lat: 47.905, lon: 11.315 }],
     hours: speeds.map((s, i) => ({
-      time: `2026-10-26T${String(10 + i).padStart(2, "0")}:00:00Z`, lakeWide, lights: "000", wavesCm: [5, 10, 20],
+      time: `2026-10-26T${String(10 + i).padStart(2, "0")}:00:00Z`, lakeWide, lights: "000", wavesMm: [50, 100, 200],
       wind: [{ speedMs: s, gustMs: s + 2, fromDeg: 270, other: 0 }],
       zones: [{ light: "green", maxWaveM: 0.1 }, { light: "green", maxWaveM: 0.2 }],
     })),
@@ -157,7 +157,7 @@ test("a tapped spot names hail, a thunderstorm or heavy rain, the strongest only
   assert.equal(pointExtra({ other: "red", visM: 300 }), null);
   assert.deepEqual(pointExtra({ other: "red", visM: 800 }), { kind: "thunderstorm", light: "red" });
   const view = { waterC: 15, grid: { cellPoint: [0] } };
-  const hour = { wavesCm: [40], lakeWide: { reasons: [] }, wind: [{ speedMs: 3, gustMs: 9, visM: 800, storm: "green", rainMm: 0, hail: false }] };
+  const hour = { wavesMm: [400], lakeWide: { reasons: [] }, wind: [{ speedMs: 3, gustMs: 9, visM: 800, storm: "green", rainMm: 0, hail: false }] };
   const p = spotProbe(view, hour, 0, { boat: { id: "small", name: "", type: "racing", class: "1x" }, custom: {} });
   assert.equal(p.waves.m, 0.4);
   assert.equal(p.visibility.light, "amber");
@@ -190,7 +190,7 @@ test("the lake view's now goes by this minute's daylight", () => {
 // between green and amber follows the waves blended between the cell centres, not the squares.
 test("the fine rowing light follows the blended values", () => {
   const view = sampleView();
-  view.hours[0].wavesCm = [5, 10, 30];
+  view.hours[0].wavesMm = [50, 100, 300];
   const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
   const fine = fineLight(view, view.hours[0], limits);
   assert.equal(fine.scale, 8);
@@ -219,14 +219,14 @@ test("the fine rowing light follows the blended values", () => {
 test("a cell red only by the waves' rounding is not kept as a square", () => {
   const view = sampleView();
   const hour = view.hours[0];
-  hour.wavesCm = [20, 25, 20];
+  hour.wavesMm = [200, 250, 200];
   hour.lights = ["amber", "red", "amber"];
   const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
   const fine = fineLight(view, hour, limits);
   const at = (x) => fine.data.slice((4 * fine.width + x) * 4, (4 * fine.width + x) * 4 + 3).join(",");
   for (const x of [8, 11, 12, 15]) assert.equal(at(x), "255,149,0", `pixel ${x} of the middle cell is amber, not a red square`);
   // A cell the server makes red for more than rounding still stays red.
-  hour.wavesCm = [20, 24, 20];
+  hour.wavesMm = [200, 249, 200];
   const kept = fineLight(view, hour, limits);
   assert.equal(kept.data.slice((4 * kept.width + 12) * 4, (4 * kept.width + 12) * 4 + 3).join(","), "255,59,48");
 });
@@ -240,7 +240,7 @@ test("fog along both shores: each part says why and where, and the headline name
       cellZone: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
     zones: ["north", "south"], outline: [[[11.295, 47.795], [11.345, 47.795], [11.345, 47.835], [11.295, 47.835]]], clubs: [],
     points: [{ lat: 47.815, lon: 11.32 }],
-    hours: [{ time: "2026-11-12T09:00:00Z", lakeWide: { light: "green", reasons: [] }, lights, wavesCm: Array(20).fill(1),
+    hours: [{ time: "2026-11-12T09:00:00Z", lakeWide: { light: "green", reasons: [] }, lights, wavesMm: Array(20).fill(10),
       wind: [{ speedMs: 1, gustMs: 2, fromDeg: 315, other: 2, visM: 300, storm: 0 }],
       zones: [{ light: "red", maxWaveM: 0.01 }, { light: "red", maxWaveM: 0.01 }] }],
   });
@@ -276,7 +276,7 @@ test("cells exactly on a limit blend to it, without green dots", () => {
             cellPoint: Array(9).fill(0), cellZone: Array(9).fill(0) },
     zones: ["all"], outline: [], clubs: [], points: [{ lat: 47.915, lon: 11.315 }],
     hours: [{
-      time: "2026-11-26T11:00:00Z", lakeWide: { light: "green", reasons: [] }, lights: "111111111", wavesCm: Array(9).fill(15),
+      time: "2026-11-26T11:00:00Z", lakeWide: { light: "green", reasons: [] }, lights: "111111111", wavesMm: Array(9).fill(150),
       wind: [{ speedMs: 2, gustMs: 4, fromDeg: 0, other: 0 }], zones: [{ light: "amber", maxWaveM: 0.15 }],
     }],
   });

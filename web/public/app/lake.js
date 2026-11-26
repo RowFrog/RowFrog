@@ -33,7 +33,7 @@ export function spotProbe(view, hour, i, limits, at = null) {
   const w = at ? windAt(view, hour, at, i) : cellWind(view, hour, i);
   const cold = view.waterC != null ? view.waterC < 10 : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
   const l = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
-  const waveM = i < hour.wavesCm.length ? hour.wavesCm[i] / 100 : null;
+  const waveM = i < hour.wavesMm.length ? hour.wavesMm[i] / 1000 : null;
   return {
     waves: { m: waveM, light: light(waveM, l.value("waveAmber"), l.value("waveRed")) },
     wind: { speedMs: w?.speedMs ?? null, gustMs: w?.gustMs ?? null,
@@ -146,7 +146,7 @@ export function applyLakeLimits(view, limits, standard) {
         let l = wind?.other ?? "green";
         l = worse(l, light(wind?.speedMs, forBoat.value("windAmber"), forBoat.value("windRed")));
         l = worse(l, light(wind?.gustMs, forBoat.value("gustAmber"), forBoat.value("gustRed")));
-        l = worse(l, light(hour.wavesCm[i] / 100, forBoat.value("waveAmber"), forBoat.value("waveRed")));
+        l = worse(l, light(hour.wavesMm[i] / 1000, forBoat.value("waveAmber"), forBoat.value("waveRed")));
         const z = grid.cellZone[i] ?? 0;
         if (z < zoneLights.length) zoneLights[z] = worse(zoneLights[z], l);
         return l;
@@ -316,7 +316,7 @@ export function windSummary(hour) {
   };
 }
 
-export const maxWave = (hour) => (hour.wavesCm.length ? Math.max(...hour.wavesCm) / 100 : null);
+export const maxWave = (hour) => (hour.wavesMm.length ? Math.max(...hour.wavesMm) / 1000 : null);
 
 // ---- The grid -------------------------------------------------------------------
 
@@ -412,7 +412,7 @@ export const hasVisibility = (view) => view.hours.some((hr) => hr.wind?.some((w)
 export function cellColours(view, hour, layer, limits) {
   const { grid } = view;
   return grid.cells.map((_, i) => {
-    if (layer === "waves") return ramp(hour.wavesCm[i] / 100, limits.value("waveAmber"), limits.value("waveRed"));
+    if (layer === "waves") return ramp(hour.wavesMm[i] / 1000, limits.value("waveAmber"), limits.value("waveRed"));
     if (layer === "wind") return ramp(cellWind(view, hour, i)?.speedMs ?? 0, limits.value("windAmber"), limits.value("windRed"));
     if (layer === "visibility") return visibilityColour(cellWind(view, hour, i)?.visM);
     const c = RGB[hour.lights[i]] ?? RGB.green;
@@ -457,7 +457,7 @@ export function fineLight(view, hour, limits) {
     const f = values[p];
     f[0] = wind?.speedMs ?? NaN;
     f[1] = wind?.gustMs ?? NaN;
-    f[2] = i < hour.wavesCm.length && hour.wavesCm[i] != null ? hour.wavesCm[i] / 100 : NaN;
+    f[2] = i < hour.wavesMm.length && hour.wavesMm[i] != null ? hour.wavesMm[i] / 1000 : NaN;
     let stays = "green";
     if (wind && wind.storm != null) {
       // Newer backends say what the combined light is made of.
@@ -467,11 +467,11 @@ export function fineLight(view, hour, limits) {
     } else {
       stays = wind?.other ?? "green"; // only the combined light: it stays per cell
     }
-    // Waves come in whole centimetres: a cell at "25 cm" may be 25.4 cm and red over a 0.25 m limit.
-    // Judged with the waves up to half a centimetre higher, so such a cell isn't kept as one hard
+    // Waves come in whole millimetres: a cell at "250 mm" may be 250.4 mm and red over a 0.25 m limit.
+    // Judged with the waves up to half a millimetre higher, so such a cell isn't kept as one hard
     // square (owner's zoomed-in lake map, 12 Nov 2026; LakeRaster.fineLight).
     const upper = Float64Array.from(f);
-    if (!Number.isNaN(upper[2])) upper[2] += 0.005;
+    if (!Number.isNaN(upper[2])) upper[2] += 0.0005;
     const own = worse(worse(judged(f), judged(upper)), stays);
     // The backend's light is stricter than these explain: keep it for the cell.
     least[p] = worse(stays, RANK[hour.lights[i]] > RANK[own] ? hour.lights[i] : "green");
@@ -753,7 +753,7 @@ export function planRoute(planner, start, paceSeconds, currentMs = null) {
     const wind = windAt(view, hour, p.coordinate, p.cell);
     return {
       coordinate: p.coordinate, distanceM: p.distanceM, time, cell: p.cell,
-      light: worse(hour.lights[p.cell], hour.lakeWide.light), waveM: hour.wavesCm[p.cell] / 100,
+      light: worse(hour.lights[p.cell], hour.lakeWide.light), waveM: hour.wavesMm[p.cell] / 1000,
       windMs: wind?.speedMs ?? null, gustMs: wind?.gustMs ?? null,
       relation: wind?.fromDeg == null ? null : windRelation(p.headingDeg, wind.fromDeg),
     };
@@ -944,13 +944,13 @@ export function zoneNoteText(note) {
  */
 export function zoneValues(view, hour, zone, limits) {
   const zoneOf = view.grid.cellZone ?? [];
-  const cells = hour.lights.map((_, i) => i).filter((i) => zoneOf[i] === zone && i < hour.wavesCm.length);
+  const cells = hour.lights.map((_, i) => i).filter((i) => zoneOf[i] === zone && i < hour.wavesMm.length);
   if (!cells.length) return null;
   const cold = view.waterC != null ? view.waterC < COLD.waterC : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
   const l = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
   const winds = cells.map((i) => cellWind(view, hour, i)).filter(Boolean);
   const top = (list) => (list.length ? Math.max(...list) : null);
-  const waveM = top(cells.map((i) => hour.wavesCm[i] / 100));
+  const waveM = top(cells.map((i) => hour.wavesMm[i] / 1000));
   const speedMs = top(winds.map((w) => w.speedMs).filter((v) => v != null));
   const gustMs = top(winds.map((w) => w.gustMs).filter((v) => v != null));
   const vis = winds.map((w) => w.visM).filter((v) => v != null);

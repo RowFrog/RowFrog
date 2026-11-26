@@ -1248,7 +1248,7 @@ function viewingPanel(hour) {
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
         ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}
-        <div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
+        <div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesMm[i] / 1000))}</span></div>
         ${w?.visM != null ? `<div><small class="label">${icon(CONDITION_ICONS.visibility)} ${h(t("Visibility"))}</small><span>${h(distance(w.visM))}</span></div>` : ""}</div>
       ${(() => { const x = extraItem(spotProbe(view, hour, i, mapLimits(), page.spot.at).extra); return x ? `<p class="spot-extra">${x}</p>` : ""; })()}</div>`;
   } else {

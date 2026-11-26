@@ -147,7 +147,7 @@ def lake_view_summary(client: TestClient, lake_id: str) -> list[str]:
         winds = [w["speedMs"] for w in h["wind"] if w["speedMs"] is not None]
         lines.append(
             f"  {h['time']}  green/amber/red cells {counts['0']}/{counts['1']}/{counts['2']}  "
-            f"waves up to {max(h['wavesCm'], default=0)} cm  wind {min(winds, default=None)}-{max(winds, default=None)} m/s  "
+            f"waves up to {max(h['wavesMm'], default=0) / 10:g} cm  wind {min(winds, default=None)}-{max(winds, default=None)} m/s  "
             f"lake wide {h['lakeWide']['light']}  zones {[z['light'] for z in h['zones']]}"
         )
     return lines

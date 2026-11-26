@@ -196,7 +196,7 @@ def view_is_empty(body: dict) -> bool:
     """A lake view with no wind speed or no wave height in any hour: the map would show nothing."""
     hours = body.get("hours") or []
     wind = any(w.get("speedMs") is not None for h in hours for w in h.get("wind") or [])
-    waves = any(h.get("wavesCm") for h in hours)
+    waves = any(h.get("wavesMm") for h in hours)
     return not (wind and waves)
 
 

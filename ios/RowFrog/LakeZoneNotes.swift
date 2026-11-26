@@ -133,7 +133,7 @@ extension LakeView {
     /// The numbers behind `zoneValues`, with where the wind comes from, for the
     /// lake tile's table (owner's H1, 12 Nov 2026).
     func zoneReading(_ zone: Int, hour: LakeHour) -> LakeZoneReading? {
-        let cells = hour.lights.indices.filter { $0 < grid.cellZone.count && grid.cellZone[$0] == zone && $0 < hour.wavesCm.count }
+        let cells = hour.lights.indices.filter { $0 < grid.cellZone.count && grid.cellZone[$0] == zone && $0 < hour.wavesMm.count }
         guard !cells.isEmpty else { return nil }
         let cold = waterC.map { $0 < RowingLimits.coldWaterC }
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
