@@ -536,7 +536,9 @@ export function fineLight(view, hour, limits) {
         const cell = values[y * w + x];
         for (let f = 0; f < F; f++) if (!Number.isNaN(cell[f])) { sum[f] += cell[f] * weight; weights[f] += weight; }
       }
-      for (let f = 0; f < F; f++) blended[f] = weights[f] > 0 ? sum[f] / weights[f] : NaN;
+      // Rounded to a billionth: four cells of exactly 15 cm blend to 0.15 m, but the sums came out as
+      // 0.1499999… at one pixel per cell, a green dot under a 0.15 m limit (owner's lake map, 26 Nov 2026).
+      for (let f = 0; f < F; f++) blended[f] = weights[f] > 0 ? Math.round((sum[f] / weights[f]) * 1e9) / 1e9 : NaN;
       const c = colour[worse(least[cy * w + cx], judged(blended))];
       const j = (fy * fw + fx) * 4;
       data[j] = c[0];

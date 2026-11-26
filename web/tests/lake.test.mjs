@@ -266,3 +266,23 @@ test("a part's wind direction is the speed-weighted vector mean, and its arrow g
   assert.ok(Math.abs(meanFrom([{ fromDeg: 0, speedMs: 1 }, { fromDeg: 90, speedMs: 3 }]) - 71.565) < 0.01, "the stronger wind weighs more");
   assert.deepEqual([0, 45, 90, 180, 270, 337, 338, -45, 720].map(arrowGlyph), ["↑", "↗", "→", "↓", "←", "↖", "↑", "↖", "↑"]);
 });
+
+// Starnberger See, 26 Nov 2026, 12:00: cells of exactly "15 cm" next to each other blended to 0.1499999… at one
+// pixel per cell, a green dot in the amber under the 0.15 m limit (owner's zoomed-in lake map).
+test("cells exactly on a limit blend to it, without green dots", () => {
+  const view = decodeView({
+    generatedAt: "2026-11-26T11:00:00Z", waterC: 6,
+    grid: { south: 47.9, west: 11.3, dLat: 0.01, dLon: 0.01, cols: 3, rows: 3, cells: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+            cellPoint: Array(9).fill(0), cellZone: Array(9).fill(0) },
+    zones: ["all"], outline: [], clubs: [], points: [{ lat: 47.915, lon: 11.315 }],
+    hours: [{
+      time: "2026-11-26T11:00:00Z", lakeWide: { light: "green", reasons: [] }, lights: "111111111", wavesCm: Array(9).fill(15),
+      wind: [{ speedMs: 2, gustMs: 4, fromDeg: 0, other: 0 }], zones: [{ light: "amber", maxWaveM: 0.15 }],
+    }],
+  });
+  const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
+  const fine = fineLight(view, view.hours[0], limits);
+  const green = [];
+  for (let p = 0; p < fine.width * fine.height; p++) if (fine.data.slice(p * 4, p * 4 + 3).join(",") === "52,199,89") green.push(p);
+  assert.deepEqual(green, []);
+});

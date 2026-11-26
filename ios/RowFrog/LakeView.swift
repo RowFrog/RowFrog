@@ -827,7 +827,10 @@ extension LakeRaster {
                     let cell = values[y * w + x]
                     for f in 0..<fields where !cell[f].isNaN { sum[f] += cell[f] * weight; weights[f] += weight }
                 }
-                for f in 0..<fields { blended[f] = weights[f] > 0 ? sum[f] / weights[f] : .nan }
+                // Rounded to a billionth: four cells of exactly 15 cm blend to 0.15 m, but the sums
+                // came out as 0.1499999… at one pixel per cell, a green dot under a 0.15 m limit
+                // (owner's lake map, 26 Nov 2026).
+                for f in 0..<fields { blended[f] = weights[f] > 0 ? ((sum[f] / weights[f]) * 1e9).rounded() / 1e9 : .nan }
                 let light = max(least[cy * w + cx], judged(blended))
                 let c = wholeRed ? greyed(color(light)) : color(light)
                 let j = (fy * fw + fx) * 4
