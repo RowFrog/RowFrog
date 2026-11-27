@@ -5,7 +5,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { nowHour, iceValue, UNITS } from "./logic.js";
-import { store, h, closeX, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
+import { store, h, closeX, time as clock, dayTime, setTitle, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips, paceTips, bubbleTip, closeTip } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -139,7 +139,6 @@ function show(page) {
       ${closeX(`class="link close-x"`, `#/club/${encodeURIComponent(page.clubId)}`)}
       <label class="nav-title title-menu"><strong>${h(title)}</strong>${icon("chevron-down")}<select id="jump" aria-label="${h(t("Go to another value"))}">${menu}</select></label>
       <span></span></header>
-    ${testing()}
     <main class="page value-page">
       <div class="value-top">
         <div class="value-head"><span class="big-value" id="big-value"></span><small class="sub" id="big-note"></small></div>

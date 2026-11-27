@@ -7,7 +7,7 @@ import { baseMap } from "./basemap.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, h, setTitle, testing, loadLeaflet, loadCatalog } from "./shared.js";
+import { store, h, setTitle, loadLeaflet, loadCatalog } from "./shared.js";
 import { OWN_PREFIX } from "./ownplace.js";
 
 const KINDS = [["club", key("Club")], ["boathouse", key("Boathouse")], ["water", key("Place on the water")]];
@@ -59,7 +59,6 @@ export async function renderAddPlace(root, startName = "") {
   setTitle(t("Add a place"));
   root.innerHTML = `
     <header class="nav"><a class="link" href="#/list">${h(t("Cancel"))}</a><strong class="nav-title">${h(t("Add a place"))}</strong><button class="link strong" id="save" disabled>${h(t("Save"))}</button></header>
-    ${testing()}
     <main class="page add-place">
       <p class="hint">${h(t("Move the map until the pin sits where you launch"))}</p>
       <div class="pin-map"><div id="place-map"></div><span class="center-pin" aria-hidden="true">${icon("map-pin")}</span></div>

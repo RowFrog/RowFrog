@@ -130,7 +130,7 @@ const measure = (page) => page.evaluate(() => {
   const all = (q) => [...document.querySelectorAll(q)].filter(shown).map(rect);
   const title = document.querySelector(".title-row h1");
   return {
-    width: innerWidth, height: innerHeight, sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    width: innerWidth, height: innerHeight, scrollY, sideways: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     bars: all(".top-title .head-side > .round, .top-title .head-side > .boat, nav.bottom a, nav.bottom button, .side-head > .round"),
     pageButtons: all(".top-title .head-side > .round, .top-title .head-side > .boat"),
     listButtons: all(".side-head > .round"),
@@ -163,7 +163,10 @@ function check(at, layout, state) {
     assert.ok(Math.abs(at.bar.left - at.sideRight) <= 1, `${where}: the top bar starts at ${Math.round(at.bar.left)}, not at the list's edge ${Math.round(at.sideRight)}`);
     assert.ok(Math.abs(at.bar.right - at.clientWidth) <= 1, `${where}: the top bar ends at ${Math.round(at.bar.right)}, not at the window's edge ${at.clientWidth}`);
   }
-  if (at.title) for (const b of at.pageButtons) assert.ok(!overlaps(b, at.title), `${where}: "${b.label}" covers the club's name`);
+  // At rest the buttons never cover the name. Scrolling, it slides under them on its way out, as in the app, whose
+  // name scrolls under its floating buttons; this held at 40 px only while the test bar above the page scrolled away
+  // with it and took the list's buttons 23 px up (bar removed, owner 27 Nov 2026).
+  if (at.title && at.scrollY === 0) for (const b of at.pageButtons) assert.ok(!overlaps(b, at.title), `${where}: "${b.label}" covers the club's name`);
   if (layout.wide) {
     assert.ok(at.pageButtons.length >= 2, `${where}: the page's cog and boat show`);
     for (const b of at.pageButtons) assert.ok(b.left >= at.main.left - 0.5 && b.right <= at.main.right + 0.5, `${where}: "${b.label}" sits outside the page's column`);
@@ -295,6 +298,27 @@ test("tablet from the Home Screen icon (no #/club/ address): a turn lays the pag
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.setViewportSize({ width: 1180, height: 820 });
   await eventually(() => page.locator(".top-title [data-show-list]").count(), 1, "slid away and turned twice: the sidebar button is there");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("Home Screen app: the club page starts below the clock as in the app, with no test bar (owner's iPhone shots, 27 Nov 2026)", async () => {
+  // black-translucent (decision 0063) runs the page on under the clock: without the safe-area inset the
+  // club's name sat behind the clock and the small name showed at once, with the yellow test bar above it.
+  const { page, errors, context } = await openIn(LAYOUTS.find((l) => l.name === "phone Home Screen app"));
+  await page.goto(`${base}/app/`);
+  await page.locator(".club-head h1").waitFor();
+  await page.locator("main.page.club .card:not(.loading)").first().waitFor();
+  const at = await page.evaluate(() => ({ head: document.querySelector(".club-head").getBoundingClientRect().top,
+    gone: document.body.classList.contains("title-gone"), bars: document.querySelectorAll(".testing").length }));
+  assert.ok(at.head >= 62 + 8 && at.head <= 62 + 30, `the header starts ${at.head} px down, below the 62 px clock as the app's`);
+  assert.equal(at.gone, false, "the big name shows, not the small one");
+  assert.equal(at.bars, 0, "no test bar");
+  for (const hash of ["#/settings", "#/list"]) {
+    await page.goto(`${base}/app/${hash}`);
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator(".testing").count(), 0, `no test bar on ${hash}`);
+  }
   assert.deepEqual(errors, []);
   await context.close();
 });

@@ -6,7 +6,7 @@ import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, windPair, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
-  dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit, dayLabel,
+  dot, setTitle, openSheet, openMenu, loadLeaflet, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit, dayLabel,
   CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain, wavesNumber, distanceNumber, unitSymbol, markIcon,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
@@ -714,7 +714,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null, route
   if (clubId) noteDaylight(lakeId, clubId);
   // Over the map at the top left, a round close button and the lake's name, as the app's topBar; the layers,
   // the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
-  root.innerHTML = `<div class="lake-screen">${testing()}
+  root.innerHTML = `<div class="lake-screen">
     <div class="lake-page"><div class="lake-map-box"><div class="lake-map" id="lake-map"></div>
       <header class="lake-top"><a class="glass round tool" href="${h(back)}" aria-label="${h(t("Close"))}">${icon("x")}</a><strong class="glass lake-name" id="lake-name"></strong>${clubId ? `<span class="lake-boat" id="lake-boat">${boatControl.html()}</span>` : ""}</header>
       <div class="lake-over" id="lake-over"></div></div>
@@ -1500,7 +1500,6 @@ export async function renderAllRoutes(root) {
     const lakeOf = (id) => lakes.find((l) => l.id === id);
     const groups = [...byLake.entries()].sort(([a], [b]) => (lakeOf(a)?.name ?? a).localeCompare(lakeOf(b)?.name ?? b));
     root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Routes"))}</strong><span class="nav-side">${store.routes.length ? `<button class="link" data-share-routes aria-label="${h(t("Share all routes"))}" title="${h(t("Share all routes"))}">${icon("share")}</button>` : ""}</span></header>
-    ${testing()}
     <main class="page settings-topic all-routes">
       <section class="card group"><div class="row-setting pace-setting"><span>${h(t("Standard pace /500 m"))}</span>
         <span class="pace"><strong class="num" id="std-pace">${h(paceText(store.routePace))}</strong>

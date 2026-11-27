@@ -1149,8 +1149,6 @@ export function openSheet(title, body, wire) {
 
 // ---- Notes every page shows --------------------------------------------------------
 
-export const testing = () => `<p class="testing">${h(t("Test version: only for you, hidden from search engines."))}</p>`;
-
 export const adviceOnly = () => `<p class="advice">${icon("user-round-search")}<span>${h(t("Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore."))}</span></p>`;
 
 /** Build number and commit of this website, as the app's Settings > About (BuildInfo.swift);
