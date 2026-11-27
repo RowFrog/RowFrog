@@ -802,8 +802,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="soft-edge" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-    <div class="top-title edge" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true"><span class="top-pill glass">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span></span>${pageButtons("right", true)}</div>
+    <div class="top-title edge" style="--side-room:${sideRoom()}px"><div class="soft-edge" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>${pageButtons("left")}<span class="top-name" aria-hidden="true"><span class="top-pill glass">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span></span>${pageButtons("right", true)}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure, state.loading)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
