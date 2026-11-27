@@ -557,10 +557,14 @@ body.wide-bar .top-title .head-side > * { pointer-events: auto; }
    behind it (html::after) keeps it readable on a light page. */
 body.edge-page::before { display: none; }
 .top-title.edge::before { display: none; }
-/* Safari on the iPhone drew the soft edge's blur layers over the bar despite its higher z-index, so the small name
-   and its capsule came out blurred and grey (owner's Home Screen shot, 27 Nov 2026). Its own compositing layer keeps
-   the bar on top; a transform is no backdrop root, so the capsule's glass still sees the cards. */
-.top-title.edge { transform: translateZ(0); }
+/* The soft edge lies inside the bar, under its buttons and name (z-index -1 in the bar's own stacking context): as a
+   fixed layer of its own beside the bar, the Home Screen web app on the iPhone drew its blur over the small name, which
+   came out blurred and grey (owner's shots, 27 Nov 2026; a transform on the bar did not help, #666). So the bar itself
+   never fades, which would make it a backdrop root and leave the blur nothing to blur: its buttons and name fade. */
+.top-title.edge { opacity: 1; }
+.top-title.edge > .soft-edge { position: absolute; top: 0; left: 0; width: 100%; z-index: -1; }
+.top-title.edge > :not(.soft-edge) { opacity: 0; transition: opacity .2s ease-in-out; }
+body.title-gone .top-title.edge > :not(.soft-edge), body.wide-bar .top-title.edge > .head-side { opacity: 1; }
 /* The small name in its own glass capsule (InlineClubTitle); the buttons keep their places. */
 .top-pill { min-width: 0; height: 44px; padding: 0 16px; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; }
 /* As the app's (TopEdgeBlur, owner 25 Nov 2026: the website behaves as the app): it runs out 34 px below the clock,
