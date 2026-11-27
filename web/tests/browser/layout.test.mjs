@@ -280,6 +280,62 @@ test("columns (owner's pick B): the window sets 2 or 3, kept when the list slide
   await context.close();
 });
 
+test("tablet from the Home Screen icon (no #/club/ address): a turn lays the page out again, list and sidebar button included", async () => {
+  // Owner's iPad shots, 23 Nov 2026: turned, the list stayed beside a portrait page, or a landscape page kept the
+  // phone layout with neither list nor sidebar button, as only "#/club/…" addresses were laid out again.
+  const { page, errors, context } = await openIn({ name: "tablet", viewport: { width: 1180, height: 820 }, touch: true });
+  await page.goto(`${base}/app/`);
+  await page.locator("aside.side").waitFor();
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await eventually(() => page.locator("aside.side").count(), 0, "portrait: no list beside the page");
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await eventually(() => page.locator("aside.side").count(), 1, "landscape again: the list is back");
+  await page.click("#hide-list");
+  await page.locator(".top-title [data-show-list]").waitFor();
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await eventually(() => page.locator(".top-title [data-show-list]").count(), 1, "slid away and turned twice: the sidebar button is there");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("48 hours: the table's last line stops the pinned header, and the two leave together (owner's pick B, 25 Nov 2026)", async () => {
+  const { page, errors, context } = await openIn({ name: "short phone", viewport: { width: 390, height: 330 }, touch: true });
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".hhead").waitFor();
+  const at = () => page.evaluate(() => {
+    const head = document.querySelector(".hhead");
+    const last = [...head.nextElementSibling.children].filter((x) => x.offsetParent).at(-1).getBoundingClientRect();
+    const box = head.getBoundingClientRect();
+    return { stuck: head.classList.contains("stuck"), bottom: box.bottom, lastTop: last.top };
+  });
+  const end = await page.evaluate(() => document.querySelector(".hourly").getBoundingClientRect().bottom + scrollY);
+  let met = 0;
+  for (let y = end - 330; y <= end - 40; y += 10) {
+    await page.evaluate((to) => scrollTo(0, to), y);
+    await page.waitForTimeout(60);
+    const now = await at();
+    if (!now.stuck) continue;
+    assert.ok(now.bottom <= now.lastTop + 0.5, `at ${y}: the header (bottom ${now.bottom}) lies over the last line (top ${now.lastTop})`);
+    if (Math.abs(now.bottom - now.lastTop) < 0.5) met++;
+  }
+  assert.ok(met >= 2, "the header rode on the last line for a while");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("tablet: a swipe on a short club list never scrolls the club page beside it (owner's iPad shots, 23 Nov 2026)", async () => {
+  const { page, errors, context } = await openIn({ name: "tablet", viewport: { width: 1180, height: 820 } });
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator("aside.side").waitFor();
+  await page.mouse.move(150, 500);
+  for (let i = 0; i < 6; i++) await page.mouse.wheel(0, 400);
+  await page.waitForTimeout(400);
+  assert.equal(await page.evaluate(() => document.scrollingElement.scrollTop), 0, "the club page stayed at the top");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("club page: one 16 px gap between the cards and each item at the page's end, as the app (VStack spacing 16)", async () => {
   for (const layout of [LAYOUTS[0], LAYOUTS[5]]) {
     const { page, errors, context } = await openIn(layout);
