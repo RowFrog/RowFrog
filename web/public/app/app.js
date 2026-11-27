@@ -1842,8 +1842,12 @@ function laterWarningLine(headline) {
   if (!headline || headline.urgency === "now") return "";
   const { warning, urgency } = headline;
   const soon = urgency === "soon";
-  const text = warningInfoOnly(warning) ? t("%@ · not part of the rowing light", warningLine(warning)) : warningLine(warning);
-  return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}<span>${h(text)}</span></button></li>`;
+  // Info only: "DWD-Warnung: Frost ab 17:00 · nur Info" where it fits on one line,
+  // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0066; fitLine).
+  const text = warningInfoOnly(warning)
+    ? `<span class="fit-line" data-short="${h(t("%@ · info only", warningLine(warning, new Date(), true)))}">${h(t("%@ · info only", warningLine(warning)))}</span>`
+    : `<span>${h(warningLine(warning))}</span>`;
+  return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}${text}</button></li>`;
 }
 
 /** When the warnings were checked: earlier than the forecast file when the last check failed and the

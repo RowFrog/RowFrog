@@ -81,3 +81,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 63 | 2026-11-22 | [The soft blur at the top of the club pages is the app's own, with no bar per page](0063-own-soft-blur-at-the-top-of-club-pages.md) |
 | 64 | 2026-11-22 | [The small print at a club page's end sits on the cards' plate over a picture](0064-small-print-on-the-card-plate.md) |
 | 65 | 2026-11-27 | [The widget's day bars show the sunrise and sunset hours, part night](0065-widget-sunrise-and-sunset-hours-part-night.md) |
+| 66 | 2026-11-27 | [The night reason and the info-only warning line each fit on one line](0066-short-night-and-info-only-lines.md) |

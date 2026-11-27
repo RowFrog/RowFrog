@@ -155,6 +155,10 @@ button.wide { margin-top: 0; }
 .no-warning { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; font-size: 15px; }
 /* "· checked 13:00 ⓘ" wraps as one piece: the ⓘ never sits alone on a line. */
 .no-warning .checked { white-space: nowrap; }
+/* An info-only warning: the ⓘ stays beside its text, and the text fits one line or else wraps beside it (decision 0066). */
+.no-warning:has(.fit-line) { flex-wrap: nowrap; align-items: flex-start; text-align: left; }
+.no-warning:has(.fit-line) > .i { flex: none; margin-top: 2px; }
+.no-warning .fit-line { min-width: 0; }
 .advice { display: flex; gap: 6px; align-items: flex-start; color: var(--sub); font-size: 12px; margin: 10px 0 0; }
 .advice .i { margin-top: 1px; }
 .label { color: var(--sub); font-size: 12px; font-weight: 600; display: inline-flex; gap: 4px; align-items: center; }
