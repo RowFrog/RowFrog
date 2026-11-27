@@ -53,8 +53,13 @@ struct StickyHourlyCut: ViewModifier {
         // Rounded at the cut like the header's top, so nothing of the tile shows
         // beside the header's corners.
         let radius: CGFloat = showing ? 16 : 0
+        // The bottom keeps the tile's own corners: over a picture with frosted tiles the
+        // cut tile showed square bottom corners while the header stayed (Mac shots for
+        // #607, 27 Nov 2026), so the mask rounds them itself.
         content.mask(alignment: .top) {
-            UnevenRoundedRectangle(topLeadingRadius: radius, topTrailingRadius: radius).padding(.top, cut)
+            UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: 16,
+                                   bottomTrailingRadius: 16, topTrailingRadius: radius)
+                .padding(.top, cut)
         }
     }
 }
