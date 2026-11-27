@@ -57,15 +57,11 @@ extension RowingWidgetView {
                         .frame(width: big ? 64 : 54, alignment: .leading)
                     HStack(spacing: 2) {
                         slots(day.firstHour - axisStart) { Color.clear }
-                        slots(day.earlier) { segment(.green, past: true) }
-                        ForEach(Array(day.lights.enumerated()), id: \.offset) { index, light in
-                            segment(light, past: day.past[index])
-                        }
-                        // Not forecast yet: room kept, a faint dashed outline.
-                        slots(day.missing) {
-                            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
-                                .opacity(0.35)
+                        ForEach(Array(barSlots(day).enumerated()), id: \.offset) { index, slot in
+                            withNight(before: index == 0 ? day.nightBefore : 0,
+                                      after: index == day.slots - 1 ? day.nightAfter : 0, past: slot.past) {
+                                slotView(slot)
+                            }
                         }
                         slots(axisEnd - day.firstHour - day.slots) { Color.clear }
                     }
@@ -89,6 +85,64 @@ extension RowingWidgetView {
                     .fixedSize()
                 }
                 .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    /// One slot of a day's bar: an hour gone before the forecast starts, a forecast hour,
+    /// or an hour not forecast yet.
+    private enum BarSlot {
+        case earlier
+        case hour(Light, past: Bool)
+        case missing
+
+        var past: Bool {
+            switch self {
+            case .earlier: return true
+            case let .hour(_, past): return past
+            case .missing: return false
+            }
+        }
+    }
+
+    private func barSlots(_ day: WidgetDay) -> [BarSlot] {
+        Array(repeating: BarSlot.earlier, count: day.earlier)
+            + day.lights.enumerated().map { BarSlot.hour($1, past: day.past[$0]) }
+            + Array(repeating: BarSlot.missing, count: day.missing)
+    }
+
+    @ViewBuilder
+    private func slotView(_ slot: BarSlot) -> some View {
+        switch slot {
+        case .earlier:
+            segment(.green, past: true)
+        case let .hour(light, past):
+            segment(light, past: past)
+        case .missing:
+            // Not forecast yet: room kept, a faint dashed outline.
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                .opacity(0.35)
+        }
+    }
+
+    /// The sunrise and sunset hours: the minutes before sunrise (`before`, a part of the
+    /// slot) and after sunset (`after`) in the night's indigo, the rest as the slot itself
+    /// (owner's pick C, 27 Nov 2026).
+    @ViewBuilder
+    private func withNight<Slot: View>(before: Double, after: Double, past: Bool, @ViewBuilder _ slot: () -> Slot) -> some View {
+        if before <= 0 && after <= 0 {
+            slot()
+        } else {
+            let content = slot()
+            let night = RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(Color.indigo.opacity((plain ? 0.3 : 0.6) * (past ? 0.5 : 1)))
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    if before > 0 { night.frame(width: geometry.size.width * min(before, 1)) }
+                    content
+                    if after > 0 { night.frame(width: geometry.size.width * min(after, 1)) }
+                }
             }
         }
     }
