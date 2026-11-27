@@ -234,18 +234,34 @@ extension RowingSnapshot {
 
     /// The daylight hours of `day` after the forecast's last hour (`end`), from the day's sunrise and sunset.
     private func missingHours(after end: Date?, on day: Date, calendar: Calendar) -> Int {
-        guard let end, let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }) else { return 0 }
-        let from = max(end.addingTimeInterval(3600), sun.sunrise)
-        guard sun.sunset > from else { return 0 }
-        return Int((sun.sunset.timeIntervalSince(from) / 3600).rounded(.up))
+        guard let end, let sun = sunDay(on: day, calendar: calendar) else { return 0 }
+        return Self.daylightHours(of: sun, calendar: calendar).filter { $0 > end }.count
     }
 
     /// The daylight hours of `day` before `first` (the day's first forecast hour), from the
     /// day's sunrise: the hours of today that are gone before the forecast starts.
     private func earlierHours(before first: Date, on day: Date, calendar: Calendar) -> Int {
-        guard let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }),
-              let rise = calendar.dateInterval(of: .hour, for: sun.sunrise)?.start, first > rise else { return 0 }
-        return Int((min(first, sun.sunset).timeIntervalSince(rise) / 3600).rounded(.up))
+        guard let sun = sunDay(on: day, calendar: calendar) else { return 0 }
+        return Self.daylightHours(of: sun, calendar: calendar).filter { $0 < first }.count
+    }
+
+    private func sunDay(on day: Date, calendar: Calendar) -> SunDay? {
+        forecast?.daylight?.first { calendar.isDate($0.sunrise, inSameDayAs: day) }
+    }
+
+    /// The starts of the clock hours whose middle the sun is up for: the same rule as the
+    /// forecast's `sunUp` (backend `_daylight`), so the hours added before or after the
+    /// forecast match its own daylight hours. 16:00 with a 16:24 sunset is night there,
+    /// and was one box too many on the last day (owner, 23 Nov 2026).
+    static func daylightHours(of sun: SunDay, calendar: Calendar) -> [Date] {
+        guard var hour = calendar.dateInterval(of: .hour, for: sun.sunrise)?.start else { return [] }
+        var result: [Date] = []
+        while hour < sun.sunset {
+            let middle = hour.addingTimeInterval(1800)
+            if sun.sunrise <= middle && middle < sun.sunset { result.append(hour) }
+            hour = hour.addingTimeInterval(3600)
+        }
+        return result
     }
 
     private func hourOfDay(_ time: Date, calendar: Calendar) -> Double {

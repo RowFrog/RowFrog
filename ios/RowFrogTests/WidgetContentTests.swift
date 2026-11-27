@@ -150,10 +150,32 @@ final class WidgetContentTests: XCTestCase {
         let sun = [SunDay(sunrise: start.addingTimeInterval(-1200), sunset: start.addingTimeInterval(9.5 * 3600))]
         let cut = snapshot([hour(0, .red)], daylight: sun).days(1).first
         XCTAssertEqual(cut?.lights, [.red])
-        XCTAssertEqual(cut?.missing, 9)
+        XCTAssertEqual(cut?.missing, 8, "the 09:00 hour ends past sunset at its middle: night, as in the forecast")
         XCTAssertNil(cut?.good)
         let whole = snapshot((0..<10).map { hour($0) }, daylight: sun).days(1).first
         XCTAssertEqual(whole?.missing, 0)
+    }
+
+    /// The last day had one box more than today and tomorrow (owner, 23 Nov 2026): its
+    /// missing hours counted the sunset hour (16:00, sunset 16:24), which the forecast
+    /// calls night, and every day got a faint box for the sunrise hour (07:00, sunrise
+    /// 07:37). Hours before and after the forecast now follow its own daylight rule.
+    func testEveryDayHasAsManyBoxesAsItsDaylightHours() {
+        let sun = [SunDay(sunrise: start.addingTimeInterval(-23 * 60), sunset: start.addingTimeInterval(8 * 3600 + 25 * 60))]
+        let night = [hour(-1, .red, sunUp: false), hour(8, .red, sunUp: false)]
+        let whole = snapshot([night[0]] + (0..<8).map { hour($0) } + [night[1]], at: start.addingTimeInterval(-2 * 3600), daylight: sun).days(1).first
+        XCTAssertEqual(whole?.earlier, 0)
+        XCTAssertEqual(whole?.missing, 0)
+        XCTAssertEqual(whole?.slots, 8)
+        let cut = snapshot([night[0]] + (0..<5).map { hour($0) }, at: start.addingTimeInterval(-2 * 3600), daylight: sun).days(1).first
+        XCTAssertEqual(cut?.earlier, 0)
+        XCTAssertEqual(cut?.missing, 3)
+        XCTAssertEqual(cut?.slots, 8)
+        XCTAssertEqual(cut?.firstHour, whole?.firstHour)
+        let later = snapshot((4..<8).map { hour($0) }, at: start.addingTimeInterval(4.5 * 3600), daylight: sun).days(1).first
+        XCTAssertEqual(later?.earlier, 4)
+        XCTAssertEqual(later?.slots, 8)
+        XCTAssertEqual(later?.firstHour, whole?.firstHour)
     }
 
     /// At 14:56 the green 14:00 hour still counts whole, as the light at the top says
