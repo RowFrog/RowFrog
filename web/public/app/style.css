@@ -52,10 +52,12 @@ hr { border: 0; border-top: .5px solid var(--line); margin: 12px 0; }
 .blue { color: var(--blue); }
 .tint { color: var(--accent); }
 
-.testing { margin: 0; padding: .3em 16px; font-size: 12px; text-align: center; background: var(--amber); color: #000; }
-
 .page { max-width: 640px; margin: 0 auto; padding: 8px 16px 40px; }
 .page.club { padding-bottom: 110px; }
+/* Pages with no bar above them start below the clock, also on the Home Screen, where the page runs on under it
+   (black-translucent, decision 0063): the club page's name sits as far below the clock as in the app (owner's
+   iPhone shots, 27 Nov 2026), and so does the safety notice. */
+.page.club, #root > main.page:first-child:not(.tour) { padding-top: calc(8px + var(--safe-top)); }
 h1.large { font-size: 34px; font-weight: 700; margin: 4px 0 12px; }
 
 /* Navigation bar on the list and the settings: gear and Edit left, Done right. */
@@ -859,7 +861,8 @@ button.red { color: var(--red); }
 .lake-wide.red { color: var(--red); }
 .lake-wide.orange { color: var(--orange); }
 /* Close and the lake's name over the map's top left (LakeMapScreen.topBar). */
-.lake-top { position: absolute; top: 10px; left: 16px; right: 72px; z-index: 1000; display: flex; gap: 10px; align-items: center; pointer-events: none; }
+/* Below the clock on the Home Screen, where the map runs on under it (decision 0063). */
+.lake-top { position: absolute; top: calc(10px + var(--safe-top)); left: 16px; right: 72px; z-index: 1000; display: flex; gap: 10px; align-items: center; pointer-events: none; }
 .lake-top > * { pointer-events: auto; }
 .lake-top .round { width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 20px; flex: none; }
 .lake-top .lake-name { height: 44px; line-height: 44px; padding: 0 14px; border-radius: 22px; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

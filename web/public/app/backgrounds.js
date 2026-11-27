@@ -6,7 +6,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, h, load, save, getJSON, setTitle, testing, footerLinks, openSheet, savingData, dot, lightTitle, degrees, wind, waves, conditionIcon } from "./shared.js";
+import { store, h, load, save, getJSON, setTitle, footerLinks, openSheet, savingData, dot, lightTitle, degrees, wind, waves, conditionIcon } from "./shared.js";
 import { tip, wireTips } from "./tour.js";
 
 /** The pictures that come with the app, in its order (BackgroundLibrary.samples). */
@@ -380,7 +380,7 @@ export function renderBackgrounds(root) {
   const b = backgrounds;
   const row = (target, title, iconName, choice, inherited) => `<button class="row-setting" data-target="${h(target)}">
       <span>${icon(iconName)} ${h(title)}</span><span class="sub">${h(choice ? choiceTitle(choice) : inherited)} ${icon("chevron-right")}</span></button>`;
-  root.innerHTML = `${settingsNav()}${testing()}
+  root.innerHTML = `${settingsNav()}
     <main class="page">
       ${tip("backgrounds")}
       ${previewHtml()}
