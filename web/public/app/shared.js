@@ -789,7 +789,7 @@ export function reasonExplanation(condition, light, topic = null, value = null) 
     case "hail": return t("Hail is forecast with a thunderstorm.");
     case "thunderstorm": return t("Thunderstorms are possible.");
     case "ice": return light === "red" ? t("Ice on the lake is likely (estimate).") : t("Thin ice at the shore or drift ice is possible (estimate).");
-    case "daylight": return t("Row in daylight only."); // One line; the sun line gives the sunrise (decision 0065)
+    case "daylight": return t("Row in daylight only."); // One line; the sun line gives the sunrise (decision 0066)
     case "twilight":
     case "sunset_soon": return t("The last hour before sunset: back ashore by sunset.");
     case "nearby_water": return nearbyExplanation(topic, value);

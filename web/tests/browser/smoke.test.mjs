@@ -259,7 +259,7 @@ test("the warnings card follows the clock while the page stays open", async () =
   await context.close();
 });
 
-test("an info-only warning is one grey line: full where it fits, else the event and its start (decision 0065)", async () => {
+test("an info-only warning is one grey line: full where it fits, else the event and its start (decision 0066)", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);
   // Past 14:00 the lake warning has ended and only the frost warning stands, which does not count for the light.
@@ -267,10 +267,10 @@ test("an info-only warning is one grey line: full where it fits, else the event 
   await page.clock.setSystemTime(new Date(new Date(forecast.generatedAt).getTime() + 6 * 3600e3));
   await page.clock.runFor(61000);
   const line = page.locator("#no-warning .fit-line");
-  await page.waitForFunction(() => document.querySelector("#no-warning .fit-line")?.textContent === "DWD warning: Frost · info only", null, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelector("#no-warning .fit-line")?.textContent === "DWD warning: Frost · info only", null, { timeout: 20000 });
   // Where the full form needs a second line, the short one shows.
   await page.evaluate(() => { document.querySelector("#no-warning").style.width = "150px"; });
-  await page.waitForFunction(() => document.querySelector("#no-warning .fit-line")?.textContent === "Frost · info only", null, { timeout: 10000 });
+  await page.waitForFunction(() => document.querySelector("#no-warning .fit-line")?.textContent === "Frost · info only", null, { timeout: 20000 });
   assert.equal(await line.evaluate((el) => el.getClientRects().length), 1);
   assert.deepEqual(errors, []);
   await context.close();

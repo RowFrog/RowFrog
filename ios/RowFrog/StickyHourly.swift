@@ -7,6 +7,8 @@ import SwiftUI
 final class StickyHourly {
     var hourlyFrame: CGRect = .zero
     var dayTops: [Date: CGFloat] = [:]
+    /// Where the table's last line starts, in global coordinates (0 before it was measured).
+    var lastRowTop: CGFloat = 0
     /// Where the header stays on the screen, in global coordinates.
     var top: CGFloat = 0
     /// The height of the tip under the card's title (0 without one): the header stays only once
@@ -18,9 +20,13 @@ final class StickyHourly {
         hourlyFrame.height > 0 && hourlyFrame.minY + 40 + leadIn < top && hourlyFrame.maxY > top
     }
 
-    /// How far up the last rows have pushed the header (0 or less).
+    /// How far up the last line has pushed the header (0 or less). The header stops on the
+    /// table's last line and the two leave together, so it never stands alone over the
+    /// tile's rounded end with no row under it (owner's pick B, 25 Nov 2026: it showed
+    /// square corners there on the iPhone).
     func push(at top: CGFloat) -> CGFloat {
-        min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
+        let end = lastRowTop > hourlyFrame.minY && lastRowTop < hourlyFrame.maxY ? lastRowTop : hourlyFrame.maxY
+        return min(0, end - top - HourlyStickyHeader.height)
     }
 }
 
@@ -47,8 +53,13 @@ struct StickyHourlyCut: ViewModifier {
         // Rounded at the cut like the header's top, so nothing of the tile shows
         // beside the header's corners.
         let radius: CGFloat = showing ? 16 : 0
+        // The bottom keeps the tile's own corners: over a picture with frosted tiles the
+        // cut tile showed square bottom corners while the header stayed (Mac shots for
+        // #607, 27 Nov 2026), so the mask rounds them itself.
         content.mask(alignment: .top) {
-            UnevenRoundedRectangle(topLeadingRadius: radius, topTrailingRadius: radius).padding(.top, cut)
+            UnevenRoundedRectangle(topLeadingRadius: radius, bottomLeadingRadius: 16,
+                                   bottomTrailingRadius: 16, topTrailingRadius: radius)
+                .padding(.top, cut)
         }
     }
 }

@@ -466,7 +466,9 @@ the 48-hour table, the dark hours after "Now" fold into one moon column up to
 sunrise (a dimmed red dot on an indigo band, as in the app; in the large ones
 with the night's worst values), then the morning hours follow. The day bars
 share one clock axis with small hour labels; today's gone hours stay faint and
-a tick marks now (`docs/decisions/0041`). **Marks** (on by default) put a check, ! or ×
+a tick marks now (`docs/decisions/0041`). Each day's bar runs from the
+sunrise hour to the sunset hour, with the minutes of those two hours when the
+sun is down drawn in the night's indigo (`docs/decisions/0065`). **Marks** (on by default) put a check, ! or ×
 in the light's dots and stripes or outlines on amber and red day bars, so the
 light reads without colour. Values that set the light are coloured; the rain
 value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
@@ -507,13 +509,15 @@ field at the bottom.
   ask. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
   There is no top bar: once the page scrolls, the cards blur away under the
-  clock and the buttons as in Mail (iOS 26 and later; iOS 18 shows its frosted
-  bar), and the club's small name sits in its own glass capsule
-  (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
+  clock and the buttons as in Mail, the same on iOS 18, 26 and 27 (the app's
+  own soft blur over the page column, `docs/decisions/0063`), and the club's
+  small name sits in its own glass capsule (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
   The website has no top bar either (a blur over the page column while it
-  scrolls, the name in a glass capsule), and as a Home Screen web app its
-  status bar takes the colour of the page or picture.
+  scrolls, the name in a glass capsule, with the app's depth and tint), and as
+  a Home Screen web app the page runs on under the clock, which iOS draws in
+  white over a light veil (an icon added before 27 Nov 2026 may need adding
+  again to pick this up).
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
   the weather maps open with ("Maps start": Close, Normal or Wide) and the

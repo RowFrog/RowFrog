@@ -892,7 +892,13 @@ function slideList(hide) {
   split.classList.add("hiding");
   setTimeout(done, 300);
 }
-sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
+// Laid out again on a turn or resize across the edge, also on the first club page, whose address has no
+// "#/club/…" when the Home Screen icon opens it (owner's iPad shots, 23 Nov 2026: the list stayed beside a
+// portrait page, or a landscape page had neither list nor sidebar button).
+const onClubPage = () => location.hash === "" || location.hash === "#" || location.hash === "#/" || location.hash.startsWith("#/club/");
+// Not while the safety notice or the tour is up: drawn again, they would lose a tick or a search typed into them.
+const pastStart = () => store.safety?.version >= SAFETY_VERSION && tourSeen() && location.hash !== "#/tour";
+sideList.addEventListener("change", () => onClubPage() && pastStart() && route(false));
 
 /** From this page width, padding included and counted as if the list were shown, the cards go into two columns (LocationPageView.twoColumnWidth). */
 const TWO_COLUMNS = 600;
@@ -1250,6 +1256,17 @@ function stickHourlyHeader() {
   const head = root.querySelector(".hhead");
   const card = head?.closest(".card");
   if (!card) return;
+  // The table's last line stops the pinned header, and the two leave together, so it never stands
+  // alone over the tile's rounded end (owner's pick B, 25 Nov 2026; StickyHourly.push in the app).
+  // Sticky keeps its margin box inside the table: a bottom margin as tall as the last line, taken back
+  // by the rows, ends its ride on that line without moving anything.
+  const lines = [...(head.nextElementSibling?.children ?? [])].filter((x) => x.offsetParent);
+  const fold = card.querySelector(".fold");
+  const last = fold?.offsetParent ? 0 : lines.at(-1)?.offsetHeight ?? 0;
+  if (head.style.marginBottom !== `${last}px`) {
+    head.style.marginBottom = `${last}px`;
+    if (head.nextElementSibling) head.nextElementSibling.style.marginTop = `${-last}px`;
+  }
   const table = head.parentElement.getBoundingClientRect();
   const at = head.getBoundingClientRect();
   const top = parseFloat(getComputedStyle(head).top) || 0;
@@ -1826,7 +1843,7 @@ function laterWarningLine(headline) {
   const { warning, urgency } = headline;
   const soon = urgency === "soon";
   // Info only: "DWD-Warnung: Frost ab 17:00 · nur Info" where it fits on one line,
-  // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0065; fitLine).
+  // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0066; fitLine).
   const text = warningInfoOnly(warning)
     ? `<span class="fit-line" data-short="${h(t("%@ · info only", warningLine(warning, new Date(), true)))}">${h(t("%@ · info only", warningLine(warning)))}</span>`
     : `<span>${h(warningLine(warning))}</span>`;

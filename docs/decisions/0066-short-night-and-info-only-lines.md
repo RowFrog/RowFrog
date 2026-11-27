@@ -1,4 +1,4 @@
-# 0065. The night reason and the info-only warning line each fit on one line
+# 0066. The night reason and the info-only warning line each fit on one line
 
 - Date: 2026-11-27
 - Status: decided (owner, thread "Shorten night and Ampel note lines", 27 Nov 2026: picked "N1 + A5" on the decision card 16:28 CET (15:28 UTC); mock-ups https://claude.ai/artifact/Qw3WuaUvczmArv8dtUnVW9)

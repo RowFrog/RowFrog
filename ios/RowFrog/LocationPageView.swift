@@ -105,7 +105,7 @@ struct LocationPageView: View {
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
     @Environment(\.pageBarBottom) private var pageBarBottom
-    @Environment(\.pageInToolbar) private var inToolbar
+    @Environment(\.pageEdgeBlurred) private var edgeBlurred
 
     /// Whether this tip shows now: one tip on the page at a time (ClubPageTip).
     private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
@@ -237,6 +237,9 @@ struct LocationPageView: View {
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
                         if sticky.hourlyFrame != frame { sticky.hourlyFrame = frame }
                     }
+                    .onPreferenceChange(LastRowTopKey.self) { top in
+                        if sticky.lastRowTop != top { sticky.lastRowTop = top }
+                    }
                     .onPreferenceChange(DayTopKey.self) { tops in
                         if sticky.dayTops != tops { sticky.dayTops = tops }
                     }
@@ -245,7 +248,7 @@ struct LocationPageView: View {
                 // view blurs or fades them itself (owner's pick D, 19 Nov 2026).
                 .modifier(PageTopEdge(
                     active: !PowerState.shared.lowPower,
-                    toolbar: inToolbar,
+                    blurred: edgeBlurred,
                     scrolled: PageScroll.shared.scrolled.contains(club.id),
                     gone: PageScroll.shared.titleGone.contains(club.id)
                         ? pageBarBottom : min(pageMargins.top, pageBarBottom)))
@@ -341,11 +344,8 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            // In its navigation stack the page keeps its own top margin, measured from the
-            // screen's top, rather than the bar's, so the phone's page starts where it did.
-            .safeAreaPadding(.top, inToolbar ? pageMargins.top : max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
             .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
-            .ignoresSafeArea(.container, edges: inToolbar ? .top : [])
         }
     }
 
@@ -956,7 +956,7 @@ private struct NowCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         // "DWD-Warnung: Frost ab 17:00 · nur Info" where it fits on one line,
-                        // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0065).
+                        // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0066).
                         ViewThatFits(in: .horizontal) {
                             Text(tr("%@ · info only", warning.shortLabel(at: .now)))
                             Text(tr("%@ · info only", warning.compactLabel(at: .now)))
@@ -1283,6 +1283,24 @@ private struct HourlyFrameKey: PreferenceKey {
     }
 }
 
+/// Where the hourly table's last line starts on the page (StickyHourly.lastRowTop).
+private struct LastRowTopKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next != 0 { value = next }
+    }
+}
+
+/// Reports where the line it sits behind starts.
+private struct LastRowTop: View {
+    var body: some View {
+        GeometryReader { geo in
+            Color.clear.preference(key: LastRowTopKey.self, value: geo.frame(in: .global).minY)
+        }
+    }
+}
+
 /// Where each day of the hourly table starts on the page.
 private struct DayTopKey: PreferenceKey {
     static var defaultValue: [Date: CGFloat] = [:]
@@ -1326,7 +1344,9 @@ private struct HourlyCard: View {
         let firstRow = firstHourRow
         return Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
+            let lastID = folds && hiddenHours > 0 ? nil : rows.last?.id
             ForEach(rows) { row in
+                Group {
                 switch row {
                 case let .day(day, index):
                     DayHeader(day: day, sun: sunDay(on: day))
@@ -1358,9 +1378,13 @@ private struct HourlyCard: View {
                     }
                     .buttonStyle(.plain)
                 }
+                }
+                // The table's last line stops the pinned header (owner's pick B, 25 Nov 2026).
+                .background { if row.id == lastID { LastRowTop() } }
             }
             if folds && hiddenHours > 0 {
                 foldButton(proxy)
+                    .background { LastRowTop() }
             }
         }
         .background {
@@ -1745,9 +1769,9 @@ private struct DaylightText: View {
 private struct PageTopEdge: ViewModifier {
     /// Not in Low Power Mode, which keeps its plain strip.
     let active: Bool
-    /// The page sits in its own navigation stack: the bar's edge (iOS 26 soft blur,
-    /// iOS 18 frosted bar) reaches under the top buttons, so no fade mask.
-    var toolbar = false
+    /// One of the swiping club pages: the soft blur over them all (TopEdgeBlur) hides
+    /// the cards under the clock and the top buttons, so no fade mask.
+    var blurred = false
     /// Whether cards are under the clock.
     let scrolled: Bool
     /// Where on screen the cards are gone completely (iOS 18): below the clock, or
@@ -1759,16 +1783,8 @@ private struct PageTopEdge: ViewModifier {
     func body(content: Content) -> some View {
         if !active {
             content
-        } else if toolbar {
-#if compiler(>=6.2)
-            if #available(iOS 26.0, *) {
-                content.scrollEdgeEffectStyle(.soft, for: .top)
-            } else {
-                content
-            }
-#else
+        } else if blurred {
             content
-#endif
         } else {
 #if compiler(>=6.2)
             if #available(iOS 26.0, *) {

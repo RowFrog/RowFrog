@@ -360,7 +360,7 @@ struct Reason: Codable, Hashable {
         case "hail": tr("Hail is forecast with a thunderstorm.")
         case "thunderstorm": tr("Thunderstorms are possible.")
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
-        case "daylight": tr("Row in daylight only.")  // One line; the sun line gives the sunrise (decision 0065)
+        case "daylight": tr("Row in daylight only.")  // One line; the sun line gives the sunrise (decision 0066)
         case "twilight", "sunset_soon": tr("The last hour before sunset: back ashore by sunset.")
         case "nearby_water": nearbyExplanation
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", Format.temperature(RowingLimits.coldWaterC))
