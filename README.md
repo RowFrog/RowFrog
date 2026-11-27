@@ -518,8 +518,9 @@ field at the bottom.
   The website has no top bar either (a blur over the page column while it
   scrolls, the name in a glass capsule, with the app's depth and tint), and as
   a Home Screen web app the page runs on under the clock, which iOS draws in
-  white over a light veil (an icon added before 27 Nov 2026 may need adding
-  again to pick this up).
+  white over a light veil, while the club page, the safety notice and the
+  lake map buttons start below the clock (an icon added before 27 Nov 2026
+  may need adding again to pick this up).
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
   the weather maps open with ("Maps start": Close, Normal or Wide) and the
