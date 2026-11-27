@@ -509,13 +509,15 @@ field at the bottom.
   ask. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
   There is no top bar: once the page scrolls, the cards blur away under the
-  clock and the buttons as in Mail (iOS 26 and later; iOS 18 shows its frosted
-  bar), and the club's small name sits in its own glass capsule
-  (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
+  clock and the buttons as in Mail, the same on iOS 18, 26 and 27 (the app's
+  own soft blur over the page column, `docs/decisions/0063`), and the club's
+  small name sits in its own glass capsule (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
   The website has no top bar either (a blur over the page column while it
-  scrolls, the name in a glass capsule), and as a Home Screen web app its
-  status bar takes the colour of the page or picture.
+  scrolls, the name in a glass capsule, with the app's depth and tint), and as
+  a Home Screen web app the page runs on under the clock, which iOS draws in
+  white over a light veil (an icon added before 27 Nov 2026 may need adding
+  again to pick this up).
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
   the weather maps open with ("Maps start": Close, Normal or Wide) and the
