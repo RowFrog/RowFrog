@@ -100,8 +100,7 @@ final class TapTests: XCTestCase {
         let search = app.textFields["tour-search-1"]
         XCTAssertTrue(search.waitForExistence(timeout: 30), "No home base search; the app shows:\n\(app.debugDescription)")
         XCTAssertFalse(next.isEnabled, "Next works without a home base")
-        search.tap()
-        search.typeText("MRC 1880")
+        type("MRC 1880", into: search, in: app)
         let club = app.buttons["tour-club-1-mrc-1880"]
         // The club list comes from the backend.
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
@@ -144,13 +143,7 @@ final class TapTests: XCTestCase {
         let next = app.buttons["tour-next"]
         let search = app.textFields["tour-search-1"]
         XCTAssertTrue(search.waitForExistence(timeout: 30), "No home base search; the app shows:\n\(app.debugDescription)")
-        search.tap()
-        // The location question can come late and take the keyboard away (newest Xcode, 17 Nov 2026).
-        if !app.keyboards.firstMatch.waitForExistence(timeout: 5) {
-            answerLocationQuestion()
-            search.tap()
-        }
-        search.typeText("MRC 1880")
+        type("MRC 1880", into: search, in: app)
         let club = app.buttons["tour-club-1-mrc-1880"]
         XCTAssertTrue(club.waitForExistence(timeout: 60), "MRC 1880 not found by search; the app shows:\n\(app.debugDescription)")
         club.tap()
@@ -233,6 +226,21 @@ final class TapTests: XCTestCase {
     /// The tour page the dots show, or "no tour" once it is gone.
     private func tourPage(_ dots: XCUIElement) -> String {
         dots.exists ? (dots.value as? String ?? "?") : "no tour"
+    }
+
+    /// Taps the field and types once it has the keyboard. The location question can come
+    /// late and take the keyboard away (newest Xcode, 17 Nov 2026); on 27 Nov the first-start
+    /// test typed into a field without focus ("Neither element nor any descendant has keyboard
+    /// focus", run 45990033848), so both tour tests wait for the keyboard before typing.
+    private func type(_ text: String, into field: XCUIElement, in app: XCUIApplication) {
+        field.tap()
+        if !app.keyboards.firstMatch.waitForExistence(timeout: 5) {
+            answerLocationQuestion()
+            field.tap()
+        }
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 10),
+                      "No keyboard after tapping \(field.identifier); the app shows:\n\(app.debugDescription)")
+        field.typeText(text)
     }
 
     /// The tour asks for the location on the home base page; the answer does

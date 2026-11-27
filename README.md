@@ -80,7 +80,7 @@ GitHub issue, so no GitHub account is needed.
    in that colour, and cold water shows in blue while the life jacket badge
    is on; while daylight is the reason, the sunrise or sunset time takes the
    light's colour, and in the last hour before sunset so do the minutes left
-   (the reason then reads "Be back ashore by sunset."). Reasons list red
+   (the reason then reads "Be back ashore by sunset."; after sunset it reads "Row in daylight only.", `docs/decisions/0066`). Reasons list red
    first, then by one fixed list of dangers, with daylight last
    (`docs/decisions/0053`). Tapping "All values" under the sun line opens Current
    conditions inside the tile; tapping "Fewer values" closes it. Each club
@@ -196,7 +196,9 @@ Otherwise the top tile's status line says there is none and when it was
 checked, or that DWD could not be reached. When a check fails, the last good
 one stands in for up to 3 hours, without the warnings that have ended since,
 and the card says when it was checked; the website does the same. A warning that starts later or
-only informs gets one line in the top tile that opens the card, and in the
+only informs gets one line in the top tile that opens the card (e.g. "DWD
+warning: Frost from 17:00 · info only", shortened to "Frost from 17:00 · info
+only" where that doesn't fit, `docs/decisions/0066`), and in the
 club list it shows grey with an info sign and its start time; only warnings
 that count for the light now or within 3 hours show amber there.
 Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
@@ -466,7 +468,9 @@ the 48-hour table, the dark hours after "Now" fold into one moon column up to
 sunrise (a dimmed red dot on an indigo band, as in the app; in the large ones
 with the night's worst values), then the morning hours follow. The day bars
 share one clock axis with small hour labels; today's gone hours stay faint and
-a tick marks now (`docs/decisions/0041`). **Marks** (on by default) put a check, ! or ×
+a tick marks now (`docs/decisions/0041`). Each day's bar runs from the
+sunrise hour to the sunset hour, with the minutes of those two hours when the
+sun is down drawn in the night's indigo (`docs/decisions/0065`). **Marks** (on by default) put a check, ! or ×
 in the light's dots and stripes or outlines on amber and red day bars, so the
 light reads without colour. Values that set the light are coloured; the rain
 value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
@@ -507,13 +511,16 @@ field at the bottom.
   ask. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
   There is no top bar: once the page scrolls, the cards blur away under the
-  clock and the buttons as in Mail (iOS 26 and later; iOS 18 shows its frosted
-  bar), and the club's small name sits in its own glass capsule
-  (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
+  clock and the buttons as in Mail, the same on iOS 18, 26 and 27 (the app's
+  own soft blur over the page column, `docs/decisions/0063`), and the club's
+  small name sits in its own glass capsule (`docs/decisions/0054`); the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
   The website has no top bar either (a blur over the page column while it
-  scrolls, the name in a glass capsule), and as a Home Screen web app its
-  status bar takes the colour of the page or picture.
+  scrolls, the name in a glass capsule, with the app's depth and tint), and as
+  a Home Screen web app the page runs on under the clock, which iOS draws in
+  white over a light veil, while the club page, the safety notice and the
+  lake map buttons start below the clock (an icon added before 27 Nov 2026
+  may need adding again to pick this up).
 - Club pages: Current conditions in the top tile, the order of the cards for
   all clubs, Location in the club header, and a Maps section: how much area
   the weather maps open with ("Maps start": Close, Normal or Wide) and the

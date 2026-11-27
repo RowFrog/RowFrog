@@ -5,7 +5,7 @@
 import { t, lang, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { fold, town, place, waterUnknown } from "./logic.js";
-import { store, loadCountryIndex, html, raw, flag, setTitle, testing, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
+import { store, loadCountryIndex, html, raw, flag, setTitle, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
 
 // Markup here goes through html``, which escapes every value (shared.js).
 const svg = (...args) => raw(icon(...args));
@@ -64,7 +64,6 @@ export function wireResults(list, lakes) {
 function page(title, back, body, backTitle = t("Back")) {
   setTitle(title);
   return html`<header class="nav"><a class="link" href="${back}">${svg("chevron-left")} <span class="back-title">${backTitle}</span></a><strong class="nav-title">${title}</strong><span class="nav-side"></span></header>
-    ${raw(testing())}
     <main class="page">${body}${footer()}</main>`;
 }
 

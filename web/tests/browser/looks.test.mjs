@@ -217,7 +217,8 @@ for (const layout of [LAYOUTS[0], LAYOUTS[3]]) for (const background of ["sample
       const shown = [...document.querySelectorAll(".soft-edge > *")].map((el) => Number(getComputedStyle(el).opacity));
       const blurs = [...document.querySelectorAll(".soft-edge > i")].map((el) => getComputedStyle(el).backdropFilter);
       return { left: box.left, bottom: box.bottom, sideRight: side?.width ? side.right : 0, barBottom: bar.bottom, shown, blurs,
-        strip: document.querySelector('meta[name="theme-color"]').content, before: getComputedStyle(document.body, "::before").display };
+        strip: document.querySelector('meta[name="theme-color"]').content, before: getComputedStyle(document.body, "::before").display,
+        nameShown: document.body.classList.contains("title-gone") || document.body.classList.contains("wide-bar") };
     });
     const rest = await edge();
     assert.ok(rest.shown.every((o) => o === 0), `nothing drawn at the top while the page is at its top (${rest.shown})`);
@@ -230,7 +231,9 @@ for (const layout of [LAYOUTS[0], LAYOUTS[3]]) for (const background of ["sample
     assert.ok(now.shown.every((o) => o === 1), `the edge shows while scrolled (${now.shown})`);
     assert.deepEqual(now.blurs, ["blur(1px)", "blur(3px)", "blur(6px)", "blur(12px)"], "the blur grows towards the top");
     assert.ok(now.left >= now.sideRight - 0.5, `the edge stays off the list (${now.left} < ${now.sideRight})`);
-    assert.ok(Math.abs(now.bottom - (now.barBottom + 10)) <= 1, `the edge ends 10 px below the line of buttons (${now.bottom} vs ${now.barBottom})`);
+    // As the app's TopEdgeBlur (runOut 34): below the small name and the buttons once they show, else below the clock.
+    const line = now.nameShown ? now.barBottom : 0;
+    assert.ok(Math.abs(now.bottom - (line + 34)) <= 1, `the edge ends 34 px below ${now.nameShown ? "the line of buttons" : "the clock"} (${now.bottom} vs ${line})`);
     assert.deepEqual(errors, []);
     await context.close();
   });

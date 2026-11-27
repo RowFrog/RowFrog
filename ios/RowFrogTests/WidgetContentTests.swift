@@ -150,10 +150,43 @@ final class WidgetContentTests: XCTestCase {
         let sun = [SunDay(sunrise: start.addingTimeInterval(-1200), sunset: start.addingTimeInterval(9.5 * 3600))]
         let cut = snapshot([hour(0, .red)], daylight: sun).days(1).first
         XCTAssertEqual(cut?.lights, [.red])
-        XCTAssertEqual(cut?.missing, 9)
+        XCTAssertEqual(cut?.missing, 9, "up to the sunset hour, as on the days the forecast covers")
         XCTAssertNil(cut?.good)
         let whole = snapshot((0..<10).map { hour($0) }, daylight: sun).days(1).first
         XCTAssertEqual(whole?.missing, 0)
+    }
+
+    /// Every day has the same boxes, from the sunrise hour to the sunset hour (owner, 23 Nov
+    /// 2026: the last day alone had the 16:00 box). The sunrise and sunset hours show their
+    /// daylight minutes in colour and the rest as night (owner's pick C, 27 Nov 2026): with
+    /// sunrise 07:37 and sunset 16:24, 07:00 is 37 minutes night then green, 16:00 is 24
+    /// minutes amber (the last hour before sunset) then night, though the forecast calls both red.
+    func testSunriseAndSunsetHoursShowTheirDaylightPartOnEveryDay() {
+        let sun = [SunDay(sunrise: start.addingTimeInterval(-23 * 60), sunset: start.addingTimeInterval(8 * 3600 + 25 * 60))]
+        let dawn = hour(-1, .red, reasons: [Reason(condition: "daylight", light: .red)], sunUp: false)
+        let dusk = hour(8, .red, reasons: [Reason(condition: "daylight", light: .red)], sunUp: false)
+        let early = start.addingTimeInterval(-2 * 3600)
+        let whole = snapshot([dawn] + (0..<8).map { hour($0) } + [dusk], at: early, daylight: sun).days(1).first
+        XCTAssertEqual(whole?.lights.first, .green)
+        XCTAssertEqual(whole?.lights.last, .amber)
+        XCTAssertEqual(whole?.earlier, 0)
+        XCTAssertEqual(whole?.missing, 0)
+        XCTAssertEqual(whole?.slots, 10)
+        XCTAssertEqual(whole?.nightBefore ?? 0, 37.0 / 60, accuracy: 0.001)
+        XCTAssertEqual(whole?.nightAfter ?? 0, 35.0 / 60, accuracy: 0.001)
+        XCTAssertEqual(whole?.good, "\(Format.time(start))–\(Format.time(start.addingTimeInterval(8 * 3600)))",
+                       "the good stretch keeps to whole hours")
+        let cut = snapshot([dawn] + (0..<5).map { hour($0) }, at: early, daylight: sun).days(1).first
+        XCTAssertEqual(cut?.missing, 4)
+        XCTAssertEqual(cut?.slots, 10)
+        XCTAssertEqual(cut?.firstHour, whole?.firstHour)
+        let later = snapshot((4..<8).map { hour($0) } + [dusk], at: start.addingTimeInterval(4.5 * 3600), daylight: sun).days(1).first
+        XCTAssertEqual(later?.earlier, 5)
+        XCTAssertEqual(later?.slots, 10)
+        XCTAssertEqual(later?.firstHour, whole?.firstHour)
+        // Weather worse than the daylight still shows in the daylight part.
+        let windy = hour(8, .red, reasons: [Reason(condition: "daylight", light: .red), Reason(condition: "wind", light: .red)], sunUp: false)
+        XCTAssertEqual(snapshot([dawn] + (0..<8).map { hour($0) } + [windy], at: early, daylight: sun).days(1).first?.lights.last, .red)
     }
 
     /// At 14:56 the green 14:00 hour still counts whole, as the light at the top says

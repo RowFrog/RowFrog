@@ -1,7 +1,7 @@
 # 0054. The top of a club page has no bar: the cards blur away under the buttons
 
 - Date: 2026-11-19 (built 20 Nov)
-- Status: decided (owner's pick D on 19 Nov 2026, 16:29 CET (15:29 UTC): "Then lets go with option D for now. Keep the mock-ups, perhaps we change later on once again", after the mock-ups artifact "Top bar over a picture" and the owner's iPad screenshots of app, website and the Claude app; 16:31 CET: pages without a background picture get the same; 20 Nov 18:03 CET: "Yes, lets try 1", the empty bar that makes iOS blur as deep as in Mail, with the buttons and their places unchanged)
+- Status: decided, how it is built replaced by [0063](0063-own-soft-blur-at-the-top-of-club-pages.md) (owner's pick D on 19 Nov 2026, 16:29 CET (15:29 UTC): "Then lets go with option D for now. Keep the mock-ups, perhaps we change later on once again", after the mock-ups artifact "Top bar over a picture" and the owner's iPad screenshots of app, website and the Claude app; 16:31 CET: pages without a background picture get the same; 20 Nov 18:03 CET: "Yes, lets try 1", the empty bar that makes iOS blur as deep as in Mail, with the buttons and their places unchanged)
 - Where: app `pages(_:chrome:insets:)` (a `NavigationStack` per club page), `TopEdgeFade` and `InlineClubTitle` in `ios/RowFrog/RootView.swift`, `PageTopEdge` in `ios/RowFrog/LocationPageView.swift`; website `.soft-edge` and `.top-pill` in `web/public/app/style.css`, `paintClockStrip` in `web/public/app/backgrounds.js`
 - Replaces: item 3 of [0037](0037-app-web-detail-check-picks.md) (title fade A)
 

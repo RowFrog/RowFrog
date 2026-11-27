@@ -49,6 +49,11 @@ struct WidgetDay: Equatable {
     var firstHour = 0
     /// Today only: now as an hour of the day with its minutes (14.93 at 14:56), for the tick.
     var now: Double? = nil
+    /// The part of the first slot before sunrise and of the last slot after sunset (0.62
+    /// for a 07:37 sunrise), drawn in the night's indigo: the sunrise and sunset hours show
+    /// their daylight minutes in colour and the rest as night (owner's pick C, 27 Nov 2026).
+    var nightBefore = 0.0
+    var nightAfter = 0.0
 
     /// All slots of the bar: the earlier ones, the forecast hours and the missing ones.
     var slots: Int { earlier + lights.count + missing }
@@ -210,7 +215,11 @@ extension RowingSnapshot {
         var result: [WidgetDay] = []
         var day = calendar.startOfDay(for: date)
         for _ in 0..<(count + 1) where result.count < count {
-            let hours = daylight.filter { calendar.isDate($0.time, inSameDayAs: day) }
+            let sun = sunDay(on: day, calendar: calendar)
+            let sunHours = sun.map { Self.daylightHours(of: $0, calendar: calendar) }
+            // With sun times: every hour with daylight in it, the sunrise and sunset hours too.
+            let hours = sunHours.map { list in forecast.hours.filter { list.contains($0.time) } }
+                ?? daylight.filter { calendar.isDate($0.time, inSameDayAs: day) }
             let past = hours.map { $0.time.addingTimeInterval(3600) <= date }
             if let first = hours.first, past.contains(false) {
                 let label = calendar.isDateInToday(day) || calendar.isDateInTomorrow(day)
@@ -219,12 +228,14 @@ extension RowingSnapshot {
                 let earlier = earlierHours(before: first.time, on: day, calendar: calendar)
                 let start = calendar.date(byAdding: .hour, value: -earlier, to: first.time) ?? first.time
                 let isToday = calendar.isDate(date, inSameDayAs: day)
-                result.append(WidgetDay(label: label, lights: hours.map(\.light), past: past,
+                result.append(WidgetDay(label: label, lights: hours.map { daylightLight($0, sun: sun) }, past: past,
                                         good: isStale ? nil : goodStretch(hours),
                                         missing: missingHours(after: forecast.hours.last?.time, on: day, calendar: calendar),
                                         earlier: earlier,
                                         firstHour: calendar.component(.hour, from: start),
-                                        now: isToday ? hourOfDay(date, calendar: calendar) : nil))
+                                        now: isToday ? hourOfDay(date, calendar: calendar) : nil,
+                                        nightBefore: sun.flatMap { sun in sunHours?.first.map { sun.sunrise.timeIntervalSince($0) / 3600 } } ?? 0,
+                                        nightAfter: sun.flatMap { sun in sunHours?.last.map { $0.addingTimeInterval(3600).timeIntervalSince(sun.sunset) / 3600 } } ?? 0))
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
@@ -234,18 +245,48 @@ extension RowingSnapshot {
 
     /// The daylight hours of `day` after the forecast's last hour (`end`), from the day's sunrise and sunset.
     private func missingHours(after end: Date?, on day: Date, calendar: Calendar) -> Int {
-        guard let end, let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }) else { return 0 }
-        let from = max(end.addingTimeInterval(3600), sun.sunrise)
-        guard sun.sunset > from else { return 0 }
-        return Int((sun.sunset.timeIntervalSince(from) / 3600).rounded(.up))
+        guard let end, let sun = sunDay(on: day, calendar: calendar) else { return 0 }
+        return Self.daylightHours(of: sun, calendar: calendar).filter { $0 > end }.count
     }
 
     /// The daylight hours of `day` before `first` (the day's first forecast hour), from the
     /// day's sunrise: the hours of today that are gone before the forecast starts.
     private func earlierHours(before first: Date, on day: Date, calendar: Calendar) -> Int {
-        guard let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }),
-              let rise = calendar.dateInterval(of: .hour, for: sun.sunrise)?.start, first > rise else { return 0 }
-        return Int((min(first, sun.sunset).timeIntervalSince(rise) / 3600).rounded(.up))
+        guard let sun = sunDay(on: day, calendar: calendar) else { return 0 }
+        return Self.daylightHours(of: sun, calendar: calendar).filter { $0 < first }.count
+    }
+
+    private func sunDay(on day: Date, calendar: Calendar) -> SunDay? {
+        forecast?.daylight?.first { calendar.isDate($0.sunrise, inSameDayAs: day) }
+    }
+
+    /// The starts of the clock hours with daylight in them, from the sunrise hour to the
+    /// sunset hour, on every day alike: 07:00 to 16:00 with sunrise 07:37 and sunset 16:24.
+    /// The sunrise and sunset hours are drawn part night (`WidgetDay.nightBefore`/`nightAfter`;
+    /// owner's pick C, 27 Nov 2026, after the last day alone had the 16:00 box, 23 Nov).
+    static func daylightHours(of sun: SunDay, calendar: Calendar) -> [Date] {
+        guard var hour = calendar.dateInterval(of: .hour, for: sun.sunrise)?.start else { return [] }
+        var result: [Date] = []
+        while hour < sun.sunset {
+            result.append(hour)
+            hour = hour.addingTimeInterval(3600)
+        }
+        return result
+    }
+
+    /// The light of an hour's daylight minutes. The forecast gives the sunrise and sunset
+    /// hours the strictest of their minutes, red for the dark part; the bar draws that part
+    /// as night, so its coloured part is the daylight half of the hour's half-and-half dot
+    /// (`dotHalves`, the same rule as the hour rows): green after sunrise, amber before sunset,
+    /// never better than the weather. Without a split (a part under 10 minutes) the hour's own light.
+    private func daylightLight(_ hour: ForecastHour, sun: SunDay?) -> Light {
+        guard let sun else { return hour.light }
+        let end = hour.time.addingTimeInterval(3600)
+        let dawn = hour.time < sun.sunrise && sun.sunrise < end
+        let dusk = hour.time < sun.sunset && sun.sunset < end
+        guard dawn || dusk, let halves = forecast?.dotHalves(for: hour) else { return hour.light }
+        // Other splits in the hour (amber from an hour before sunset) stay the strictest.
+        return dawn ? halves.end : halves.start
     }
 
     private func hourOfDay(_ time: Date, calendar: Calendar) -> Double {

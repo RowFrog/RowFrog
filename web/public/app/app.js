@@ -15,7 +15,7 @@ import {
   degrees, temperature, windUnit, windNumber, wind, windRange, windPair, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card as cardHtml, sunPath, openSheet, openMenu,
-  loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
+  loadLeaflet, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon, closeX, keptForecast } from "./shared.js";
 import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
@@ -343,7 +343,6 @@ async function renderList() {
   // back but the clubs' cards; the cog beside the search at the bottom (LocationListView).
   root.innerHTML = `
     <div class="top-title"><strong>${h(t("Locations"))}</strong></div>
-    ${testing()}
     <main class="page list-page">
       <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${wideList.matches ? searchBar("head-search", false) : ""}${moreMenu()}</header>
       ${listBody()}
@@ -699,7 +698,7 @@ async function renderClub(id) {
     if (old && !forecasts.get(id)?.value) forecasts.set(id, { ...loadable.loaded(old.forecast, old.at), loading: true });
   }
   const side = sideShown();
-  root.innerHTML = `${testing()}<div class="split">
+  root.innerHTML = `<div class="split">
       ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
         ${clubHeader(club, name, isHome, null, false, null, true)}
@@ -803,8 +802,7 @@ function drawClubPage(id, club, saved, name, isHome, alive) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="soft-edge" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-    <div class="top-title edge" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true"><span class="top-pill glass">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span></span>${pageButtons("right", true)}</div>
+    <div class="top-title edge" style="--side-room:${sideRoom()}px"><div class="soft-edge" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>${pageButtons("left")}<span class="top-name" aria-hidden="true"><span class="top-pill glass">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span></span>${pageButtons("right", true)}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure, state.loading)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
@@ -892,7 +890,13 @@ function slideList(hide) {
   split.classList.add("hiding");
   setTimeout(done, 300);
 }
-sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
+// Laid out again on a turn or resize across the edge, also on the first club page, whose address has no
+// "#/club/…" when the Home Screen icon opens it (owner's iPad shots, 23 Nov 2026: the list stayed beside a
+// portrait page, or a landscape page had neither list nor sidebar button).
+const onClubPage = () => location.hash === "" || location.hash === "#" || location.hash === "#/" || location.hash.startsWith("#/club/");
+// Not while the safety notice or the tour is up: drawn again, they would lose a tick or a search typed into them.
+const pastStart = () => store.safety?.version >= SAFETY_VERSION && tourSeen() && location.hash !== "#/tour";
+sideList.addEventListener("change", () => onClubPage() && pastStart() && route(false));
 
 /** From this page width, padding included and counted as if the list were shown, the cards go into two columns (LocationPageView.twoColumnWidth). */
 const TWO_COLUMNS = 600;
@@ -1199,7 +1203,7 @@ function updateTopBar() {
   const bar = root.querySelector(".top-title");
   // The bar and the strip behind the clock cover the page's own column only, never the list beside it.
   const main = root.querySelector("main");
-  // The list beside the page ends at the window's bottom also while the test banner above it shows.
+  // The list beside the page ends at the window's bottom wherever the page above it starts.
   const split = root.querySelector(".split");
   if (split) body.style.setProperty("--side-top", `${Math.max(0, split.getBoundingClientRect().top)}px`);
   if (main) {
@@ -1250,6 +1254,17 @@ function stickHourlyHeader() {
   const head = root.querySelector(".hhead");
   const card = head?.closest(".card");
   if (!card) return;
+  // The table's last line stops the pinned header, and the two leave together, so it never stands
+  // alone over the tile's rounded end (owner's pick B, 25 Nov 2026; StickyHourly.push in the app).
+  // Sticky keeps its margin box inside the table: a bottom margin as tall as the last line, taken back
+  // by the rows, ends its ride on that line without moving anything.
+  const lines = [...(head.nextElementSibling?.children ?? [])].filter((x) => x.offsetParent);
+  const fold = card.querySelector(".fold");
+  const last = fold?.offsetParent ? 0 : lines.at(-1)?.offsetHeight ?? 0;
+  if (head.style.marginBottom !== `${last}px`) {
+    head.style.marginBottom = `${last}px`;
+    if (head.nextElementSibling) head.nextElementSibling.style.marginTop = `${-last}px`;
+  }
   const table = head.parentElement.getBoundingClientRect();
   const at = head.getBoundingClientRect();
   const top = parseFloat(getComputedStyle(head).top) || 0;
@@ -1825,8 +1840,12 @@ function laterWarningLine(headline) {
   if (!headline || headline.urgency === "now") return "";
   const { warning, urgency } = headline;
   const soon = urgency === "soon";
-  const text = warningInfoOnly(warning) ? t("%@ · not part of the rowing light", warningLine(warning)) : warningLine(warning);
-  return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}<span>${h(text)}</span></button></li>`;
+  // Info only: "DWD-Warnung: Frost ab 17:00 · nur Info" where it fits on one line,
+  // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0066; fitLine).
+  const text = warningInfoOnly(warning)
+    ? `<span class="fit-line" data-short="${h(t("%@ · info only", warningLine(warning, new Date(), true)))}">${h(t("%@ · info only", warningLine(warning)))}</span>`
+    : `<span>${h(warningLine(warning))}</span>`;
+  return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}${text}</button></li>`;
 }
 
 /** When the warnings were checked: earlier than the forecast file when the last check failed and the
@@ -2690,11 +2709,9 @@ function renderSettings(topic = null) {
   const groups = [["appearance", "clubpages"], ["language", "data"], ["help", "about", ...(store.developerOptions ? ["developer"] : [])]];
   root.innerHTML = topic
     ? `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t(named[1]))}</strong><span class="nav-side"></span></header>
-    ${testing()}
     <main class="page settings-topic">${settingsTopicBody(topic)}
     </main>`
     : `<header class="nav">${closeX(`class="link close-x"`, back)}<strong class="nav-title">${h(t("Settings"))}</strong><span class="nav-side"></span></header>
-    ${testing()}
     <main class="page settings-main">
       <div id="settings-topics">
       <section class="card group">
@@ -2939,7 +2956,7 @@ function renderBoats() {
       <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("info")}</a></div>`;
   };
   // A round back button and a small centred title, as the app and the other settings pages (Routen).
-  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Boats and limits"))}</strong><span class="nav-side"></span></header>${testing()}
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Boats and limits"))}</strong><span class="nav-side"></span></header>
     <main class="page">
       ${tip("myBoats")}
       <h3 class="section">${icon("rower")} ${h(t("Your boat"))}</h3>
@@ -3108,7 +3125,7 @@ function renderBoat(id) {
   }
   setTitle(boatTitle(boat));
   const own = { get value() { return ownLimitsShown[id] ?? hasOwnLimits(id); }, set value(v) { ownLimitsShown[id] = v; } };
-  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings/boats" aria-label="${h(t("Boats and limits"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(boatTitle(boat))}</strong><span class="nav-side"></span></header>${testing()}
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings/boats" aria-label="${h(t("Boats and limits"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(boatTitle(boat))}</strong><span class="nav-side"></span></header>
     <main class="page">
       ${boatForm(boat, false, own.value)}
       ${footerLinks()}
