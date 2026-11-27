@@ -421,15 +421,16 @@ Check a system: `python3 scripts/check_versions.py --env <venv> --extras <extras
 
 Change a backend version: `cd backend && uv lock --upgrade-package <name>`, commit the lock. Python, Node and uv are raised by the monthly dependency check (3rd of each month), Python only when every locked package has a build for all three systems.
 
-## Weekly Mac cleanup (owner, 12 Nov 2026)
+## Weekly Mac and Pi cleanup (owner, 12 Nov 2026; the Pi too since 27 Nov 2026)
 
-Sundays 03:30 CET (02:30 UTC), by the merge queue, only when the Mac is idle. The 03:30 run only lists what it would delete, with sizes; the deletions run at the next idle gap after the owner writes "Run the weekly cleanup" in the merge thread (a standing OK does not pass the Mac's safety check). It also reports when something fails or the RowFrog folder grows past 5 GB.
+Sundays 03:30 CET (02:30 UTC), by the merge queue, only when the Mac is idle. It covers the Mac and the Pi. The 03:30 run only lists what it would delete, with sizes; the deletions run at the next idle gap after the owner writes "Run the weekly cleanup" in the merge thread (a standing OK does not pass the Mac's safety check). It also reports when something fails or the RowFrog folder grows past 5 GB.
 
 1. **Screenshot sets** (`screenshots.nosync/` since 15 Nov 2026, `inbox/shots/`, `log/screenshots/` and the older `refs/screenshots/*`, on the Mac and the Pi): a set of an unmerged branch stays; a merged branch's set goes 7 days after the merge; for `main` the newest set and the one before stay; review sets stay until the owner closes the review; release sets stay for good.
 2. **Logs:** the newest 10 coverage files and the newest 20 check logs stay; older logs go once they are more than 30 days old.
 3. **Finder copies** such as `main 2.bundle` go once their head is in `main`.
 4. **Git:** local branches merged more than 14 days ago are deleted (their bundles stay in `inbox/done/`), worktrees are pruned, `git gc` runs.
 5. **Simulators:** one over 5 GB is erased; `xcrun simctl delete unavailable` runs.
+6. **Package caches** (owner, 27 Nov 2026): `uv cache prune` on the Mac and the Pi, with the cache size before and after. On the Pi it runs only right after a :00/:30 forecast run has finished.
 
 First Sunday of the month, report only (the owner decides): DerivedData, iOS DeviceSupport older than the devices in use, unused runtimes and Simulators.
 
