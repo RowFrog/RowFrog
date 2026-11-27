@@ -557,6 +557,10 @@ body.wide-bar .top-title .head-side > * { pointer-events: auto; }
    behind it (html::after) keeps it readable on a light page. */
 body.edge-page::before { display: none; }
 .top-title.edge::before { display: none; }
+/* Safari on the iPhone drew the soft edge's blur layers over the bar despite its higher z-index, so the small name
+   and its capsule came out blurred and grey (owner's Home Screen shot, 27 Nov 2026). Its own compositing layer keeps
+   the bar on top; a transform is no backdrop root, so the capsule's glass still sees the cards. */
+.top-title.edge { transform: translateZ(0); }
 /* The small name in its own glass capsule (InlineClubTitle); the buttons keep their places. */
 .top-pill { min-width: 0; height: 44px; padding: 0 16px; border-radius: 22px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; }
 /* As the app's (TopEdgeBlur, owner 25 Nov 2026: the website behaves as the app): it runs out 34 px below the clock,
