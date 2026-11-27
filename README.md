@@ -466,7 +466,9 @@ the 48-hour table, the dark hours after "Now" fold into one moon column up to
 sunrise (a dimmed red dot on an indigo band, as in the app; in the large ones
 with the night's worst values), then the morning hours follow. The day bars
 share one clock axis with small hour labels; today's gone hours stay faint and
-a tick marks now (`docs/decisions/0041`). **Marks** (on by default) put a check, ! or ×
+a tick marks now (`docs/decisions/0041`). Each day's bar runs from the
+sunrise hour to the sunset hour, with the minutes of those two hours when the
+sun is down drawn in the night's indigo (`docs/decisions/0065`). **Marks** (on by default) put a check, ! or ×
 in the light's dots and stripes or outlines on amber and red day bars, so the
 light reads without colour. Values that set the light are coloured; the rain
 value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
