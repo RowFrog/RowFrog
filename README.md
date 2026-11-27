@@ -80,7 +80,7 @@ GitHub issue, so no GitHub account is needed.
    in that colour, and cold water shows in blue while the life jacket badge
    is on; while daylight is the reason, the sunrise or sunset time takes the
    light's colour, and in the last hour before sunset so do the minutes left
-   (the reason then reads "Be back ashore by sunset."). Reasons list red
+   (the reason then reads "Be back ashore by sunset."; after sunset it reads "Row in daylight only.", `docs/decisions/0066`). Reasons list red
    first, then by one fixed list of dangers, with daylight last
    (`docs/decisions/0053`). Tapping "All values" under the sun line opens Current
    conditions inside the tile; tapping "Fewer values" closes it. Each club
@@ -196,7 +196,9 @@ Otherwise the top tile's status line says there is none and when it was
 checked, or that DWD could not be reached. When a check fails, the last good
 one stands in for up to 3 hours, without the warnings that have ended since,
 and the card says when it was checked; the website does the same. A warning that starts later or
-only informs gets one line in the top tile that opens the card, and in the
+only informs gets one line in the top tile that opens the card (e.g. "DWD
+warning: Frost from 17:00 · info only", shortened to "Frost from 17:00 · info
+only" where that doesn't fit, `docs/decisions/0066`), and in the
 club list it shows grey with an info sign and its start time; only warnings
 that count for the light now or within 3 hours show amber there.
 Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
