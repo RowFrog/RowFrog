@@ -79,3 +79,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 61 | 2026-11-22 | [One reason line per thing near the launch point; the ice line only at 3 °C or colder](0061-one-line-per-thing-and-ice-line-at-3-c.md) |
 | 62 | 2026-11-22 | [In columns the warnings card spans the page, and warnings for the same place and time are one block](0062-warnings-tile-in-columns.md) |
 | 64 | 2026-11-22 | [The small print at a club page's end sits on the cards' plate over a picture](0064-small-print-on-the-card-plate.md) |
+| 65 | 2026-11-27 | [The night reason and the info-only warning line each fit on one line](0065-short-night-and-info-only-lines.md) |

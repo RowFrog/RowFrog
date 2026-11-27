@@ -951,10 +951,18 @@ private struct NowCard: View {
             Button { showingWarnings = true } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Image(systemName: soon ? "exclamationmark.triangle.fill" : "info.circle")
-                    Text(warning.counts
-                         ? warning.shortLabel(at: .now)
-                         : tr("%@ · not part of the rowing light", warning.shortLabel(at: .now)))
-                        .fixedSize(horizontal: false, vertical: true)
+                    if warning.counts {
+                        Text(warning.shortLabel(at: .now))
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        // "DWD-Warnung: Frost ab 17:00 · nur Info" where it fits on one line,
+                        // else "Frost ab 17:00 · nur Info" (owner's pick A5, decision 0065).
+                        ViewThatFits(in: .horizontal) {
+                            Text(tr("%@ · info only", warning.shortLabel(at: .now)))
+                            Text(tr("%@ · info only", warning.compactLabel(at: .now)))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
                 }
                 .foregroundStyle(soon ? Color.orange : Color.secondary)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { warningLineHeight = $0 }
