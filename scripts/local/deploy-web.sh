@@ -28,7 +28,7 @@ set -a; . "$env_file"; set +a
 for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
   [ -n "${!name:-}" ] || { echo "Missing $name in $env_file"; exit 1; }
 done
-command -v npm >/dev/null || { echo "npm is missing (MacPorts: sudo port install nodejs22 npm10)"; exit 1; }
+command -v npm >/dev/null || { echo "npm is missing (MacPorts: sudo port install nodejs22 npm10, or Homebrew: brew install node@22)"; exit 1; }
 node -e 'process.exit(Number(process.versions.node.split(".")[0]) < 22 ? 1 : 0)' || { echo "Node 22 or later needed, found $(node -v)"; exit 1; }
 
 # Exactly that commit, away from the working tree.

@@ -7,7 +7,7 @@ description: >-
 runs:
   using: composite
   steps:
-    # uv's version: the newest that every system has (Mac: MacPorts), see docs/handbook.md,
+    # uv's version: the newest that every system has (Mac: its package manager, today MacPorts; MAC_SOURCE in scripts/check_pins_available.py), see docs/handbook.md,
     # "Same versions everywhere". The monthly dependency check raises it.
     - shell: bash
       run: |

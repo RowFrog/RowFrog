@@ -83,3 +83,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 65 | 2026-11-27 | [The widget's day bars show the sunrise and sunset hours, part night](0065-widget-sunrise-and-sunset-hours-part-night.md) |
 | 66 | 2026-11-27 | [The night reason and the info-only warning line each fit on one line](0066-short-night-and-info-only-lines.md) |
 | 67 | 2026-11-28 | [The app runs on Python 3.14.10](0067-app-python-3-14-10.md) |
+| 68 | 2026-11-27 | [The Mac's scripts find their tools by name, MacPorts first](0068-mac-tools-found-by-name.md) |
