@@ -1,8 +1,8 @@
 name: Pins installable everywhere
 
 # Owner rule (21 Nov 2026): pin and install only versions that GitHub, the Pi
-# and the Mac all offer. Fails a PR that sets .python-version, .nvmrc or
-# .uv-version to a version one of them can't install
+# and the Mac all offer. Fails a PR that sets .python-version, .nvmrc,
+# .uv-version or .xcodegen-version to a version one of them can't install
 # (scripts/check_pins_available.py). The monthly dependency check runs it by
 # hand (workflow_dispatch) before proposing new pins.
 on:
@@ -11,6 +11,7 @@ on:
       - .python-version
       - .nvmrc
       - .uv-version
+      - .xcodegen-version
       - scripts/check_pins_available.py
       - .github/workflows/pins.yml
   push:
@@ -19,6 +20,7 @@ on:
       - .python-version
       - .nvmrc
       - .uv-version
+      - .xcodegen-version
       - scripts/check_pins_available.py
       - .github/workflows/pins.yml
   workflow_dispatch:

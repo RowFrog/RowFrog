@@ -12,6 +12,9 @@ the monthly dependency check.
                    as 3.12.15, so the Mac runner jobs install Python with uv)
   .nvmrc           Node: GitHub's setup-node has it and MacPorts' nodejsNN is
                    that version (the Pi runs no Node)
+  .xcodegen-version XcodeGen: MacPorts' xcodegen is that version (Mac) and
+                   XcodeGen's GitHub release has xcodegen.zip for it (GitHub's
+                   Mac runners, .github/actions/xcodegen; the Pi builds no app)
 
 The packages need no check here: uv.lock can only be written when every package
 has a build for all three systems ([tool.uv] required-environments).
@@ -45,6 +48,15 @@ def macports_version(portfile_path):
     text = get(f"{PORTS}/{portfile_path}/Portfile")
     m = re.search(r"^github\.setup\s+\S+\s+\S+\s+(\S+)", text, re.M) or re.search(r"^version\s+(\S+)", text, re.M)
     return m.group(1)
+
+
+def release_has(url):
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status == 200
+    except Exception:
+        return False
 
 
 def manifest_has(url, version, wanted):
@@ -103,6 +115,15 @@ def main():
     if vtuple(mac_node) > vtuple(node_pin) and not gh_missing:
         note += f" (MacPorts moved on: raise .nvmrc to {mac_node} once GitHub has it)"
     row("Node", node_pin, ok, note)
+
+    # XcodeGen
+    xg_pin = (ROOT / ".xcodegen-version").read_text().strip()
+    mac_xg = macports_version("devel/xcodegen")
+    on_gh = release_has(f"https://github.com/yonaskolb/XcodeGen/releases/download/{xg_pin}/xcodegen.zip")
+    note = f"MacPorts xcodegen (Mac) {mac_xg}; XcodeGen release zip (GitHub) " + ("yes" if on_gh else "no")
+    if vtuple(mac_xg) > vtuple(xg_pin):
+        note += f" (MacPorts moved on: raise .xcodegen-version to {mac_xg})"
+    row("XcodeGen", xg_pin, on_gh and mac_xg == xg_pin, note)
 
     lines = ["| Pin | Version | All systems | Where |", "| --- | --- | --- | --- |"]
     lines += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows]

@@ -48,7 +48,7 @@ jobs:
         working-directory: ios
     steps:
       - uses: actions/checkout@v7
-      - run: brew install xcodegen
+      - uses: ./.github/actions/xcodegen
       - run: xcodegen
       - name: Release archive (unsigned)
         run: |
