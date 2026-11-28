@@ -1,0 +1,23 @@
+name: XcodeGen
+description: >-
+  Installs exactly the XcodeGen version in .xcodegen-version, the one the Mac
+  has from MacPorts ("same versions everywhere"), from XcodeGen's own GitHub
+  release, and puts it on PATH. Homebrew would install whatever is newest.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        want=$(tr -d '[:space:]' < "$GITHUB_WORKSPACE/.xcodegen-version")
+        dir="$RUNNER_TEMP/xcodegen-$want"
+        curl -fsSL --retry 4 -o "$RUNNER_TEMP/xcodegen.zip" \
+          "https://github.com/yonaskolb/XcodeGen/releases/download/$want/xcodegen.zip"
+        unzip -q -o "$RUNNER_TEMP/xcodegen.zip" -d "$dir"
+        have=$("$dir/xcodegen/bin/xcodegen" --version | awk '{print $NF}')
+        if [ "$have" != "$want" ]; then
+          echo "::error::XcodeGen download says $have, .xcodegen-version pins $want"
+          exit 1
+        fi
+        echo "$dir/xcodegen/bin" >> "$GITHUB_PATH"
+        echo "XcodeGen $have (.xcodegen-version)"

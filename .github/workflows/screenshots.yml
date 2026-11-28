@@ -182,6 +182,7 @@ jobs:
           d = json.load(sys.stdin)
           print(d["lakeId"], len(d["grid"]["cells"]), "cells,", len(d["points"]), "forecast points,", len(d["hours"]), "hours, zones:",
                 list(zip(d["zones"], [z["light"] for z in d["hours"][0]["zones"]])))'
+      - uses: ./.github/actions/xcodegen
       - name: Build the app
         working-directory: ios
         env:
@@ -194,7 +195,6 @@ jobs:
             export DEVELOPER_DIR="$XCODE/Contents/Developer"
             echo "Using $XCODE"
           fi
-          brew install xcodegen
           xcodegen
           # Settings > About shows the real build number and commit (decision 0034).
           bash ../scripts/build_number.sh || echo "No build number stamped"

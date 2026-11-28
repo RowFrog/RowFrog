@@ -93,7 +93,7 @@ jobs:
           if ! files=$(gh api --paginate "repos/${{ github.repository }}/compare/$BASE...$HEAD" --jq '.files[].filename'); then
             echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if echo "$files" | grep -qE '^(ios/|testdata/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
+          if echo "$files" | grep -qE '^(ios/|testdata/|\.github/workflows/ci\.yml$|\.github/actions/xcodegen/|\.xcodegen-version$|scripts/newest_xcode_runner\.py$)'; then
             echo "ios=true" >> "$GITHUB_OUTPUT"
           else
             echo "ios=false" >> "$GITHUB_OUTPUT"; echo "Nothing under ios/ changed, so the iOS build is skipped."
@@ -177,7 +177,7 @@ jobs:
         working-directory: ios
     steps:
       - uses: actions/checkout@v7
-      - run: brew install xcodegen
+      - uses: ./.github/actions/xcodegen
       - run: xcodegen
       - name: Build and run the unit tests on a simulator
         timeout-minutes: 30

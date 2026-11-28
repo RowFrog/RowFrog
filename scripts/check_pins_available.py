@@ -12,6 +12,10 @@ the monthly dependency check.
                    as 3.12.15, so the Mac runner jobs install Python with uv)
   .nvmrc           Node: GitHub's setup-node has it and the Mac's nodejsNN /
                    node@NN is that version (the Pi runs no Node)
+  .xcodegen-version XcodeGen: the Mac's xcodegen (MacPorts port or Homebrew
+                   formula) is that version and XcodeGen's GitHub release has
+                   xcodegen.zip for it (GitHub's Mac runners,
+                   .github/actions/xcodegen; the Pi builds no app)
 
 Where the Mac gets its tools is set in one place, MAC_SOURCE below (owner,
 27 Nov 2026: MacPorts for now; the choice between MacPorts and Homebrew is made
@@ -84,6 +88,21 @@ def mac_node_version(source, major):
     return homebrew_version(f"node@{major}")
 
 
+def mac_xcodegen_version(source):
+    if source == "macports":
+        return macports_version("devel/xcodegen")
+    return homebrew_version("xcodegen")
+
+
+def release_has(url):
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
 def manifest_has(url, version, wanted):
     for rel in json.loads(get(url)):
         if rel["version"] == version:
@@ -146,6 +165,15 @@ def main():
     if vtuple(mac_node) > vtuple(node_pin) and not gh_missing:
         note += f" ({SOURCE_NAMES[args.mac_source]} moved on: raise .nvmrc to {mac_node} once GitHub has it)"
     row("Node", node_pin, ok, note)
+
+    # XcodeGen
+    xg_pin = (ROOT / ".xcodegen-version").read_text().strip()
+    mac_xg = mac_xcodegen_version(args.mac_source)
+    on_gh = release_has(f"https://github.com/yonaskolb/XcodeGen/releases/download/{xg_pin}/xcodegen.zip")
+    note = f"{SOURCE_NAMES[args.mac_source]} xcodegen (Mac) {mac_xg}; XcodeGen release zip (GitHub) " + ("yes" if on_gh else "no")
+    if vtuple(mac_xg) > vtuple(xg_pin):
+        note += f" ({SOURCE_NAMES[args.mac_source]} moved on: raise .xcodegen-version to {mac_xg})"
+    row("XcodeGen", xg_pin, on_gh and mac_xg == xg_pin, note)
 
     lines = ["| Pin | Version | All systems | Where |", "| --- | --- | --- | --- |"]
     lines += [f"| {a} | {b} | {c} | {d} |" for a, b, c, d in rows]

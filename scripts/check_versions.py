@@ -6,7 +6,8 @@ everywhere", decision 0055) and prints one line per item:
     DIFF   Node v22.23.4, pinned 22.23.5 (.nvmrc)
 
     python3 scripts/check_versions.py [--env DIR] [--extras dev,satellite]
-                                      [--node] [--npm] [--summary FILE]
+                                      [--node] [--npm] [--xcodegen]
+                                      [--summary FILE]
 
 --env      the Python environment to check against backend/uv.lock (its Python
            version and every package, with `uv sync --locked --check`); without
@@ -14,6 +15,7 @@ everywhere", decision 0055) and prints one line per item:
 --extras   the extras that environment is meant to have (default: satellite).
 --node     check `node --version` against .nvmrc.
 --npm      check node_modules against package-lock.json.
+--xcodegen check `xcodegen --version` against .xcodegen-version (the Mac).
 --summary  also append the lines as a Markdown table to FILE (GitHub's
            $GITHUB_STEP_SUMMARY).
 Exits 1 if anything differs, 0 if all is the same. Runs on Python 3.9+ with
@@ -74,6 +76,16 @@ def check_node() -> list[tuple[bool, str]]:
     return [(have == want, f"Node {have}" + ("" if have == want else f", pinned {want}") + " (.nvmrc)")]
 
 
+def check_xcodegen() -> list[tuple[bool, str]]:
+    want = pinned(".xcodegen-version")
+    xg = shutil.which("xcodegen")
+    if not xg:
+        return [(False, f"XcodeGen: not installed, pinned {want} (.xcodegen-version)")]
+    out = subprocess.run([xg, "--version"], capture_output=True, text=True).stdout.split()
+    have = out[-1] if out else "unknown"
+    return [(have == want, f"XcodeGen {have}" + ("" if have == want else f", pinned {want}") + " (.xcodegen-version)")]
+
+
 def check_npm() -> list[tuple[bool, str]]:
     lock = json.loads((TOP / "package-lock.json").read_text())["packages"]
     installed_file = TOP / "node_modules" / ".package-lock.json"
@@ -100,6 +112,7 @@ def main() -> int:
     ap.add_argument("--extras", default="satellite")
     ap.add_argument("--node", action="store_true")
     ap.add_argument("--npm", action="store_true")
+    ap.add_argument("--xcodegen", action="store_true")
     ap.add_argument("--summary", type=Path)
     a = ap.parse_args()
     rows: list[tuple[bool, str]] = []
@@ -109,6 +122,8 @@ def main() -> int:
         rows += check_node()
     if a.npm:
         rows += check_npm()
+    if a.xcodegen:
+        rows += check_xcodegen()
     for ok, text in rows:
         print(("same   " if ok else "DIFF   ") + text)
     if a.summary:
