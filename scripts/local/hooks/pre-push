@@ -11,7 +11,8 @@
 remote="$1"
 [ "$remote" = pi ] || exit 0
 
-export PATH="/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+# The Mac's tool folders (MacPorts, Homebrew or uv's installer), see scripts/local/tool-path.sh.
+. "$(dirname "$(git -C "$(dirname "$0")" rev-parse --path-format=absolute --git-common-dir)")/scripts/local/tool-path.sh"
 top=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)") || exit 1  # the main checkout, also from a worktree
 logdir="$top/log"; mkdir -p "$logdir"
 passed="$logdir/checks-passed.txt"; touch "$passed"
@@ -55,7 +56,7 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
     if command -v node >/dev/null; then
       (cd "$wt" && node --test cloudflare/tests/*.test.mjs 2>&1 | tail -15; exit "${PIPESTATUS[0]}") || ok=1
     else
-      echo "WARNING: Node.js is not installed (sudo port install nodejs22), so the Worker tests were skipped"
+      echo "WARNING: Node.js is not installed (MacPorts: sudo port install nodejs22, or Homebrew: brew install node@22), so the Worker tests were skipped"
     fi
     if [ "$base" = "$zero" ] || git diff --name-only "$base" "$sha" | grep -qE '^(web/|scripts/build_web\.py$|\.github/workflows/website\.yml$)'; then
       echo "== website (as website.yml): node tests + build"

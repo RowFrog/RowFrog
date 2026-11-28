@@ -31,7 +31,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 export VENV="$top/backend/.venv"
-export PATH="$VENV/bin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+. "$here/tool-path.sh"  # the Mac's tool folders (MacPorts, Homebrew or uv's installer)
+export PATH="$VENV/bin:$PATH"  # the venv stays in front
 export PORT=8765
 if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $PORT is in use"; exit 1; fi
 sha=$(git -C "$top" rev-parse --verify "$branch^{commit}")
