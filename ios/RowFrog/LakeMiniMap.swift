@@ -18,7 +18,8 @@ struct LakeMiniMap: View {
     var cornerRadius: CGFloat = 12
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
-    @State private var base: UIImage?
+    /// The map picture shown and the key (lake, size, appearance) it was taken for.
+    @State private var base: (key: NSString, image: UIImage)?
 
     /// The map pictures, by lake, size and appearance.
     private static let pictures = NSCache<NSString, UIImage>()
@@ -36,8 +37,9 @@ struct LakeMiniMap: View {
             let key = "\(view.lakeId)|\(Int(geometry.size.width))x\(Int(geometry.size.height))|\(colorScheme == .dark ? "dark" : "light")" as NSString
             let land = ModelMapStore.shared.landWind(at: view.grid.centre, time: hour.time)
             ZStack(alignment: .topLeading) {
-                if let base {
-                    Image(uiImage: base).resizable()
+                // Only the picture taken for this key: never a light map on a dark page.
+                if let base, base.key == key {
+                    Image(uiImage: base.image).resizable()
                 } else {
                     Color.secondary.opacity(0.1)
                 }
@@ -131,12 +133,17 @@ struct LakeMiniMap: View {
     }
 
     /// Apple's muted map for the frame, without places of interest, as under the lake view.
+    ///
+    /// When the app goes to the background, iOS draws it once in the other appearance for the
+    /// app switcher, so the key turns light and back to dark. The light picture's snapshot does
+    /// not stop when its task is cancelled; it may finish later, even only when the app comes back,
+    /// and must then not replace the dark picture (owner's shots, 28 Nov 2026). It is still kept
+    /// under its own key.
     @MainActor private func loadBase(_ frame: LakeMiniFrame, key: NSString) async {
         if let kept = Self.pictures.object(forKey: key) {
-            base = kept
+            base = (key, kept)
             return
         }
-        base = nil
         guard frame.size.width > 1, frame.size.height > 1 else { return }
         let options = MKMapSnapshotter.Options()
         options.mapRect = frame.shown
@@ -148,7 +155,7 @@ struct LakeMiniMap: View {
         options.preferredConfiguration = map
         if let snapshot = try? await MKMapSnapshotter(options: options).start() {
             Self.pictures.setObject(snapshot.image, forKey: key)
-            base = snapshot.image
+            if !Task.isCancelled { base = (key, snapshot.image) }
         }
     }
 }

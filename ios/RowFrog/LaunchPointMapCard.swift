@@ -423,7 +423,8 @@ struct LaunchPointSnapshot: View {
     var tint: Color = .blue
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
-    @State private var image: UIImage?
+    /// The picture shown and the key (place, size, appearance) it was taken for.
+    @State private var image: (key: NSString, image: UIImage)?
 
     private static let cache = NSCache<NSString, UIImage>()
 
@@ -431,8 +432,9 @@ struct LaunchPointSnapshot: View {
         GeometryReader { geometry in
             let key = "\(coordinate.latitude),\(coordinate.longitude),\(region.span.latitudeDelta),\(Int(geometry.size.width)),\(Int(geometry.size.height)),\(colorScheme == .dark)" as NSString
             ZStack {
-                if let image {
-                    Image(uiImage: image).resizable()
+                // Only the picture taken for this key: never a light map on a dark page (LakeMiniMap.loadBase).
+                if let image, image.key == key {
+                    Image(uiImage: image.image).resizable()
                 } else {
                     Color(.secondarySystemBackground)
                 }
@@ -446,7 +448,7 @@ struct LaunchPointSnapshot: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
             .task(id: key) {
                 if let cached = Self.cache.object(forKey: key) {
-                    image = cached
+                    image = (key, cached)
                     return
                 }
                 guard geometry.size.width > 0 else { return }
@@ -459,7 +461,8 @@ struct LaunchPointSnapshot: View {
                 options.pointOfInterestFilter = .excludingAll
                 if let snapshot = try? await MKMapSnapshotter(options: options).start() {
                     Self.cache.setObject(snapshot.image, forKey: key)
-                    image = snapshot.image
+                    // A snapshot started for the other appearance may finish after its task was cancelled.
+                    if !Task.isCancelled { image = (key, snapshot.image) }
                 }
             }
         }
