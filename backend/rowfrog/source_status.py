@@ -8,7 +8,9 @@ requests the jobs make anyway.
     {"version": 1, "updated": "2026-11-21T18:00:12Z",
      "sources": {"openmeteo": {"job": "publish", "last_try": "...Z", "last_ok": "...Z",
                                "last_fail": null, "reason": "", "tries": 14, "failed": 0,
-                               "expect_min": 30}, ...}}
+                               "expect_min": 30, "bytes_in": 81234, "bytes_out": 5120,
+                               "bytes_in_total": 912345678, "bytes_out_total": 40960000,
+                               "bytes_since": "...Z"}, ...}}
 
 - last_try: end of the last request to the source in the job's last run.
 - last_ok: the last run in which at least one request succeeded and none failed.
@@ -16,6 +18,14 @@ requests the jobs make anyway.
   tls, refused, network, http-503, http-429, firewall, ...; the most frequent one).
 - tries / failed: requests to the source in that run (counts only: no URLs, keys or clubs).
 - expect_min: how often the source is normally fetched (minutes), null when irregular.
+- bytes_in / bytes_out: data received from / sent to the source in that run, null when unknown.
+  HTTP (httpx): the status line, headers and body as they cross the network, so compressed
+  where the server compresses; TLS, TCP and DNS overhead are not counted. r2 (rclone): the
+  size of the files handed to rclone in uploads that succeeded, nothing received counted.
+  github (git fetch): null, unless the shell job gives a number (record --bytes-in).
+- bytes_in_total / bytes_out_total: running totals over all jobs and runs since bytes_since;
+  they only grow (a reader sees a reset when a total gets smaller, e.g. the file was lost).
+  null while no number was ever known for the source.
 
 A request counts as failed when it got no answer or an answer that says the service is
 unavailable or refused us (5xx, 429, 401, 403, 407, 408). Other answers (200, 304, 404,
@@ -102,6 +112,9 @@ CLUB_DEPENDENT = frozenset({"gkd", "pegelonline", "bafu", "meteoalarm", "geosphe
 ALL_CLUBS_EVERY = 360
 
 FAILING_STATUS = {401, 403, 407, 408, 429}
+# Every source entry, in this order.
+FIELDS = ("job", "last_try", "last_ok", "last_fail", "reason", "tries", "failed", "expect_min",
+          "bytes_in", "bytes_out", "bytes_in_total", "bytes_out_total", "bytes_since")
 
 
 def utc_text(t: datetime) -> str:
@@ -162,6 +175,20 @@ class Tally:
         self.failed = 0
         self.reasons: Counter[str] = Counter()
         self.last: datetime | None = None
+        self.bytes_in: int | None = None   # this run so far; None: nothing measured
+        self.bytes_out: int | None = None
+        self.added_in = 0                  # already in the file's totals (written part way)
+        self.added_out = 0
+
+    def add_bytes(self, received: int | None = None, sent: int | None = None) -> None:
+        if received is not None:
+            self.bytes_in = (self.bytes_in or 0) + int(received)
+        if sent is not None:
+            self.bytes_out = (self.bytes_out or 0) + int(sent)
+
+    def mark_added(self) -> None:
+        """The totals in the file now hold this run's bytes so far."""
+        self.added_in, self.added_out = self.bytes_in or 0, self.bytes_out or 0
 
     def add(self, ok: bool, reason: str = "", when: datetime | None = None) -> None:
         self.tries += 1
@@ -229,8 +256,17 @@ def merge(old: dict | None, job: str, tallies: dict[str, Tally], now: datetime,
                 and (now - old_try).total_seconds() < 1.5 * 60 * old_min:
             minutes = old_min  # a job that fetches it more often is still at it
         entry["expect_min"] = minutes
-        sources[key] = {k: entry[k] for k in
-                        ("job", "last_try", "last_ok", "last_fail", "reason", "tries", "failed", "expect_min")}
+        entry["bytes_in"] = tally.bytes_in
+        entry["bytes_out"] = tally.bytes_out
+        for name, run, added in (("in", tally.bytes_in, tally.added_in), ("out", tally.bytes_out, tally.added_out)):
+            total = entry.get(f"bytes_{name}_total")
+            total = total if isinstance(total, int) and total >= 0 else None
+            if run is not None:
+                total = (total or 0) + max(run - added, 0)
+            entry[f"bytes_{name}_total"] = total
+        if not entry.get("bytes_since"):
+            entry["bytes_since"] = when
+        sources[key] = {k: entry.get(k) for k in FIELDS}
     return {"version": VERSION, "updated": utc_text(now), "sources": dict(sorted(sources.items()))}
 
 
@@ -256,6 +292,8 @@ def write(path: Path, job: str, tallies: dict[str, Tally], now: datetime | None 
                 os.fsync(f.fileno())
             os.chmod(tmp, 0o644)
             os.replace(tmp, path)
+            for tally in tallies.values():
+                tally.mark_added()  # a later write in the same run adds only what came since
         except BaseException:
             try:
                 os.unlink(tmp)
@@ -282,6 +320,12 @@ class Recorder:
             return
         with self.lock:
             self.tallies.setdefault(source, Tally()).add(ok, reason)
+
+    def add_bytes(self, source: str | None, received: int | None = None, sent: int | None = None) -> None:
+        if source is None:
+            return
+        with self.lock:
+            self.tallies.setdefault(source, Tally()).add_bytes(received, sent)
 
     def reject(self, source: str, reason: str) -> None:
         with self.lock:
@@ -332,14 +376,18 @@ def note(source: str | None, ok: bool, reason: str = "") -> None:
         RECORDER.note(source, ok, reason)
 
 
-def note_command(args: list[str], returncode: int | None = None, error: BaseException | None = None) -> None:
-    """Counts one run of an upload command: rclone is the R2 bucket (r2); other commands are not counted."""
+def note_command(args: list[str], returncode: int | None = None, error: BaseException | None = None,
+                 sent: int | None = None) -> None:
+    """Counts one run of an upload command: rclone is the R2 bucket (r2); other commands are not counted.
+    `sent`: the bytes of the files handed to it, counted when it succeeded (None: unknown)."""
     if not args or os.path.basename(args[0]) != "rclone":
         return
     if error is not None:
         note("r2", False, "timeout" if "timeout" in type(error).__name__.lower() else "start-failed")
     else:
         note("r2", returncode == 0, f"exit-{returncode}")
+        if returncode == 0 and sent is not None and RECORDER is not None:
+            RECORDER.add_bytes("r2", None, sent)
 
 
 def reject(source: str, reason: str) -> None:
@@ -364,6 +412,7 @@ def _hook_httpx() -> None:
         return
     import httpx
 
+    counted_stream = _counted_stream_class(httpx)
     sync_send = httpx.HTTPTransport.handle_request
     async_send = httpx.AsyncHTTPTransport.handle_async_request
 
@@ -371,12 +420,21 @@ def _hook_httpx() -> None:
         if RECORDER is None:
             return
         source = source_for(request.url.host)
+        if source is None:
+            return
         if error is not None:
             RECORDER.note(source, False, reason_for_error(error))
         elif status_failed(response.status_code):
             RECORDER.note(source, False, reason_for_status(response.status_code))
         else:
             RECORDER.note(source, True)
+        RECORDER.add_bytes(source, None if response is None else _head_bytes(response), _request_bytes(request))
+        if response is not None:
+            try:
+                RECORDER.add_bytes(source, len(response.content))  # already read (mock answers)
+            except httpx.ResponseNotRead:
+                recorder = RECORDER
+                response.stream = counted_stream(response.stream, lambda n: recorder.add_bytes(source, n))
 
     def handle_request(self, request):
         try:
@@ -401,6 +459,56 @@ def _hook_httpx() -> None:
     _HOOKED = True
 
 
+def _head_bytes(response) -> int:
+    """The status line and headers of an answer, as HTTP/1.1 sends them."""
+    reason = response.extensions.get("reason_phrase", b"") if hasattr(response, "extensions") else b""
+    line = len(b"HTTP/1.1 200 \r\n") + len(reason or b"")
+    return line + sum(len(k) + len(v) + 4 for k, v in response.headers.raw) + 2
+
+
+def _request_bytes(request) -> int:
+    """The request line, headers and body as sent (the body by its Content-Length when it streams)."""
+    line = len(request.method) + len(request.url.raw_path) + len(b"  HTTP/1.1\r\n")
+    head = line + sum(len(k) + len(v) + 4 for k, v in request.headers.raw) + 2
+    try:
+        body = len(request.content)
+    except Exception:  # a streaming body that was not read
+        try:
+            body = int(request.headers.get("content-length", 0))
+        except ValueError:
+            body = 0
+    return head + body
+
+
+def _counted_stream_class(httpx):
+    """httpx reads a body only from its own stream classes, so the counter is one of both."""
+
+    class CountedStream(httpx.SyncByteStream, httpx.AsyncByteStream):
+        """An answer's body stream that counts the bytes as they arrive (before any decompression)."""
+
+        def __init__(self, inner, count) -> None:
+            self.inner, self.count = inner, count
+
+        def __iter__(self):
+            for chunk in self.inner:
+                self.count(len(chunk))
+                yield chunk
+
+        async def __aiter__(self):
+            async for chunk in self.inner:
+                self.count(len(chunk))
+                yield chunk
+
+        def close(self) -> None:
+            if hasattr(self.inner, "close"):
+                self.inner.close()
+
+        async def aclose(self) -> None:
+            if hasattr(self.inner, "aclose"):
+                await self.inner.aclose()
+
+    return CountedStream
+
 def main(argv: list[str] | None = None) -> int:
     """For the shell jobs (rclone, git fetch): records one run's counts for one source."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -411,6 +519,8 @@ def main(argv: list[str] | None = None) -> int:
     rec.add_argument("--tries", type=int, default=1)
     rec.add_argument("--failed", type=int, default=0)
     rec.add_argument("--reason", default="")
+    rec.add_argument("--bytes-in", type=int, help="bytes received in that run, if known")
+    rec.add_argument("--bytes-out", type=int, help="bytes sent in that run, if known")
     rec.add_argument("--file", type=Path, help="default: SOURCES_STATUS")
     args = parser.parse_args(argv)
     path = args.file or status_path()
@@ -419,6 +529,7 @@ def main(argv: list[str] | None = None) -> int:
     tally = Tally()
     for i in range(max(args.tries, 1)):
         tally.add(i >= args.failed, args.reason or "error")
+    tally.add_bytes(args.bytes_in, args.bytes_out)
     try:
         write(path, args.job, {args.source: tally})
     except OSError as e:

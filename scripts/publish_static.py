@@ -1306,7 +1306,7 @@ class Uploader:
             f.write("\n".join(names) + "\n")
         try:
             result = subprocess.run([f.name if a == "{files}" else a for a in self.args], timeout=600)
-            source_status.note_command(self.args, result.returncode)
+            source_status.note_command(self.args, result.returncode, sent=self._size(names))
             if result.returncode == 0:
                 self.sent += len(names)
                 self.batches += 1
@@ -1317,6 +1317,16 @@ class Uploader:
             print(f"  upload of {len(names)} files failed: {e!r}; the copy after the run sends them", flush=True)
         finally:
             os.unlink(f.name)
+
+    def _size(self, names: list[str]) -> int:
+        """The bytes of the files in one upload (for the status file's bytes_out)."""
+        total = 0
+        for name in names:
+            try:
+                total += (self.out / name).stat().st_size
+            except OSError:
+                pass
+        return total
 
     def close(self) -> None:
         self.stop.set()

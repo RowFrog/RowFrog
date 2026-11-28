@@ -17,7 +17,22 @@ import pytest
 from rowfrog import source_status
 
 MODULE = Path(source_status.__file__)
-FIELDS = {"job", "last_try", "last_ok", "last_fail", "reason", "tries", "failed", "expect_min"}
+FIELDS = {"job", "last_try", "last_ok", "last_fail", "reason", "tries", "failed", "expect_min",
+          "bytes_in", "bytes_out", "bytes_in_total", "bytes_out_total", "bytes_since"}
+
+
+class Chunks(httpx.SyncByteStream, httpx.AsyncByteStream):
+    """A body that arrives in pieces and is not read yet, like a real transport's."""
+
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = chunks
+
+    def __iter__(self):
+        yield from self.chunks
+
+    async def __aiter__(self):
+        for chunk in self.chunks:
+            yield chunk
 
 
 @pytest.fixture
@@ -31,6 +46,8 @@ def fake_net(monkeypatch):
             raise what
         if isinstance(what, str):
             return httpx.Response(200, text=what, request=request)
+        if isinstance(what, list):  # a body that streams in these chunks, as from the network
+            return httpx.Response(200, stream=Chunks(what), request=request)
         return httpx.Response(what, request=request)
 
     async def answer_async(self, request):
@@ -313,3 +330,90 @@ def test_the_shortest_interval_stays_while_its_job_is_at_it(tmp_path):
 
 def test_utc_text():
     assert source_status.utc_text(datetime(2026, 11, 21, 18, 0, 12, 345, tzinfo=timezone.utc)) == "2026-11-21T18:00:12Z"
+
+
+def test_bytes_are_counted_per_source(fake_net, tmp_path, monkeypatch):
+    status = tmp_path / "sources-status.json"
+    monkeypatch.setenv("SOURCES_STATUS", str(status))
+    fake_net["api.open-meteo.com"] = "x" * 1000                   # a body read at once
+    fake_net["opendata.dwd.de"] = [b"a" * 40_000, b"b" * 25_000]  # a body that streams in
+    fake_net["www.gkd.bayern.de"] = httpx.ConnectTimeout("timed out")
+    source_status.start("publish")
+    with httpx.Client() as client:
+        client.get("https://api.open-meteo.com/v1/forecast?latitude=47.9")
+        with client.stream("GET", "https://opendata.dwd.de/weather/nwp/icon-d2/grib/x.grib2.bz2") as response:
+            assert sum(len(c) for c in response.iter_raw()) == 65_000
+        client.post("https://api.open-meteo.com/v1/forecast", content=b"z" * 500)
+        with pytest.raises(httpx.ConnectTimeout):
+            client.get("https://www.gkd.bayern.de/en/lakes")
+    source_status.note_command(["rclone", "copy"], 0, sent=12_345)
+    source_status.note_command(["rclone", "copy"], 1, sent=999)  # failed: what got through is unknown
+    source_status.flush()
+
+    sources = read(status)["sources"]
+    om, dwd, gkd, r2 = sources["openmeteo"], sources["dwd"], sources["gkd"], sources["r2"]
+    # Bodies plus a status line and headers for each answer; requests with their headers (and the 500-byte body).
+    assert 2000 < om["bytes_in"] < 2600 and 600 < om["bytes_out"] < 1200
+    assert 65_000 < dwd["bytes_in"] < 65_400 and 0 < dwd["bytes_out"] < 400
+    assert gkd["bytes_in"] is None and gkd["bytes_out"] > 0  # sent, no answer
+    assert r2["bytes_in"] is None and r2["bytes_out"] == 12_345
+    for entry in sources.values():
+        assert entry["bytes_in_total"] == entry["bytes_in"] and entry["bytes_out_total"] == entry["bytes_out"]
+        assert entry["bytes_since"] == entry["last_try"]
+
+
+def test_totals_grow_once_per_byte(fake_net, tmp_path, monkeypatch):
+    """A run that writes part way adds only what came since; the next run adds its own."""
+    status = tmp_path / "sources-status.json"
+    monkeypatch.setenv("SOURCES_STATUS", str(status))
+    fake_net["api.open-meteo.com"] = "x" * 1000
+
+    def run(requests_before: int, requests_after: int) -> dict:
+        source_status.start("publish")
+        with httpx.Client() as client:
+            for _ in range(requests_before):
+                client.get("https://api.open-meteo.com/v1/forecast")
+            source_status.flush()  # the club forecasts are online
+            for _ in range(requests_after):
+                client.get("https://api.open-meteo.com/v1/forecast")
+        source_status.flush()
+        return read(status)["sources"]["openmeteo"]
+
+    one = run(1, 0)["bytes_in"]
+    first = run(2, 1)
+    assert first["bytes_in"] == 3 * one and first["bytes_in_total"] == 4 * one
+    since = first["bytes_since"]
+    second = run(1, 0)
+    assert second["bytes_in"] == one and second["bytes_in_total"] == 5 * one and second["bytes_since"] == since
+
+
+def test_a_file_from_before_bytes_gets_them(tmp_path):
+    status = tmp_path / "sources-status.json"
+    status.write_text(json.dumps({"version": 1, "updated": "2026-11-27T10:00:00Z", "sources": {
+        "github": {"job": "follow", "last_try": "2026-11-27T10:00:00Z", "last_ok": "2026-11-27T10:00:00Z",
+                   "last_fail": None, "reason": "", "tries": 1, "failed": 0, "expect_min": 30}}}))
+    tally = source_status.Tally()
+    tally.add(True)
+    tally.add_bytes(100, 20)
+    now = datetime(2026, 11, 28, 6, 0, tzinfo=timezone.utc)
+    body = source_status.write(status, "publish", {"r2": tally}, now=now)
+    assert body["sources"]["github"] == {**body["sources"]["github"], "tries": 1}  # untouched until github is next written
+    assert "bytes_in" not in body["sources"]["github"]
+    git = source_status.Tally()
+    git.add(True)
+    body = source_status.write(status, "follow", {"github": git}, now=now)
+    github = body["sources"]["github"]
+    assert set(github) == FIELDS and github["bytes_in"] is None and github["bytes_in_total"] is None
+    assert github["bytes_since"] == github["last_try"]
+    assert body["sources"]["r2"]["bytes_out_total"] == 20
+
+
+def test_shell_jobs_can_give_bytes(tmp_path):
+    status = tmp_path / "sources-status.json"
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"} | {"SOURCES_STATUS": str(status)}
+    run = [sys.executable, "-I", str(MODULE), "record", "--job", "follow", "--source", "github"]
+    subprocess.run(run + ["--bytes-in", "5000"], env=env, check=True)
+    subprocess.run(run + ["--bytes-in", "700", "--bytes-out", "90"], env=env, check=True)
+    github = read(status)["sources"]["github"]
+    assert (github["bytes_in"], github["bytes_out"]) == (700, 90)
+    assert (github["bytes_in_total"], github["bytes_out_total"]) == (5700, 90)
