@@ -1,4 +1,4 @@
-# 0067. The Mac's scripts find their tools by name, MacPorts first
+# 0068. The Mac's scripts find their tools by name, MacPorts first
 
 - Date: 2026-11-27
 - Status: decided (owner, thread "Review the other project's doc", 27 Nov 2026 16:25 CET (15:25 UTC): agreed answers 1-4 of the Pi project's doc "RowFrog scripts: path-neutral tools on the Mac", https://claude.ai/artifact/1MujE4KbEYDm4DXftn6nnU)
