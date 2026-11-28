@@ -6,7 +6,8 @@
 set -euo pipefail
 top=$(git rev-parse --show-toplevel)
 here=$(cd "$(dirname "$0")" && pwd)
-export PATH="$top/backend/.venv/bin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+. "$here/tool-path.sh"  # the Mac's tool folders (MacPorts, Homebrew or uv's installer)
+export PATH="$top/backend/.venv/bin:$PATH"  # the venv stays in front
 ref=${1:-main}
 sha=$(git -C "$top" rev-parse --verify "$ref^{commit}")
 export RUNNER_TEMP; RUNNER_TEMP=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-app-size.XXXXXX")
